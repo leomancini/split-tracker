@@ -55,7 +55,11 @@ export function shell(data) {
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
     }
+
+    input, textarea { -webkit-user-select: text; user-select: text; }
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
