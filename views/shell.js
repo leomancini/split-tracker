@@ -660,6 +660,26 @@ export function shell(data) {
       }catch(e){}
     }
 
+    // --- Touch navigation (fixes long-press not navigating on iOS) ---
+    var touchStart = null;
+    document.addEventListener('touchstart', function(e){
+      var el = e.target.closest('[data-link]');
+      if(el) touchStart = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+      else touchStart = null;
+    }, {passive:true});
+    document.addEventListener('touchend', function(e){
+      if(!touchStart) return;
+      var el = e.target.closest('[data-link]');
+      if(!el){touchStart=null;return;}
+      var t = e.changedTouches[0];
+      var dx = Math.abs(t.clientX - touchStart.x), dy = Math.abs(t.clientY - touchStart.y);
+      touchStart = null;
+      if(dx < 10 && dy < 10){
+        e.preventDefault();
+        nav(el.getAttribute('data-link'));
+      }
+    });
+
     // --- Event delegation ---
     document.addEventListener('click', function(e){
       // data-link navigation
