@@ -483,9 +483,9 @@ export function shell(data) {
         + '<h1>Create a group</h1>'
         + '<form id="create-group-form">'
         + '<div class="form-group"><label for="name">Group name</label>'
-        + '<input type="text" id="name" name="name" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="off"></div>'
+        + '<input type="text" id="name" name="name" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="do-not-autofill"></div>'
         + '<div class="form-group"><label for="emails">Invite members (optional)</label>'
-        + '<textarea id="emails" name="emails" placeholder="Enter email addresses, one per line" data-1p-ignore autocomplete="off"></textarea>'
+        + '<textarea id="emails" name="emails" placeholder="Enter email addresses, one per line" data-1p-ignore autocomplete="do-not-autofill"></textarea>'
         + '<div class="form-hint">Enter the Google account emails of people you want to invite.</div></div>'
         + '<button type="submit" class="btn">Create group</button></form>';
     }
@@ -532,8 +532,8 @@ export function shell(data) {
       h += '<div class="section"><h2>Expenses</h2>';
       h += '<form id="add-expense-form" data-group-id="'+g.id+'" style="margin-bottom:0.75rem">'
         + '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">'
-        + '<input type="text" name="expense-name" required placeholder="What was it for?" style="flex:2" data-1p-ignore autocomplete="off">'
-        + '<input type="number" name="expense-amount" required placeholder="0.00" step="0.01" min="0.01" style="flex:1" data-1p-ignore autocomplete="off">'
+        + '<input type="text" name="expense-name" required placeholder="What was it for?" style="flex:2" data-1p-ignore autocomplete="do-not-autofill">'
+        + '<input type="number" name="expense-amount" required placeholder="0.00" step="0.01" min="0.01" style="flex:1" data-1p-ignore autocomplete="do-not-autofill">'
         + '</div>'
         + '<button type="submit" class="btn btn-sm">Add expense</button></form>';
 
@@ -574,7 +574,7 @@ export function shell(data) {
       if(isOwner){
         h += '<div class="section"><h2>Invite member</h2>'
           + '<form id="invite-form" data-group-id="'+g.id+'" class="inline-form">'
-          + '<input type="email" name="email" required placeholder="Email address" data-1p-ignore autocomplete="off">'
+          + '<input type="email" name="email" required placeholder="Email address" data-1p-ignore autocomplete="do-not-autofill">'
           + '<button type="submit" class="btn btn-sm">Invite</button></form></div>';
       }
 
