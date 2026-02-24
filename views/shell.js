@@ -118,7 +118,7 @@ export function shell(data) {
       color: white;
       border: none;
       border-radius: 999px;
-      padding: 0.875rem 1.5rem;
+      padding: 1rem 1.5rem;
       font-size: 1.125rem;
       font-weight: 600;
       font-family: inherit;
@@ -134,7 +134,7 @@ export function shell(data) {
     @media (hover: hover) { .btn:hover { background: var(--green-600); } }
     .btn:active { transform: scale(0.93); transition: transform 150ms; }
 
-    .btn-sm { padding: 0.625rem 1.25rem; font-size: 1rem; }
+    .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; }
 
     .btn-outline {
       background: white;
@@ -535,10 +535,10 @@ export function shell(data) {
       return '<span class="back-link" data-link="/groups/'+gid+'">&larr; Back to '+esc(gName)+'</span>'
         + '<h1>Add expense</h1>'
         + '<form id="add-expense-form" data-group-id="'+gid+'">'
-        + '<div class="form-group"><label for="expense-name">What was it for?</label>'
-        + '<input type="text" id="expense-name" name="expense-name" required placeholder="e.g. Pizza, Uber, Groceries" data-1p-ignore autocomplete="do-not-autofill"></div>'
-        + '<div class="form-group"><label for="expense-amount">Amount</label>'
-        + '<input type="number" id="expense-amount" name="expense-amount" required placeholder="0.00" step="0.01" min="0.01" data-1p-ignore autocomplete="do-not-autofill"></div>'
+        + '<div class="form-group"><label for="exp-desc">What was it for?</label>'
+        + '<input type="text" id="exp-desc" name="exp-desc" required placeholder="e.g. Pizza, Uber, Groceries" data-1p-ignore autocomplete="do-not-autofill"></div>'
+        + '<div class="form-group"><label for="exp-cost">Amount</label>'
+        + '<input type="number" id="exp-cost" name="exp-cost" required placeholder="0.00" step="0.01" min="0.01" data-1p-ignore autocomplete="do-not-autofill"></div>'
         + '<button type="submit" class="btn">Add expense</button></form>';
     }
 
@@ -619,7 +619,7 @@ export function shell(data) {
         var gid = m[1];
         document.title = 'Add Expense - Split Tracker';
         app.innerHTML = addExpenseView(gid);
-        var expInput = document.getElementById('expense-name');
+        var expInput = document.getElementById('exp-desc');
         if(expInput) expInput.focus();
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/members$/))){
@@ -788,8 +788,8 @@ export function shell(data) {
       if(form.id === 'add-expense-form'){
         e.preventDefault();
         var gid3 = form.getAttribute('data-group-id');
-        var expName = form['expense-name'].value.trim();
-        var expAmount = form['expense-amount'].value;
+        var expName = form['exp-desc'].value.trim();
+        var expAmount = form['exp-cost'].value;
         if(!expName||!expAmount) return;
         var cat = detectCat(expName);
         var btn3 = form.querySelector('button[type="submit"]');
