@@ -41,6 +41,15 @@ registerAuthRoutes(app);
 // JSON API routes
 registerApiRoutes(app, ensureAuth);
 
+// Static files (icons, manifest, service worker)
+app.use(express.static('public', {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('sw.js')) {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
+
 // All other GET routes: serve the SPA shell with embedded data
 app.get('*', (req, res) => {
   if (!req.isAuthenticated()) return res.redirect('/login');

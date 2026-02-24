@@ -1,0 +1,16 @@
+{
+  "name": "Split Tracker",
+  "short_name": "Split",
+  "description": "Track shared expenses with friends",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#22c55e",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
