@@ -47,7 +47,7 @@ export function shell(data) {
       --gray-500: #6b7280;
       --gray-700: #374151;
       --gray-900: #111827;
-      --radius: 8px;
+      --radius: 12px;
     }
 
     * {
@@ -856,7 +856,11 @@ export function shell(data) {
         if(!name) return;
         var emails = form.emails.value.trim();
         var btn = form.querySelector('button[type="submit"]');
+        var btnText = btn.innerHTML;
         btn.disabled = true;
+        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
+        form.name.disabled = true;
+        form.emails.disabled = true;
         fetch('/api/groups',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
@@ -868,8 +872,8 @@ export function shell(data) {
                 nav('/groups/'+d.groupId, {alert:{text:'Group created!',type:'success'}});
               });
             }
-            btn.disabled = false;
-          }).catch(function(){btn.disabled=false});
+            btn.disabled=false;btn.innerHTML=btnText;form.name.disabled=false;form.emails.disabled=false;
+          }).catch(function(){btn.disabled=false;btn.innerHTML=btnText;form.name.disabled=false;form.emails.disabled=false;});
         return;
       }
 
