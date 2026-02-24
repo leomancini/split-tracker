@@ -574,7 +574,7 @@ export function shell(data) {
       h += '<h1 style="margin-bottom:0.5rem">'+esc(g.name)+'</h1>';
       h += '<div data-link="/groups/'+g.id+'/members" style="margin-bottom:1rem;cursor:pointer;display:flex;align-items:center">'
         + avatarStack(members.map(function(m){return m.avatar_url}))
-        + '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;color:var(--gray-500);background:var(--gray-200);flex-shrink:0">+</div>'
+        + '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-200);flex-shrink:0;padding-bottom:1px">+</div>'
         + '</div>';
 
       // --- Balances ---
