@@ -161,12 +161,12 @@ export function shell(data) {
     @media (hover: hover) { .btn-outline:hover { background: var(--green-50); } }
 
     .btn-danger {
-      background: white;
+      background: #fef2f2;
       color: #dc2626;
-      border: 2px solid #dc2626;
+      border: none;
     }
 
-    @media (hover: hover) { .btn-danger:hover { background: #fef2f2; } }
+    @media (hover: hover) { .btn-danger:hover { background: #fee2e2; } }
 
     .card {
       background: white;
@@ -315,7 +315,7 @@ export function shell(data) {
 
     .balance-row + .balance-row { border-top: 2px solid var(--gray-100); }
 
-    .avatar-stack { display: flex; gap: 0.5rem; }
+    .avatar-stack { display: flex; gap: 0.625rem; }
     .avatar-stack img, .avatar-stack .avatar-placeholder {
       width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
     }
@@ -464,6 +464,18 @@ export function shell(data) {
       return months[d.getMonth()] + ' ' + d.getDate();
     }
 
+    function fmtDate(dateStr){
+      if(!dateStr) return '';
+      var d = new Date(dateStr+'Z');
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var hr = d.getHours();
+      var min = d.getMinutes();
+      var ampm = hr >= 12 ? 'PM' : 'AM';
+      hr = hr % 12 || 12;
+      var minStr = min < 10 ? '0'+min : ''+min;
+      return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() + ' at ' + hr + ':' + minStr + ' ' + ampm;
+    }
+
     function catLabel(cat){
       var labels = {food:'Food',transport:'Transport',entertainment:'Entertainment',shopping:'Shopping',utilities:'Utilities',health:'Health',education:'Education',general:'General'};
       return labels[cat] || 'General';
@@ -552,7 +564,7 @@ export function shell(data) {
         D.groups.forEach(function(g){
           h += '<div class="card card-link" style="margin-bottom:1rem" data-link="/groups/'+g.id+'">'
             + '<div style="font-weight:600;font-size:1.125rem">'+esc(g.name)+'</div>'
-            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.5rem">'+avatarStack(g.member_avatars)+'</div>' : '')
+            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.75rem">'+avatarStack(g.member_avatars)+'</div>' : '')
             + '</div>';
         });
       } else {
@@ -580,13 +592,20 @@ export function shell(data) {
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
       h += '<h1 style="margin-bottom:0.5rem">'+esc(g.name)+'</h1>';
-      h += '<div data-link="/groups/'+g.id+'/members" style="margin-bottom:1rem;cursor:pointer;display:flex;align-items:center">'
+
+      // Avatar row with settled pill
+      var settlements = calcSettlements(members, detail.expenses);
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">';
+      h += '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer;display:flex;align-items:center">'
         + avatarStack(members.map(function(m){return m.avatar_url}))
-        + '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-200);flex-shrink:0;padding-bottom:1px;margin-left:0.25rem">+</div>'
+        + '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.5rem">+</div>'
         + '</div>';
+      if(!settlements.length && detail.expenses && detail.expenses.length){
+        h += '<span style="display:inline-flex;align-items:center;font-size:0.8125rem;color:var(--green-700);font-weight:500;padding:0.375rem 0.75rem;background:var(--green-100);border-radius:999px"><i class="fa-solid fa-check" style="margin-right:0.25rem"></i>Settled</span>';
+      }
+      h += '</div>';
 
       // --- Balances ---
-      var settlements = calcSettlements(members, detail.expenses);
       if(settlements.length){
         h += '<div class="card" style="margin-bottom:1.25rem">';
         settlements.forEach(function(s){
@@ -601,8 +620,6 @@ export function shell(data) {
             + '</div>';
         });
         h += '</div>';
-      } else if(detail.expenses && detail.expenses.length){
-        h += '<div style="text-align:center;margin-bottom:1.25rem"><span style="display:inline-flex;align-items:center;font-size:0.875rem;color:var(--green-700);font-weight:500;padding:0.5rem 1rem;background:var(--green-100);border-radius:999px"><i class="fa-solid fa-check" style="margin-right:0.375rem"></i>All settled up</span></div>';
       }
 
       var expenses = detail.expenses || [];
@@ -650,7 +667,7 @@ export function shell(data) {
       h += '<div class="item-detail-name">'+esc(ex.name)+'</div>';
       h += '<div style="margin-bottom:1.5rem">';
       h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
-      h += '<div class="info-row"><span class="info-label">Added</span><span class="info-value">'+timeAgo(ex.created_at)+'</span></div>';
+      h += '<div class="info-row"><span class="info-label">Added</span><span class="info-value">'+fmtDate(ex.created_at)+'</span></div>';
       h += '<div class="info-row"><span class="info-label">Category</span><span class="info-value">'+catLabel(ex.category)+'</span></div>';
       h += '</div>';
       if(canDelete){
