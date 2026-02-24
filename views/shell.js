@@ -216,38 +216,6 @@ export function shell(data) {
 
     textarea { resize: vertical; min-height: 80px; }
 
-    .ce-input {
-      width: 100%;
-      border: 2px solid var(--gray-200);
-      border-radius: var(--radius);
-      padding: 0.625rem 0.75rem;
-      font-size: 16px;
-      font-family: inherit;
-      background: white;
-      color: var(--gray-900);
-      min-height: 1.5em;
-      -webkit-user-select: text;
-      user-select: text;
-    }
-    .ce-input:focus {
-      outline: 2px solid var(--green-500);
-      outline-offset: -1px;
-      border-color: var(--green-500);
-    }
-    .ce-input:empty::before {
-      content: attr(data-placeholder);
-      color: var(--gray-400);
-      pointer-events: none;
-    }
-    .ce-input.ce-multi {
-      min-height: 80px;
-      white-space: pre-wrap;
-    }
-    .ce-input[data-disabled="true"] {
-      opacity: 0.5;
-      pointer-events: none;
-    }
-
     .form-group { margin-bottom: 1rem; }
 
     .form-hint {
@@ -281,10 +249,11 @@ export function shell(data) {
     .member-row + .member-row { border-top: 2px solid var(--gray-100); }
 
     .member-avatar {
-      width: 32px;
-      height: 32px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       background: var(--gray-200);
+      object-fit: cover;
     }
 
     .member-info { flex: 1; }
@@ -450,17 +419,8 @@ export function shell(data) {
 
   // Prevent iOS viewport shift when keyboard opens
   document.addEventListener('focusin', function(e){
-    if(e.target.matches('.ce-input')){
+    if(e.target.matches('input,textarea')){
       setTimeout(function(){ window.scrollTo(0,0); }, 50);
-    }
-  });
-
-  // Force plain text paste in contenteditable
-  document.addEventListener('paste', function(e){
-    if(e.target.matches('.ce-input')){
-      e.preventDefault();
-      var text = (e.clipboardData||window.clipboardData).getData('text/plain');
-      document.execCommand('insertText', false, text);
     }
   });
 
@@ -605,13 +565,13 @@ export function shell(data) {
 
     function groupCreateView(){
       return '<h1>Create a group</h1>'
-        + '<div id="create-group-form">'
+        + '<form id="create-group-form">'
         + '<div class="form-group"><label>Title</label>'
-        + '<div class="ce-input" contenteditable="true" id="grp-title" data-placeholder="e.g. Apartment, Trip to Paris"></div></div>'
+        + '<input type="search" id="grp-title" autocomplete="off" role="presentation" placeholder="e.g. Apartment, Trip to Paris"></div>'
         + '<div class="form-group"><label>Invite (optional)</label>'
-        + '<div class="ce-input ce-multi" contenteditable="true" id="grp-inv" data-placeholder="One per line"></div>'
+        + '<textarea id="grp-inv" autocomplete="off" placeholder="One per line"></textarea>'
         + '<div class="form-hint">Enter the Google account addresses of people you want to invite.</div></div>'
-        + '<button type="button" class="btn" id="create-group-btn">Create group</button></div>';
+        + '<button type="submit" class="btn">Create group</button></form>';
     }
 
     function groupDetailView(detail, alert){
@@ -673,15 +633,13 @@ export function shell(data) {
     }
 
     function addExpenseView(gid){
-      var gInfo = groupCache[gid] ? groupCache[gid].group : D.groups.find(function(g){return g.id==gid});
-      var gName = gInfo ? gInfo.name : 'Group';
       return '<h1>Add item</h1>'
-        + '<div id="add-expense-form" data-group-id="'+gid+'">'
+        + '<form id="add-expense-form" data-group-id="'+gid+'">'
         + '<div class="form-group"><label>What was it for?</label>'
-        + '<div class="ce-input" contenteditable="true" id="exp-desc" data-placeholder="e.g. Pizza, Uber, Groceries"></div></div>'
+        + '<input type="text" id="exp-desc" placeholder="e.g. Pizza, Uber, Groceries"></div>'
         + '<div class="form-group"><label>Amount</label>'
-        + '<div class="ce-input" contenteditable="true" id="exp-cost" data-placeholder="0.00" inputmode="decimal"></div></div>'
-        + '<button type="button" class="btn" id="add-expense-btn">Add item</button></div>';
+        + '<input type="number" id="exp-cost" inputmode="decimal" step="0.01" placeholder="0.00"></div>'
+        + '<button type="submit" class="btn">Add item</button></form>';
     }
 
     function itemDetailView(gid, ex, isOwner){
@@ -709,7 +667,6 @@ export function shell(data) {
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
       h += '<h1>Members</h1>';
-      h += '<div class="card">';
       members.forEach(function(m){
         h += '<div class="member-row">'
           + (m.avatar_url ? '<img src="'+esc(m.avatar_url)+'" class="member-avatar" alt="">' : '<div class="member-avatar"></div>')
@@ -717,29 +674,30 @@ export function shell(data) {
           + '<div class="member-email">'+esc(m.email)+'</div></div>'
           + '<span class="badge'+(m.role==='owner'?'':' badge-gray')+'">'+esc(m.role)+'</span></div>';
       });
-      h += '</div>';
 
-      if(invites.length || isOwner){
-        h += '<div class="section" style="margin-top:1.5rem"><h2>Pending invites</h2><div class="card">';
-        if(invites.length){
-          invites.forEach(function(i){
-            h += '<div class="invite-row"><span style="font-size:0.875rem">'+esc(i.email)+'</span>'
-              + '<span class="badge badge-gray">pending</span></div>';
-          });
-        } else {
-          h += '<div style="font-size:0.875rem;color:var(--gray-400);padding:0.5rem 0">No pending invites</div>';
-        }
-        h += '</div></div>';
+      if(invites.length){
+        h += '<div style="margin-top:1.5rem"><h2>Pending invites</h2>';
+        invites.forEach(function(i){
+          h += '<div class="invite-row"><span style="font-size:0.875rem">'+esc(i.email)+'</span>'
+            + '<span class="badge badge-gray">pending</span></div>';
+        });
+        h += '</div>';
       }
 
       if(isOwner){
-        h += '<div class="section" style="margin-top:1.5rem"><h2>Invite member</h2>'
-          + '<div id="invite-form" data-group-id="'+g.id+'" class="inline-form">'
-          + '<div class="ce-input" contenteditable="true" id="invite-email" data-placeholder="Email address" style="flex:1"></div>'
-          + '<button type="button" class="btn btn-sm" id="invite-btn">Invite</button></div></div>';
+        h += '<div style="height:5rem"></div>';
+        h += '<div class="sticky-bottom"><button class="btn" data-link="/groups/'+g.id+'/add-member">Invite member</button></div>';
       }
 
       return h;
+    }
+
+    function addMemberView(gid){
+      return '<h1>Invite member</h1>'
+        + '<form id="invite-form" data-group-id="'+gid+'">'
+        + '<div class="form-group"><label>Email address</label>'
+        + '<input type="email" id="invite-email" placeholder="person@example.com"></div>'
+        + '<button type="submit" class="btn">Send invite</button></form>';
     }
 
     function profileView(){
@@ -774,7 +732,10 @@ export function shell(data) {
         brandEl.style.fontSize = '1.5rem';
         brandEl.style.color = 'var(--gray-500)';
         // Set back target based on route depth
-        if(path.match(/^\\/groups\\/\\d+\\/(items|add-expense|members)/)){
+        if(path.match(/^\\/groups\\/\\d+\\/add-member/)){
+          var gid = path.match(/^\\/groups\\/(\\d+)/)[1];
+          brandEl.setAttribute('data-link','/groups/'+gid+'/members');
+        } else if(path.match(/^\\/groups\\/\\d+\\/(items|add-expense|members)/)){
           var gid = path.match(/^\\/groups\\/(\\d+)/)[1];
           brandEl.setAttribute('data-link','/groups/'+gid);
         } else {
@@ -835,6 +796,13 @@ export function shell(data) {
             app.innerHTML = itemDetailView(gid, ex, d.isOwner);
           } else { nav('/groups/'+gid); }
         }
+      }
+      else if((m = path.match(/^\\/groups\\/(\\d+)\\/add-member$/))){
+        var gid = m[1];
+        document.title = 'Invite Member - Split Tracker';
+        app.innerHTML = addMemberView(gid);
+        var emailInput = document.getElementById('invite-email');
+        if(emailInput) emailInput.focus();
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/members$/))){
         var gid = m[1];
@@ -999,23 +967,24 @@ export function shell(data) {
       }
     });
 
-    // Add expense button
-    document.addEventListener('click', function(e){
-      var addBtn = e.target.closest('#add-expense-btn');
-      if(addBtn){
-        var wrap = document.getElementById('add-expense-form');
-        var gid3 = wrap.getAttribute('data-group-id');
+    // Form submissions (add expense, create group, invite member)
+    document.addEventListener('submit', function(e){
+      e.preventDefault();
+
+      if(e.target.id === 'add-expense-form'){
+        var gid3 = e.target.getAttribute('data-group-id');
         var descEl = document.getElementById('exp-desc');
         var costEl = document.getElementById('exp-cost');
-        var expName = descEl.textContent.trim();
-        var expAmount = costEl.textContent.trim();
+        var expName = descEl.value.trim();
+        var expAmount = costEl.value.trim();
         if(!expName||!expAmount) return;
         var cat = detectCat(expName);
-        var btnText = addBtn.innerHTML;
-        addBtn.disabled = true;
-        addBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
-        descEl.setAttribute('data-disabled','true');descEl.contentEditable='false';
-        costEl.setAttribute('data-disabled','true');costEl.contentEditable='false';
+        var btn = e.target.querySelector('button[type="submit"]');
+        var btnText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
+        descEl.disabled = true;
+        costEl.disabled = true;
         fetch('/api/groups/'+gid3+'/expenses',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
@@ -1026,30 +995,28 @@ export function shell(data) {
               delete groupCache[gid3];
               nav('/groups/'+gid3, {alert:{text:'Item added!',type:'success'}});
             } else {
-              addBtn.disabled=false;addBtn.innerHTML=btnText;
-              descEl.removeAttribute('data-disabled');descEl.contentEditable='true';
-              costEl.removeAttribute('data-disabled');costEl.contentEditable='true';
+              btn.disabled=false;btn.innerHTML=btnText;
+              descEl.disabled=false;costEl.disabled=false;
             }
           }).catch(function(){
-            addBtn.disabled=false;addBtn.innerHTML=btnText;
-            descEl.removeAttribute('data-disabled');descEl.contentEditable='true';
-            costEl.removeAttribute('data-disabled');costEl.contentEditable='true';
+            btn.disabled=false;btn.innerHTML=btnText;
+            descEl.disabled=false;costEl.disabled=false;
           });
         return;
       }
 
-      var createBtn = e.target.closest('#create-group-btn');
-      if(createBtn){
+      if(e.target.id === 'create-group-form'){
         var titleEl = document.getElementById('grp-title');
         var invEl = document.getElementById('grp-inv');
-        var name = titleEl.textContent.trim();
+        var name = titleEl.value.trim();
         if(!name) return;
-        var emails = invEl.textContent.trim();
-        var btnText = createBtn.innerHTML;
-        createBtn.disabled = true;
-        createBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
-        titleEl.setAttribute('data-disabled','true');titleEl.contentEditable='false';
-        invEl.setAttribute('data-disabled','true');invEl.contentEditable='false';
+        var emails = invEl.value.trim();
+        var btn = e.target.querySelector('button[type="submit"]');
+        var btnText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
+        titleEl.disabled = true;
+        invEl.disabled = true;
         fetch('/api/groups',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
@@ -1061,44 +1028,44 @@ export function shell(data) {
                 nav('/groups/'+d.groupId, {alert:{text:'Group created!',type:'success'}});
               });
             }
-            createBtn.disabled=false;createBtn.innerHTML=btnText;
-            titleEl.removeAttribute('data-disabled');titleEl.contentEditable='true';
-            invEl.removeAttribute('data-disabled');invEl.contentEditable='true';
+            btn.disabled=false;btn.innerHTML=btnText;
+            titleEl.disabled=false;invEl.disabled=false;
           }).catch(function(){
-            createBtn.disabled=false;createBtn.innerHTML=btnText;
-            titleEl.removeAttribute('data-disabled');titleEl.contentEditable='true';
-            invEl.removeAttribute('data-disabled');invEl.contentEditable='true';
+            btn.disabled=false;btn.innerHTML=btnText;
+            titleEl.disabled=false;invEl.disabled=false;
           });
         return;
       }
-    });
 
-    // Invite button
-    document.addEventListener('click', function(e){
-      var invBtn = e.target.closest('#invite-btn');
-      if(!invBtn) return;
-      var wrap = document.getElementById('invite-form');
-      var gid2 = wrap.getAttribute('data-group-id');
-      var emailEl = document.getElementById('invite-email');
-      var email = emailEl.textContent.trim().toLowerCase();
-      if(!email) return;
-      invBtn.disabled = true;
-      fetch('/api/groups/'+gid2+'/invite',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({email:email})
-      }).then(function(r){return r.json()})
-        .then(function(d){
-          invBtn.disabled = false;
-          if(d.ok){
-            delete groupCache[gid2];
-            route('/groups/'+gid2+'/members', {alert:{text:'Invite sent!',type:'success'}});
-          } else if(d.error === 'Already a member'){
-            route('/groups/'+gid2+'/members', {alert:{text:'That person is already a member.',type:'error'}});
-          } else if(d.error === 'Already invited'){
-            route('/groups/'+gid2+'/members', {alert:{text:'That email has already been invited.',type:'error'}});
-          }
-        }).catch(function(){invBtn.disabled=false});
+      if(e.target.id === 'invite-form'){
+        var gid2 = e.target.getAttribute('data-group-id');
+        var emailEl = document.getElementById('invite-email');
+        var email = emailEl.value.trim().toLowerCase();
+        if(!email) return;
+        var btn = e.target.querySelector('button[type="submit"]');
+        var btnText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
+        emailEl.disabled = true;
+        fetch('/api/groups/'+gid2+'/invite',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({email:email})
+        }).then(function(r){return r.json()})
+          .then(function(d){
+            if(d.ok){
+              delete groupCache[gid2];
+              nav('/groups/'+gid2+'/members', {alert:{text:'Invite sent!',type:'success'}});
+            } else if(d.error === 'Already a member'){
+              nav('/groups/'+gid2+'/members', {alert:{text:'That person is already a member.',type:'error'}});
+            } else if(d.error === 'Already invited'){
+              nav('/groups/'+gid2+'/members', {alert:{text:'That email has already been invited.',type:'error'}});
+            } else {
+              btn.disabled=false;btn.innerHTML=btnText;emailEl.disabled=false;
+            }
+          }).catch(function(){btn.disabled=false;btn.innerHTML=btnText;emailEl.disabled=false;});
+        return;
+      }
     });
 
     // Back/forward
