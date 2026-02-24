@@ -172,7 +172,7 @@ export function shell(data) {
       background: white;
       border: 2px solid var(--gray-200);
       border-radius: var(--radius);
-      padding: 1rem;
+      padding: 0.75rem 1rem;
       margin-bottom: 0.75rem;
     }
 
@@ -718,13 +718,12 @@ export function shell(data) {
 
     function profileView(){
       var u = D.user;
-      return '<h1>Profile</h1>'
-        + '<div class="card" style="display:flex;align-items:center;gap:1rem">'
-        + (u.avatar_url ? '<img src="'+esc(u.avatar_url)+'" style="width:56px;height:56px;border-radius:50%" alt="">'
-          : '<div style="width:56px;height:56px;border-radius:50%;background:var(--gray-200)"></div>')
-        + '<div><div style="font-size:1.125rem;font-weight:600">'+esc(u.name)+'</div>'
-        + '<div style="font-size:0.875rem;color:var(--gray-500)">'+esc(u.email)+'</div></div></div>'
-        + '<div style="margin-top:1.5rem"><a href="/logout" class="btn btn-danger">Log out</a></div>';
+      return '<div style="text-align:center;padding-top:1.5rem">'
+        + (u.avatar_url ? '<img src="'+esc(u.avatar_url)+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:1rem" alt="">'
+          : '<div style="width:72px;height:72px;border-radius:50%;background:var(--gray-200);margin:0 auto 1rem"></div>')
+        + '<div style="font-size:1.25rem;font-weight:600">'+esc(u.name)+'</div>'
+        + '<div style="font-size:0.9375rem;color:var(--gray-500);margin-bottom:2rem">'+esc(u.email)+'</div>'
+        + '<a href="/logout" class="btn btn-danger">Log out</a></div>';
     }
 
     // --- Router ---
