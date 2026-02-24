@@ -52,7 +52,7 @@ export function layout(title, content, user) {
     nav .brand {
       font-weight: 700;
       font-size: 1.1rem;
-      color: var(--green-700);
+      color: var(--green-500);
       text-decoration: none;
     }
 
