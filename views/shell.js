@@ -48,6 +48,7 @@ export function shell(data) {
       --gray-700: #374151;
       --gray-900: #111827;
       --radius: 12px;
+      --mono: 'SF Mono', ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
     }
 
     * {
@@ -332,6 +333,7 @@ export function shell(data) {
     }
 
     .expense-amount {
+      font-family: var(--mono);
       font-size: 1.125rem;
       font-weight: 600;
       color: var(--gray-900);
@@ -353,6 +355,7 @@ export function shell(data) {
     }
 
     .item-detail-amount {
+      font-family: var(--mono);
       font-size: 2.5rem;
       font-weight: 700;
       text-align: center;
@@ -533,8 +536,7 @@ export function shell(data) {
     }
 
     function groupCreateView(){
-      return '<span class="back-link" data-link="/">&larr; Back to dashboard</span>'
-        + '<h1>Create a group</h1>'
+      return '<h1>Create a group</h1>'
         + '<form id="create-group-form">'
         + '<div class="form-group"><label for="name">Group name</label>'
         + '<input type="text" id="name" name="name" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="do-not-autofill"></div>'
@@ -546,7 +548,7 @@ export function shell(data) {
 
     function groupDetailView(detail, alert){
       var g = detail.group, members = detail.members, isOwner = detail.isOwner;
-      var h = '<span class="back-link" data-link="/">&larr; Back to dashboard</span>';
+      var h = '';
 
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
@@ -566,7 +568,7 @@ export function shell(data) {
             + ' owes '
             + '<span style="font-weight:500">'+(s.to==D.user.id?'you':esc(s.toName))+'</span>'
             + '</span>'
-            + '<span style="font-size:0.875rem;font-weight:600;color:'+(isYou?'#dc2626':'var(--green-600)')+'">$'+s.amt.toFixed(2)+'</span>'
+            + '<span style="font-family:var(--mono);font-size:0.875rem;font-weight:600;color:'+(isYou?'#dc2626':'var(--green-600)')+'">$'+s.amt.toFixed(2)+'</span>'
             + '</div>';
         });
         h += '</div>';
@@ -602,8 +604,7 @@ export function shell(data) {
     function addExpenseView(gid){
       var gInfo = groupCache[gid] ? groupCache[gid].group : D.groups.find(function(g){return g.id==gid});
       var gName = gInfo ? gInfo.name : 'Group';
-      return '<span class="back-link" data-link="/groups/'+gid+'">&larr; Back to '+esc(gName)+'</span>'
-        + '<h1>Add item</h1>'
+      return '<h1>Add item</h1>'
         + '<form id="add-expense-form" data-group-id="'+gid+'">'
         + '<div class="form-group"><label for="exp-desc">What was it for?</label>'
         + '<input type="text" id="exp-desc" name="exp-desc" required placeholder="e.g. Pizza, Uber, Groceries" data-1p-ignore autocomplete="do-not-autofill"></div>'
@@ -616,8 +617,7 @@ export function shell(data) {
       var gInfo = groupCache[gid] ? groupCache[gid].group : D.groups.find(function(g){return g.id==gid});
       var gName = gInfo ? gInfo.name : 'Group';
       var canDelete = ex.paid_by === D.user.id || isOwner;
-      var h = '<span class="back-link" data-link="/groups/'+gid+'">&larr; Back to '+esc(gName)+'</span>';
-      h += '<div class="item-detail-icon">'+catIcon(ex.category)+'</div>';
+      var h = '<div class="item-detail-icon">'+catIcon(ex.category)+'</div>';
       h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';
       h += '<div class="item-detail-name">'+esc(ex.name)+'</div>';
       h += '<div style="margin-bottom:1.5rem">';
@@ -633,7 +633,7 @@ export function shell(data) {
 
     function groupMembersView(detail, alert){
       var g = detail.group, members = detail.members, invites = detail.invites, isOwner = detail.isOwner;
-      var h = '<span class="back-link" data-link="/groups/'+g.id+'">&larr; Back to '+esc(g.name)+'</span>';
+      var h = '';
 
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
@@ -673,8 +673,7 @@ export function shell(data) {
 
     function profileView(){
       var u = D.user;
-      return '<span class="back-link" data-link="/">&larr; Back to dashboard</span>'
-        + '<h1>Profile</h1>'
+      return '<h1>Profile</h1>'
         + '<div class="card" style="display:flex;align-items:center;gap:1rem">'
         + (u.avatar_url ? '<img src="'+esc(u.avatar_url)+'" style="width:56px;height:56px;border-radius:50%" alt="">'
           : '<div style="width:56px;height:56px;border-radius:50%;background:var(--gray-200)"></div>')
@@ -689,9 +688,29 @@ export function shell(data) {
     var lastNav = 0;
     var routeVer = 0;
 
+    var brandEl = document.querySelector('nav .brand');
+    function updateNav(path){
+      if(path === '/' || path === ''){
+        brandEl.innerHTML = 'Split';
+        brandEl.setAttribute('data-link','/');
+        brandEl.style.fontSize = '1.35rem';
+      } else {
+        brandEl.innerHTML = '&larr;';
+        brandEl.style.fontSize = '1.5rem';
+        // Set back target based on route depth
+        if(path.match(/^\\/groups\\/\\d+\\/(items|add-expense|members)/)){
+          var gid = path.match(/^\\/groups\\/(\\d+)/)[1];
+          brandEl.setAttribute('data-link','/groups/'+gid);
+        } else {
+          brandEl.setAttribute('data-link','/');
+        }
+      }
+    }
+
     async function route(path, opts){
       var myVer = ++routeVer;
       opts = opts || {};
+      updateNav(path);
       var m;
 
       if(path === '/' || path === ''){
@@ -749,7 +768,7 @@ export function shell(data) {
         } else {
           var gInfo = D.groups.find(function(g){return g.id==gid});
           document.title = 'Members - ' + (gInfo?gInfo.name:'Group');
-          app.innerHTML = '<span class="back-link" data-link="/groups/'+gid+'">&larr; Back</span><div class="spinner"></div>';
+          app.innerHTML = '<div class="spinner"></div>';
         }
         try{
           var r = await fetch('/api/groups/'+gid);
@@ -771,7 +790,7 @@ export function shell(data) {
         } else {
           var gInfo = D.groups.find(function(g){return g.id==gid});
           document.title = (gInfo?gInfo.name:'Group') + ' - Split Tracker';
-          app.innerHTML = '<span class="back-link" data-link="/">&larr; Back to dashboard</span><h1>'+(gInfo?esc(gInfo.name):'')+'</h1><div class="spinner"></div>';
+          app.innerHTML = '<h1>'+(gInfo?esc(gInfo.name):'')+'</h1><div class="spinner"></div>';
         }
         try{
           var r = await fetch('/api/groups/'+gid);
