@@ -67,7 +67,7 @@ export function shell(data) {
 
     body {
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: white;
+      background: #22c55e;
       color: var(--gray-900);
       line-height: 1.5;
       padding-top: env(safe-area-inset-top);
@@ -363,7 +363,7 @@ export function shell(data) {
   <div id="splash">
     <span style="font-family:Inter,system-ui,sans-serif;font-weight:700;font-size:5rem;color:white">%</span>
   </div>
-  <nav>
+  <nav style="visibility:hidden">
     <span class="brand" data-link="/">Split</span>
     <span class="user-info" data-link="/profile">
       ${data.user.avatar_url
@@ -371,7 +371,7 @@ export function shell(data) {
         : `<div style="width:32px;height:32px;border-radius:50%;background:var(--gray-200)"></div>`}
     </span>
   </nav>
-  <div class="container" id="app"></div>
+  <div class="container" id="app" style="visibility:hidden"></div>
 
   <script>
   document.addEventListener('touchstart',function(){},false);
@@ -887,6 +887,9 @@ export function shell(data) {
     var splash = document.getElementById('splash');
     if(splash){
       document.fonts.ready.then(function(){
+        document.body.style.background = 'white';
+        document.querySelector('nav').style.visibility = 'visible';
+        app.style.visibility = 'visible';
         splash.classList.add('hide');
         setTimeout(function(){ splash.remove(); }, 400);
       });
