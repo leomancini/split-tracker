@@ -486,6 +486,7 @@ export function shell(data) {
     // --- Router ---
     var app = document.getElementById('app');
     var groupCache = {};
+    var lastNav = 0;
 
     async function route(path, opts){
       opts = opts || {};
@@ -503,10 +504,14 @@ export function shell(data) {
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)$/))){
         var gid = m[1];
-        document.title = 'Group - Split Tracker';
-        // Show cached version instantly if available, then refresh
-        if(groupCache[gid] && !opts.alert){
+        // Show cached or placeholder instantly
+        if(groupCache[gid]){
+          document.title = groupCache[gid].group.name + ' - Split Tracker';
           app.innerHTML = groupDetailView(groupCache[gid], opts.alert);
+        } else {
+          var gInfo = D.groups.find(function(g){return g.id==gid});
+          document.title = (gInfo?gInfo.name:'Group') + ' - Split Tracker';
+          app.innerHTML = '<span class="back-link" data-link="/">&larr; Back to dashboard</span><h1>'+(gInfo?esc(gInfo.name):'')+'</h1><div class="empty" style="padding:3rem 1rem">Loading...</div>';
         }
         try{
           var r = await fetch('/api/groups/'+gid);
@@ -527,6 +532,9 @@ export function shell(data) {
     }
 
     function nav(path, opts){
+      var now = Date.now();
+      if(now - lastNav < 300 && path === location.pathname) return;
+      lastNav = now;
       history.pushState({},'',path);
       route(path, opts);
       window.scrollTo(0,0);
