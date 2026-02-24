@@ -391,6 +391,11 @@ export function shell(data) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    function fmtAmt(v){
+      var n = parseFloat(v);
+      return n % 1 === 0 ? '$'+n.toFixed(0) : '$'+n.toFixed(2);
+    }
+
     // --- Category detection ---
     var CATS = {
       food:          {icon:'fa-utensils',       kw:['food','grocery','groceries','restaurant','pizza','burger','sushi','lunch','dinner','breakfast','cafe','coffee','starbucks','mcdonald','kfc','subway','taco','noodle','rice','bread','meal','eat','snack','bakery','deli','brunch']},
@@ -533,10 +538,9 @@ export function shell(data) {
           h += '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0;border-bottom:2px solid var(--gray-100)">'
             + '<div class="expense-icon">'+catIcon(ex.category)+'</div>'
             + '<div style="flex:1;min-width:0">'
-            + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
             + '<span class="expense-name">'+esc(ex.name)+'</span>'
-            + '<span class="expense-amount">$'+parseFloat(ex.amount).toFixed(2)+'</span></div>'
-            + '<div style="font-size:0.8125rem;color:var(--gray-500)">'+esc(ex.paid_by_name)+'</div></div>';
+            + '<div style="font-size:0.8125rem;color:var(--gray-500)">'+esc(ex.paid_by_name)+'</div></div>'
+            + '<span class="expense-amount">'+fmtAmt(ex.amount)+'</span>';
           if(ex.paid_by === D.user.id || isOwner){
             h += '<button class="expense-delete" data-action="delete-expense" data-id="'+ex.id+'" data-group-id="'+g.id+'" title="Delete">'
               + '<i class="fa-solid fa-xmark"></i></button>';
