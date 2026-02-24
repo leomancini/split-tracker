@@ -106,7 +106,7 @@ export function shell(data) {
       padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
     }
 
-    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; }
+    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
     h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; }
 
     .btn {
@@ -339,23 +339,53 @@ export function shell(data) {
       margin-left: 0.5rem;
     }
 
-    .expense-delete {
-      background: none;
-      border: none;
-      color: var(--gray-400);
-      cursor: pointer;
-      padding: 0.25rem;
-      font-size: 0.875rem;
-      border-radius: 4px;
-      flex-shrink: 0;
+    .item-detail-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--green-50);
+      color: var(--green-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      margin: 1.5rem auto 1rem;
     }
 
-    @media (hover: hover) {
-      .expense-delete:hover {
-        color: #dc2626;
-        background: #fef2f2;
-      }
+    .item-detail-amount {
+      font-size: 2.5rem;
+      font-weight: 700;
+      text-align: center;
+      color: var(--gray-900);
+      margin-bottom: 0.25rem;
     }
+
+    .item-detail-name {
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 2px solid var(--gray-100);
+      font-size: 0.9375rem;
+    }
+    .info-row:first-child { border-top: 2px solid var(--gray-100); }
+    .info-label { color: var(--gray-500); }
+    .info-value { font-weight: 500; color: var(--gray-900); }
+
+    .btn-danger {
+      background: white;
+      color: #dc2626;
+      border: 2px solid #dc2626;
+      border-radius: var(--radius);
+    }
+    @media (hover: hover) { .btn-danger:hover { background: #fef2f2; } }
+    .btn-danger:active { transform: scale(0.93); transition: transform 150ms; }
 
     .spinner {
       width: 36px; height: 36px;
@@ -394,6 +424,27 @@ export function shell(data) {
     function fmtAmt(v){
       var n = parseFloat(v);
       return n % 1 === 0 ? '$'+n.toFixed(0) : '$'+n.toFixed(2);
+    }
+
+    function timeAgo(dateStr){
+      if(!dateStr) return '';
+      var d = new Date(dateStr+'Z');
+      var now = new Date();
+      var s = Math.floor((now - d) / 1000);
+      if(s < 60) return 'Just now';
+      var m = Math.floor(s / 60);
+      if(m < 60) return m + 'm ago';
+      var h = Math.floor(m / 60);
+      if(h < 24) return h + 'h ago';
+      var days = Math.floor(h / 24);
+      if(days < 7) return days + 'd ago';
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return months[d.getMonth()] + ' ' + d.getDate();
+    }
+
+    function catLabel(cat){
+      var labels = {food:'Food',transport:'Transport',entertainment:'Entertainment',shopping:'Shopping',utilities:'Utilities',health:'Health',education:'Education',general:'General'};
+      return labels[cat] || 'General';
     }
 
     // --- Category detection ---
@@ -474,7 +525,7 @@ export function shell(data) {
         h += '</div></div>';
       }
 
-      h += '<div class="section"><h2>Your groups</h2>';
+      h += '<div class="section">';
       if(D.groups.length){
         D.groups.forEach(function(g){
           h += '<div class="card card-link" data-link="/groups/'+g.id+'">'
@@ -535,17 +586,14 @@ export function shell(data) {
       var expenses = detail.expenses || [];
       if(expenses.length){
         expenses.forEach(function(ex){
-          h += '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0;border-bottom:2px solid var(--gray-100)">'
+          h += '<div data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0;border-bottom:2px solid var(--gray-100);cursor:pointer">'
             + '<div class="expense-icon">'+catIcon(ex.category)+'</div>'
             + '<div style="flex:1;min-width:0">'
             + '<span class="expense-name">'+esc(ex.name)+'</span>'
             + '<div style="font-size:0.8125rem;color:var(--gray-500)">'+esc(ex.paid_by_name)+'</div></div>'
-            + '<span class="expense-amount">'+fmtAmt(ex.amount)+'</span>';
-          if(ex.paid_by === D.user.id || isOwner){
-            h += '<button class="expense-delete" data-action="delete-expense" data-id="'+ex.id+'" data-group-id="'+g.id+'" title="Delete">'
-              + '<i class="fa-solid fa-xmark"></i></button>';
-          }
-          h += '</div>';
+            + '<span class="expense-amount">'+fmtAmt(ex.amount)+'</span>'
+            + '<i class="fa-solid fa-chevron-right" style="color:var(--gray-400);font-size:0.75rem"></i>'
+            + '</div>';
         });
       } else {
         h += '<div class="empty">No items yet</div>';
@@ -571,6 +619,25 @@ export function shell(data) {
         + '<div class="form-group"><label for="exp-cost">Amount</label>'
         + '<input type="number" id="exp-cost" name="exp-cost" required placeholder="0.00" step="0.01" min="0.01" data-1p-ignore autocomplete="do-not-autofill"></div>'
         + '<button type="submit" class="btn">Add item</button></form>';
+    }
+
+    function itemDetailView(gid, ex, isOwner){
+      var gInfo = groupCache[gid] ? groupCache[gid].group : D.groups.find(function(g){return g.id==gid});
+      var gName = gInfo ? gInfo.name : 'Group';
+      var canDelete = ex.paid_by === D.user.id || isOwner;
+      var h = '<span class="back-link" data-link="/groups/'+gid+'">&larr; Back to '+esc(gName)+'</span>';
+      h += '<div class="item-detail-icon">'+catIcon(ex.category)+'</div>';
+      h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';
+      h += '<div class="item-detail-name">'+esc(ex.name)+'</div>';
+      h += '<div style="margin-bottom:1.5rem">';
+      h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
+      h += '<div class="info-row"><span class="info-label">Added</span><span class="info-value">'+timeAgo(ex.created_at)+'</span></div>';
+      h += '<div class="info-row"><span class="info-label">Category</span><span class="info-value">'+catLabel(ex.category)+'</span></div>';
+      h += '</div>';
+      if(canDelete){
+        h += '<button class="btn btn-danger" data-action="delete-item" data-id="'+ex.id+'" data-group-id="'+gid+'" style="width:100%">Delete item</button>';
+      }
+      return h;
     }
 
     function groupMembersView(detail, alert){
@@ -661,6 +728,27 @@ export function shell(data) {
         app.innerHTML = addExpenseView(gid);
         var expInput = document.getElementById('exp-desc');
         if(expInput) expInput.focus();
+      }
+      else if((m = path.match(/^\\/groups\\/(\\d+)\\/items\\/(\\d+)$/))){
+        var gid = m[1], eid = parseInt(m[2]);
+        if(groupCache[gid]){
+          var ex = (groupCache[gid].expenses||[]).find(function(e){return e.id===eid});
+          if(ex){
+            document.title = esc(ex.name) + ' - Split Tracker';
+            app.innerHTML = itemDetailView(gid, ex, groupCache[gid].isOwner);
+          } else { nav('/groups/'+gid); }
+        } else {
+          app.innerHTML = '<div style="display:flex;justify-content:center;padding:3rem 0"><div class="spinner"></div></div>';
+          var r = await fetch('/api/groups/'+gid);
+          if(myVer !== routeVer) return;
+          var d = await r.json();
+          groupCache[gid] = d;
+          var ex = (d.expenses||[]).find(function(e){return e.id===eid});
+          if(ex){
+            document.title = esc(ex.name) + ' - Split Tracker';
+            app.innerHTML = itemDetailView(gid, ex, d.isOwner);
+          } else { nav('/groups/'+gid); }
+        }
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/members$/))){
         var gid = m[1];
@@ -784,22 +872,26 @@ export function shell(data) {
         return;
       }
 
-      // Delete expense
-      var delExpBtn = e.target.closest('[data-action="delete-expense"]');
-      if(delExpBtn){
+      // Delete item from detail page
+      var delItemBtn = e.target.closest('[data-action="delete-item"]');
+      if(delItemBtn){
         e.preventDefault();
         if(!confirm('Delete this item?'))return;
-        var expId = delExpBtn.getAttribute('data-id');
-        var expGid = delExpBtn.getAttribute('data-group-id');
-        delExpBtn.disabled = true;
+        var expId = delItemBtn.getAttribute('data-id');
+        var expGid = delItemBtn.getAttribute('data-group-id');
+        var btnText = delItemBtn.innerHTML;
+        delItemBtn.disabled = true;
+        delItemBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(220,38,38,0.3);border-top-color:#dc2626"></div>';
         fetch('/api/groups/'+expGid+'/expenses/'+expId,{method:'DELETE'})
           .then(function(r){return r.json()})
           .then(function(d){
             if(d.ok){
               delete groupCache[expGid];
-              route('/groups/'+expGid);
+              nav('/groups/'+expGid, {alert:{text:'Item deleted',type:'success'}});
+            } else {
+              delItemBtn.disabled=false;delItemBtn.innerHTML=btnText;
             }
-          }).catch(function(){delExpBtn.disabled=false});
+          }).catch(function(){delItemBtn.disabled=false;delItemBtn.innerHTML=btnText;});
         return;
       }
 
