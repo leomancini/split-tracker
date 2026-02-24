@@ -127,7 +127,7 @@ export function shell(data) {
 
     .card {
       background: white;
-      border: 1px solid var(--gray-200);
+      border: 2px solid var(--gray-200);
       border-radius: var(--radius);
       padding: 1rem;
       margin-bottom: 0.75rem;
@@ -155,7 +155,7 @@ export function shell(data) {
 
     input, textarea {
       width: 100%;
-      border: 1px solid var(--gray-200);
+      border: 2px solid var(--gray-200);
       border-radius: var(--radius);
       padding: 0.625rem 0.75rem;
       font-size: 16px;
@@ -202,7 +202,7 @@ export function shell(data) {
       padding: 0.5rem 0;
     }
 
-    .member-row + .member-row { border-top: 1px solid var(--gray-100); }
+    .member-row + .member-row { border-top: 2px solid var(--gray-100); }
 
     .member-avatar {
       width: 32px;
@@ -234,7 +234,7 @@ export function shell(data) {
       padding: 0.5rem 0;
     }
 
-    .invite-row + .invite-row { border-top: 1px solid var(--gray-100); }
+    .invite-row + .invite-row { border-top: 2px solid var(--gray-100); }
 
     .invite-actions { display: flex; gap: 0.375rem; }
 
@@ -248,13 +248,13 @@ export function shell(data) {
     .alert-success {
       background: var(--green-50);
       color: var(--green-700);
-      border: 1px solid var(--green-100);
+      border: 2px solid var(--green-100);
     }
 
     .alert-error {
       background: #fef2f2;
       color: #dc2626;
-      border: 1px solid #fca5a5;
+      border: 2px solid #fca5a5;
     }
 
     .back-link {
