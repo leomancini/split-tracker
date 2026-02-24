@@ -47,7 +47,6 @@ export function shell(data) {
 
     nav {
       background: white;
-      border-bottom: 1px solid var(--gray-200);
       padding: 0.75rem 1rem;
       display: flex;
       justify-content: space-between;
@@ -56,7 +55,7 @@ export function shell(data) {
 
     nav .brand {
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1.35rem;
       color: var(--green-500);
       text-decoration: none;
       cursor: pointer;
@@ -65,17 +64,12 @@ export function shell(data) {
     nav .user-info {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      font-size: 0.875rem;
-      color: var(--gray-500);
       cursor: pointer;
     }
 
-    nav .user-info:hover { color: var(--gray-700); }
-
     nav .user-info img {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
     }
 
@@ -279,8 +273,9 @@ export function shell(data) {
   <nav>
     <span class="brand" data-link="/">Split</span>
     <span class="user-info" data-link="/profile">
-      ${data.user.avatar_url ? `<img src="${esc(data.user.avatar_url)}" alt="">` : ''}
-      <span>${esc(data.user.name)}</span>
+      ${data.user.avatar_url
+        ? `<img src="${esc(data.user.avatar_url)}" alt="">`
+        : `<div style="width:32px;height:32px;border-radius:50%;background:var(--gray-200)"></div>`}
     </span>
   </nav>
   <div class="container" id="app"></div>
@@ -302,7 +297,7 @@ export function shell(data) {
       if(alert) h += '<div class="alert alert-success">'+esc(alert)+'</div>';
 
       if(D.pendingInvites.length){
-        h += '<div class="section"><h2>Pending Invites</h2><div class="card">';
+        h += '<div class="section"><h2>Pending invites</h2><div class="card">';
         D.pendingInvites.forEach(function(inv){
           h += '<div class="invite-row"><div>'
             + '<div style="font-size:0.875rem;font-weight:500">'+esc(inv.group_name)+'</div>'
@@ -315,7 +310,7 @@ export function shell(data) {
         h += '</div></div>';
       }
 
-      h += '<div class="section"><h2>Your Groups</h2>';
+      h += '<div class="section"><h2>Your groups</h2>';
       if(D.groups.length){
         D.groups.forEach(function(g){
           h += '<div class="card card-link" data-link="/groups/'+g.id+'">'
@@ -327,20 +322,20 @@ export function shell(data) {
       } else {
         h += '<div class="empty">No groups yet. Create one to get started!</div>';
       }
-      h += '<button class="btn" style="margin-top:0.5rem" data-link="/groups/new">New Group</button></div>';
+      h += '<button class="btn" style="margin-top:0.5rem" data-link="/groups/new">New group</button></div>';
       return h;
     }
 
     function groupCreateView(){
       return '<span class="back-link" data-link="/">&larr; Back to dashboard</span>'
-        + '<h1>Create a Group</h1>'
+        + '<h1>Create a group</h1>'
         + '<form id="create-group-form">'
-        + '<div class="form-group"><label for="name">Group Name</label>'
+        + '<div class="form-group"><label for="name">Group name</label>'
         + '<input type="text" id="name" name="name" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="off"></div>'
-        + '<div class="form-group"><label for="emails">Invite Members (optional)</label>'
+        + '<div class="form-group"><label for="emails">Invite members (optional)</label>'
         + '<textarea id="emails" name="emails" placeholder="Enter email addresses, one per line" data-1p-ignore autocomplete="off"></textarea>'
         + '<div class="form-hint">Enter the Google account emails of people you want to invite.</div></div>'
-        + '<button type="submit" class="btn">Create Group</button></form>';
+        + '<button type="submit" class="btn">Create group</button></form>';
     }
 
     function groupDetailView(detail, alert){
@@ -360,7 +355,7 @@ export function shell(data) {
       h += '</div></div>';
 
       if(invites.length || isOwner){
-        h += '<div class="section"><h2>Pending Invites</h2><div class="card">';
+        h += '<div class="section"><h2>Pending invites</h2><div class="card">';
         if(invites.length){
           invites.forEach(function(i){
             h += '<div class="invite-row"><span style="font-size:0.875rem">'+esc(i.email)+'</span>'
@@ -373,7 +368,7 @@ export function shell(data) {
       }
 
       if(isOwner){
-        h += '<div class="section"><h2>Invite Member</h2>'
+        h += '<div class="section"><h2>Invite member</h2>'
           + '<form id="invite-form" data-group-id="'+g.id+'" class="inline-form">'
           + '<input type="email" name="email" required placeholder="Email address" data-1p-ignore autocomplete="off">'
           + '<button type="submit" class="btn btn-sm">Invite</button></form></div>';
