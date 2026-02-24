@@ -313,12 +313,10 @@ export function shell(data) {
 
     .balance-row + .balance-row { border-top: 2px solid var(--gray-100); }
 
-    .avatar-stack { display: flex; }
+    .avatar-stack { display: flex; gap: 0.375rem; }
     .avatar-stack img, .avatar-stack .avatar-placeholder {
-      width: 28px; height: 28px; border-radius: 50%; border: 2px solid white;
-      margin-left: -8px; object-fit: cover;
+      width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
     }
-    .avatar-stack img:first-child, .avatar-stack .avatar-placeholder:first-child { margin-left: 0; }
     .avatar-placeholder { background: var(--gray-200); flex-shrink: 0; }
 
     .expense-icon {
@@ -575,7 +573,7 @@ export function shell(data) {
       h += '<h1 style="margin-bottom:0.5rem">'+esc(g.name)+'</h1>';
       h += '<div data-link="/groups/'+g.id+'/members" style="margin-bottom:1rem;cursor:pointer;display:flex;align-items:center">'
         + avatarStack(members.map(function(m){return m.avatar_url}))
-        + '<div style="width:28px;height:28px;border-radius:50%;border:2px solid var(--gray-200);margin-left:-8px;display:flex;align-items:center;justify-content:center;font-size:0.875rem;color:var(--gray-400);background:white;flex-shrink:0">+</div>'
+        + '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;color:var(--gray-500);background:var(--gray-200);flex-shrink:0">+</div>'
         + '</div>';
 
       // --- Balances ---
