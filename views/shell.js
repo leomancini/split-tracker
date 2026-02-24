@@ -93,7 +93,7 @@ export function shell(data) {
 
     nav .brand {
       font-weight: 700;
-      font-size: 1.35rem;
+      font-size: 1.5rem;
       color: var(--green-500);
       text-decoration: none;
       cursor: pointer;
@@ -751,7 +751,7 @@ export function shell(data) {
       if(path === '/' || path === ''){
         brandEl.innerHTML = 'Split';
         brandEl.setAttribute('data-link','/');
-        brandEl.style.fontSize = '1.35rem';
+        brandEl.style.fontSize = '1.5rem';
         brandEl.style.color = '';
         avatarEl.style.display = '';
       } else {
