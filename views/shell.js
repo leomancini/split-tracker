@@ -13,7 +13,17 @@ export function shell(data) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Split Tracker</title>
+  <title>Split</title>
+  <meta name="description" content="Split costs with friends">
+  <meta property="og:title" content="Split">
+  <meta property="og:description" content="Split costs with friends">
+  <meta property="og:image" content="https://split.noshado.ws/og-image.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://split.noshado.ws">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Split">
+  <meta name="twitter:description" content="Split costs with friends">
+  <meta name="twitter:image" content="https://split.noshado.ws/og-image.svg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#ffffff">
@@ -766,7 +776,7 @@ export function shell(data) {
       var m;
 
       if(path === '/' || path === ''){
-        document.title = 'Dashboard - Split Tracker';
+        document.title = 'Dashboard - Split';
         app.innerHTML = dashboardView(opts.alert);
         // Prefetch Font Awesome so it's ready when user opens a group
         if(!document.querySelector('link[data-fa-prefetch]')){
@@ -779,14 +789,14 @@ export function shell(data) {
         }
       }
       else if(path === '/groups/new'){
-        document.title = 'Create Group - Split Tracker';
+        document.title = 'Create Group - Split';
         app.innerHTML = groupCreateView();
         var nameInput = document.getElementById('grp-title');
         if(nameInput) nameInput.focus();
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/add-expense$/))){
         var gid = m[1];
-        document.title = 'Add Item - Split Tracker';
+        document.title = 'Add Item - Split';
         app.innerHTML = addExpenseView(gid);
         var expInput = document.getElementById('exp-desc');
         if(expInput) expInput.focus();
@@ -796,7 +806,7 @@ export function shell(data) {
         if(groupCache[gid]){
           var ex = (groupCache[gid].expenses||[]).find(function(e){return e.id===eid});
           if(ex){
-            document.title = esc(ex.name) + ' - Split Tracker';
+            document.title = esc(ex.name) + ' - Split';
             app.innerHTML = itemDetailView(gid, ex, groupCache[gid].isOwner);
           } else { nav('/groups/'+gid); }
         } else {
@@ -807,14 +817,14 @@ export function shell(data) {
           groupCache[gid] = d;
           var ex = (d.expenses||[]).find(function(e){return e.id===eid});
           if(ex){
-            document.title = esc(ex.name) + ' - Split Tracker';
+            document.title = esc(ex.name) + ' - Split';
             app.innerHTML = itemDetailView(gid, ex, d.isOwner);
           } else { nav('/groups/'+gid); }
         }
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/add-member$/))){
         var gid = m[1];
-        document.title = 'Invite Member - Split Tracker';
+        document.title = 'Invite Member - Split';
         app.innerHTML = addMemberView(gid);
         var emailInput = document.getElementById('invite-email');
         if(emailInput) emailInput.focus();
@@ -844,11 +854,11 @@ export function shell(data) {
         var gid = m[1];
         // Show cached or placeholder instantly
         if(groupCache[gid]){
-          document.title = groupCache[gid].group.name + ' - Split Tracker';
+          document.title = groupCache[gid].group.name + ' - Split';
           app.innerHTML = groupDetailView(groupCache[gid], opts.alert);
         } else {
           var gInfo = D.groups.find(function(g){return g.id==gid});
-          document.title = (gInfo?gInfo.name:'Group') + ' - Split Tracker';
+          document.title = (gInfo?gInfo.name:'Group') + ' - Split';
           app.innerHTML = '<h1>'+(gInfo?esc(gInfo.name):'')+'</h1><div class="spinner"></div>';
         }
         try{
@@ -858,12 +868,12 @@ export function shell(data) {
           var detail = await r.json();
           if(myVer !== routeVer) return;
           groupCache[gid] = detail;
-          document.title = detail.group.name + ' - Split Tracker';
+          document.title = detail.group.name + ' - Split';
           app.innerHTML = groupDetailView(detail, opts.alert);
         }catch(e){ if(myVer === routeVer && !groupCache[gid]) nav('/'); }
       }
       else if(path === '/profile'){
-        document.title = 'Profile - Split Tracker';
+        document.title = 'Profile - Split';
         app.innerHTML = profileView();
       }
       else {
