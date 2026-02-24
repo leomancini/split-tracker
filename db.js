@@ -73,13 +73,26 @@ export function getUserById(id) {
 // --- Group helpers ---
 
 export function getUserGroups(userId) {
-  return db.prepare(`
+  const groups = db.prepare(`
     SELECT g.*, gm.role,
       (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) as member_count
     FROM groups g
     JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = ?
     ORDER BY g.created_at DESC
   `).all(userId);
+
+  const avatarStmt = db.prepare(`
+    SELECT u.avatar_url FROM group_members gm
+    JOIN users u ON u.id = gm.user_id
+    WHERE gm.group_id = ?
+    ORDER BY gm.joined_at ASC
+  `);
+
+  for (const g of groups) {
+    g.member_avatars = avatarStmt.all(g.id).map(r => r.avatar_url);
+  }
+
+  return groups;
 }
 
 export function createGroup(name, createdBy) {

@@ -106,7 +106,7 @@ export function shell(data) {
     .container {
       max-width: 600px;
       margin: 0 auto;
-      padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+      padding: 1rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
     }
 
     h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
@@ -313,6 +313,14 @@ export function shell(data) {
 
     .balance-row + .balance-row { border-top: 2px solid var(--gray-100); }
 
+    .avatar-stack { display: flex; }
+    .avatar-stack img, .avatar-stack .avatar-placeholder {
+      width: 28px; height: 28px; border-radius: 50%; border: 2px solid white;
+      margin-left: -8px; object-fit: cover;
+    }
+    .avatar-stack img:first-child, .avatar-stack .avatar-placeholder:first-child { margin-left: 0; }
+    .avatar-placeholder { background: var(--gray-200); flex-shrink: 0; }
+
     .expense-icon {
       width: 42px;
       height: 42px;
@@ -415,6 +423,16 @@ export function shell(data) {
     function esc(s){
       if(!s)return '';
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function avatarStack(avatars){
+      if(!avatars||!avatars.length) return '';
+      var h = '<div class="avatar-stack">';
+      avatars.forEach(function(url){
+        h += url ? '<img src="'+esc(url)+'" alt="">' : '<div class="avatar-placeholder"></div>';
+      });
+      h += '</div>';
+      return h;
     }
 
     function fmtAmt(v){
@@ -525,7 +543,10 @@ export function shell(data) {
       if(D.groups.length){
         D.groups.forEach(function(g){
           h += '<div class="card card-link" data-link="/groups/'+g.id+'">'
-            + '<div style="font-weight:500">'+esc(g.name)+'</div></div>';
+            + '<div style="display:flex;justify-content:space-between;align-items:center">'
+            + '<div style="font-weight:600;font-size:1.125rem">'+esc(g.name)+'</div>'
+            + avatarStack(g.member_avatars)
+            + '</div></div>';
         });
       } else {
         h += '<div class="empty">No groups yet. Create one to get started!</div>';
@@ -551,9 +572,10 @@ export function shell(data) {
 
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
-      h += '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem">'
-        + '<h1 style="margin-bottom:0">'+esc(g.name)+'</h1>'
-        + '<span class="back-link" style="margin-bottom:0" data-link="/groups/'+g.id+'/members">'+members.length+' member'+(members.length!==1?'s':'')+'&nbsp;&rarr;</span></div>';
+      h += '<h1 style="margin-bottom:0.5rem">'+esc(g.name)+'</h1>';
+      h += '<div data-link="/groups/'+g.id+'/members" style="margin-bottom:1rem;cursor:pointer">'
+        + avatarStack(members.map(function(m){return m.avatar_url}))
+        + '</div>';
 
       // --- Balances ---
       var settlements = calcSettlements(members, detail.expenses);
