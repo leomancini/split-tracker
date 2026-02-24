@@ -556,13 +556,13 @@ export function shell(data) {
 
     function groupCreateView(){
       return '<h1>Create a group</h1>'
-        + '<form id="create-group-form" autocomplete="off">'
-        + '<div class="form-group"><label for="grp-title">Title</label>'
-        + '<input type="search" id="grp-title" name="grp-title" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="off" role="presentation" style="-webkit-appearance:none"></div>'
-        + '<div class="form-group"><label for="grp-inv">Invite (optional)</label>'
-        + '<textarea id="grp-inv" name="grp-inv" placeholder="One per line" data-1p-ignore autocomplete="off" role="presentation"></textarea>'
-        + '<div class="form-hint">Enter the Google account addresses of people you want to invite.</div></div>'
-        + '<button type="submit" class="btn">Create group</button></form>';
+        + '<div id="create-group-form">'
+        + '<form class="form-group" onsubmit="return false" autocomplete="off"><label for="grp-title">Title</label>'
+        + '<input type="search" id="grp-title" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="off" role="presentation" style="-webkit-appearance:none"></form>'
+        + '<form class="form-group" onsubmit="return false" autocomplete="off"><label for="grp-inv">Invite (optional)</label>'
+        + '<textarea id="grp-inv" placeholder="One per line" data-1p-ignore autocomplete="off" role="presentation"></textarea>'
+        + '<div class="form-hint">Enter the Google account addresses of people you want to invite.</div></form>'
+        + '<button type="button" class="btn" id="create-group-btn">Create group</button></div>';
     }
 
     function groupDetailView(detail, alert){
@@ -627,12 +627,12 @@ export function shell(data) {
       var gInfo = groupCache[gid] ? groupCache[gid].group : D.groups.find(function(g){return g.id==gid});
       var gName = gInfo ? gInfo.name : 'Group';
       return '<h1>Add item</h1>'
-        + '<form id="add-expense-form" data-group-id="'+gid+'">'
-        + '<div class="form-group"><label for="exp-desc">What was it for?</label>'
-        + '<input type="text" id="exp-desc" name="exp-desc" required placeholder="e.g. Pizza, Uber, Groceries" data-1p-ignore autocomplete="do-not-autofill"></div>'
-        + '<div class="form-group"><label for="exp-cost">Amount</label>'
-        + '<input type="number" id="exp-cost" name="exp-cost" required placeholder="0.00" step="0.01" min="0.01" data-1p-ignore autocomplete="do-not-autofill"></div>'
-        + '<button type="submit" class="btn">Add item</button></form>';
+        + '<div id="add-expense-form" data-group-id="'+gid+'">'
+        + '<form class="form-group" onsubmit="return false" autocomplete="off"><label for="exp-desc">What was it for?</label>'
+        + '<input type="text" id="exp-desc" required placeholder="e.g. Pizza, Uber, Groceries" data-1p-ignore autocomplete="off"></form>'
+        + '<form class="form-group" onsubmit="return false" autocomplete="off"><label for="exp-cost">Amount</label>'
+        + '<input type="number" id="exp-cost" required placeholder="0.00" step="0.01" min="0.01" data-1p-ignore autocomplete="off"></form>'
+        + '<button type="button" class="btn" id="add-expense-btn">Add item</button></div>';
     }
 
     function itemDetailView(gid, ex, isOwner){
@@ -950,23 +950,23 @@ export function shell(data) {
       }
     });
 
-    // Form submissions
-    document.addEventListener('submit', function(e){
-      var form = e.target;
-
-      if(form.id === 'add-expense-form'){
-        e.preventDefault();
-        var gid3 = form.getAttribute('data-group-id');
-        var expName = form['exp-desc'].value.trim();
-        var expAmount = form['exp-cost'].value;
+    // Add expense button
+    document.addEventListener('click', function(e){
+      var addBtn = e.target.closest('#add-expense-btn');
+      if(addBtn){
+        var wrap = document.getElementById('add-expense-form');
+        var gid3 = wrap.getAttribute('data-group-id');
+        var descEl = document.getElementById('exp-desc');
+        var costEl = document.getElementById('exp-cost');
+        var expName = descEl.value.trim();
+        var expAmount = costEl.value;
         if(!expName||!expAmount) return;
         var cat = detectCat(expName);
-        var btn3 = form.querySelector('button[type="submit"]');
-        var btnText = btn3.innerHTML;
-        btn3.disabled = true;
-        btn3.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
-        form['exp-desc'].disabled = true;
-        form['exp-cost'].disabled = true;
+        var btnText = addBtn.innerHTML;
+        addBtn.disabled = true;
+        addBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
+        descEl.disabled = true;
+        costEl.disabled = true;
         fetch('/api/groups/'+gid3+'/expenses',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
@@ -977,23 +977,24 @@ export function shell(data) {
               delete groupCache[gid3];
               nav('/groups/'+gid3, {alert:{text:'Item added!',type:'success'}});
             } else {
-              btn3.disabled=false;btn3.innerHTML=btnText;form['exp-desc'].disabled=false;form['exp-cost'].disabled=false;
+              addBtn.disabled=false;addBtn.innerHTML=btnText;descEl.disabled=false;costEl.disabled=false;
             }
-          }).catch(function(){btn3.disabled=false;btn3.innerHTML=btnText;form['exp-desc'].disabled=false;form['exp-cost'].disabled=false;});
+          }).catch(function(){addBtn.disabled=false;addBtn.innerHTML=btnText;descEl.disabled=false;costEl.disabled=false;});
         return;
       }
 
-      if(form.id === 'create-group-form'){
-        e.preventDefault();
-        var name = form['grp-title'].value.trim();
+      var createBtn = e.target.closest('#create-group-btn');
+      if(createBtn){
+        var titleEl = document.getElementById('grp-title');
+        var invEl = document.getElementById('grp-inv');
+        var name = titleEl.value.trim();
         if(!name) return;
-        var emails = form['grp-inv'].value.trim();
-        var btn = form.querySelector('button[type="submit"]');
-        var btnText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
-        form['grp-title'].disabled = true;
-        form['grp-inv'].disabled = true;
+        var emails = invEl.value.trim();
+        var btnText = createBtn.innerHTML;
+        createBtn.disabled = true;
+        createBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
+        titleEl.disabled = true;
+        invEl.disabled = true;
         fetch('/api/groups',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
@@ -1005,10 +1006,15 @@ export function shell(data) {
                 nav('/groups/'+d.groupId, {alert:{text:'Group created!',type:'success'}});
               });
             }
-            btn.disabled=false;btn.innerHTML=btnText;form['grp-title'].disabled=false;form['grp-inv'].disabled=false;
-          }).catch(function(){btn.disabled=false;btn.innerHTML=btnText;form['grp-title'].disabled=false;form['grp-inv'].disabled=false;});
+            createBtn.disabled=false;createBtn.innerHTML=btnText;titleEl.disabled=false;invEl.disabled=false;
+          }).catch(function(){createBtn.disabled=false;createBtn.innerHTML=btnText;titleEl.disabled=false;invEl.disabled=false;});
         return;
       }
+    });
+
+    // Form submissions
+    document.addEventListener('submit', function(e){
+      var form = e.target;
 
       if(form.id === 'invite-form'){
         e.preventDefault();
