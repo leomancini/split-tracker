@@ -18,8 +18,8 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Cache-first for fonts and CDN assets (large, don't change)
-  if (url.pathname.startsWith('/fonts/') || url.hostname === 'cdnjs.cloudflare.com') {
+  // Cache-first for CDN assets (large, don't change)
+  if (url.hostname === 'cdnjs.cloudflare.com') {
     event.respondWith(
       caches.match(event.request).then(cached => {
         if (cached) return cached;

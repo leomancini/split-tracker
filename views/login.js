@@ -23,14 +23,10 @@ export function loginPage() {
   <link rel="apple-touch-startup-image" media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3)" href="/splash-1206x2622.png">
   <link rel="apple-touch-startup-image" media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3)" href="/splash-1320x2868.png">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="preload" href="/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/Inter-Bold.woff2" as="font" type="font/woff2" crossorigin>
   <style>
-    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: block; src: url('/fonts/Inter-Regular.woff2') format('woff2'); }
-    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: block; src: url('/fonts/Inter-Bold.woff2') format('woff2'); }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: white;
       color: #111827;
       line-height: 1.5;

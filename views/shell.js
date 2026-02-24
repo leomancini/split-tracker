@@ -32,16 +32,8 @@ export function shell(data) {
   <link rel="apple-touch-startup-image" media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3)" href="/splash-1206x2622.png">
   <link rel="apple-touch-startup-image" media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3)" href="/splash-1320x2868.png">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="preload" href="/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/Inter-Medium.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/Inter-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/Inter-Bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   <style>
-    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: block; src: url('/fonts/Inter-Regular.woff2') format('woff2'); }
-    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: block; src: url('/fonts/Inter-Medium.woff2') format('woff2'); }
-    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: block; src: url('/fonts/Inter-SemiBold.woff2') format('woff2'); }
-    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: block; src: url('/fonts/Inter-Bold.woff2') format('woff2'); }
     :root {
       --green-50: #f0fdf4;
       --green-100: #dcfce7;
@@ -66,7 +58,7 @@ export function shell(data) {
     }
 
     body {
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: white;
       color: var(--gray-900);
       line-height: 1.5;
@@ -136,7 +128,7 @@ export function shell(data) {
     }
 
     @media (hover: hover) { .btn:hover { background: var(--green-600); } }
-    .btn:active { transform: scale(0.97); }
+    .btn:active { transform: scale(0.93); transition: transform 60ms; }
 
     .btn-sm { padding: 0.625rem 1.25rem; font-size: 1rem; }
 
@@ -174,7 +166,7 @@ export function shell(data) {
     }
 
     @media (hover: hover) { .card-link:hover { border-color: var(--green-500); } }
-    .card-link:active { transform: scale(0.98); }
+    .card-link:active { transform: scale(0.95); transition: transform 60ms; }
 
     label {
       display: block;
@@ -351,7 +343,7 @@ export function shell(data) {
   </style>
 </head>
 <body>
-  <nav style="visibility:hidden">
+  <nav>
     <span class="brand" data-link="/">Split</span>
     <span class="user-info" data-link="/profile">
       ${data.user.avatar_url
@@ -359,7 +351,7 @@ export function shell(data) {
         : `<div style="width:32px;height:32px;border-radius:50%;background:var(--gray-200)"></div>`}
     </span>
   </nav>
-  <div class="container" id="app" style="visibility:hidden"></div>
+  <div class="container" id="app"></div>
 
   <script>
   document.addEventListener('touchstart',function(){},false);
@@ -871,11 +863,6 @@ export function shell(data) {
     // Initial render
     route(location.pathname);
 
-    // Show app after fonts are ready (prevents staggered text rendering)
-    document.fonts.ready.then(function(){
-      document.querySelector('nav').style.visibility = 'visible';
-      app.style.visibility = 'visible';
-    });
   })();
 
   // Register service worker
