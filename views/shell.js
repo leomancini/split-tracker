@@ -226,8 +226,7 @@ export function shell(data) {
     }
 
     input:focus, textarea:focus {
-      outline: 2px solid var(--green-500);
-      outline-offset: -1px;
+      outline: none;
       border-color: var(--green-500);
     }
 
