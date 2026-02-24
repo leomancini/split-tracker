@@ -7,6 +7,7 @@ import { registerAuthRoutes, ensureAuth } from './auth.js';
 import { registerGroupRoutes } from './routes/groups.js';
 import { getUserGroups, getPendingInvitesForUser } from './db.js';
 import { dashboardPage } from './views/dashboard.js';
+import { profilePage } from './views/profile.js';
 
 const app = express();
 const port = 3124;
@@ -41,6 +42,11 @@ registerAuthRoutes(app);
 
 // Group routes
 registerGroupRoutes(app, ensureAuth);
+
+// Profile
+app.get('/profile', ensureAuth, (req, res) => {
+  res.send(profilePage(req.user));
+});
 
 // Dashboard
 app.get('/', ensureAuth, (req, res) => {

@@ -94,15 +94,16 @@ export function layout(title, content, user) {
     h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; }
 
     .btn {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 0.5rem;
+      justify-content: center;
+      width: 100%;
       background: var(--green-500);
       color: white;
       border: none;
       border-radius: 999px;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
+      padding: 0.875rem 1.5rem;
+      font-size: 1.0625rem;
       font-weight: 500;
       font-family: inherit;
       cursor: pointer;
@@ -111,11 +112,11 @@ export function layout(title, content, user) {
     }
 
     .btn:hover { background: var(--green-600); }
-    .btn:active { transform: scale(0.96); }
+    .btn:active { transform: scale(0.97); }
 
     .card-link:active { transform: scale(0.98); }
 
-    .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+    .btn-sm { padding: 0.625rem 1.25rem; font-size: 1rem; }
 
     .btn-outline {
       background: white;
@@ -315,16 +316,16 @@ export function layout(title, content, user) {
 <body>
   ${user ? `
   <nav>
-    <a href="/" class="brand">Split Tracker</a>
-    <div class="user-info">
+    <a href="/" class="brand">Split</a>
+    <a href="/profile" class="user-info">
       ${user.avatar_url ? `<img src="${escapeHtml(user.avatar_url)}" alt="">` : ''}
       <span>${escapeHtml(user.name)}</span>
-      <a href="/logout">Log out</a>
-    </div>
+    </a>
   </nav>` : ''}
   <div class="container">
     ${content}
   </div>
+  <script>document.addEventListener('touchstart',function(){},false);</script>
 </body>
 </html>`;
 }

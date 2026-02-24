@@ -18,10 +18,10 @@ export function dashboardPage(user, groups, pendingInvites, query) {
               <div style="font-size: 0.8125rem; color: var(--gray-500);">from ${escapeHtml(invite.invited_by_name)}</div>
             </div>
             <div class="invite-actions">
-              <form method="POST" action="/invites/${invite.id}/accept" style="display:inline;">
+              <form method="POST" action="/invites/${invite.id}/accept" style="flex:1;">
                 <button type="submit" class="btn btn-sm">Accept</button>
               </form>
-              <form method="POST" action="/invites/${invite.id}/decline" style="display:inline;">
+              <form method="POST" action="/invites/${invite.id}/decline" style="flex:1;">
                 <button type="submit" class="btn btn-sm btn-danger">Decline</button>
               </form>
             </div>
@@ -47,11 +47,9 @@ export function dashboardPage(user, groups, pendingInvites, query) {
     ${alert}
     ${invitesHtml}
     <div class="section">
-      <div class="section-header">
-        <h2 style="margin-bottom: 0;">Your Groups</h2>
-        <a href="/groups/new" class="btn btn-sm">+ New Group</a>
-      </div>
+      <h2>Your Groups</h2>
       ${groupsHtml}
+      <a href="/groups/new" class="btn" style="margin-top: 0.5rem;">New Group</a>
     </div>
   `;
 
