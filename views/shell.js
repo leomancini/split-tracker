@@ -525,10 +525,7 @@ export function shell(data) {
       if(D.groups.length){
         D.groups.forEach(function(g){
           h += '<div class="card card-link" data-link="/groups/'+g.id+'">'
-            + '<div style="display:flex;justify-content:space-between;align-items:center"><div>'
-            + '<div style="font-weight:500">'+esc(g.name)+'</div>'
-            + '<div style="font-size:0.8125rem;color:var(--gray-500)">'+g.member_count+' member'+(g.member_count!==1?'s':'')+'</div>'
-            + '</div><span class="badge'+(g.role==='owner'?'':' badge-gray')+'">'+esc(g.role)+'</span></div></div>';
+            + '<div style="font-weight:500">'+esc(g.name)+'</div></div>';
         });
       } else {
         h += '<div class="empty">No groups yet. Create one to get started!</div>';
