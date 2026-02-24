@@ -333,6 +333,8 @@ export function layout(title, content, user) {
   <script>
   document.addEventListener('touchstart',function(){},false);
   (function(){
+    var cache={};
+    var inflight={};
     function ok(url){
       try{ var u=new URL(url,location.origin); }catch(e){return false}
       if(u.origin!==location.origin)return false;
@@ -341,21 +343,49 @@ export function layout(title, content, user) {
       if(u.pathname==='/login')return false;
       return true;
     }
+    function parse(html){
+      var d=new DOMParser().parseFromString(html,'text/html');
+      var c=d.querySelector('.container');
+      var t=d.querySelector('title');
+      return c?{content:c.innerHTML,title:t?t.textContent:''}:null;
+    }
+    function swap(p,url,push){
+      if(!p)return false;
+      document.querySelector('.container').innerHTML=p.content;
+      if(p.title)document.title=p.title;
+      if(push!==false)history.pushState({},'',url);
+      window.scrollTo(0,0);
+      return true;
+    }
+    function prefetch(url){
+      if(cache[url]||inflight[url])return;
+      inflight[url]=fetch(url).then(function(r){return r.text()}).then(function(h){
+        cache[url]=parse(h);
+        delete inflight[url];
+      }).catch(function(){delete inflight[url]});
+    }
     async function go(url,push){
       try{
+        if(cache[url]){
+          if(swap(cache[url],url,push))return;
+        }
+        if(inflight[url])await inflight[url];
+        if(cache[url]){
+          if(swap(cache[url],url,push))return;
+        }
         var r=await fetch(url);
-        var h=await r.text();
-        var d=new DOMParser().parseFromString(h,'text/html');
-        var c=d.querySelector('.container');
-        var t=d.querySelector('title');
-        if(c){
-          document.querySelector('.container').innerHTML=c.innerHTML;
-          if(t)document.title=t.textContent;
-          if(push!==false)history.pushState({},'',url);
-          window.scrollTo(0,0);
-        }else{location.href=url}
+        var p=parse(await r.text());
+        if(!swap(p,url,push))location.href=url;
       }catch(e){location.href=url}
     }
+    document.addEventListener('touchstart',function(e){
+      var a=e.target.closest('a[href]');
+      if(a&&ok(a.href))prefetch(a.href);
+    });
+    document.addEventListener('mousedown',function(e){
+      var a=e.target.closest('a[href]');
+      if(a&&ok(a.href))prefetch(a.href);
+    });
     document.addEventListener('click',function(e){
       var a=e.target.closest('a[href]');
       if(!a)return;
@@ -376,19 +406,15 @@ export function layout(title, content, user) {
           body:new URLSearchParams(new FormData(f)).toString(),
           redirect:'follow'
         });
-        var h=await r.text();
-        var d=new DOMParser().parseFromString(h,'text/html');
-        var c=d.querySelector('.container');
-        var t=d.querySelector('title');
-        if(c){
-          document.querySelector('.container').innerHTML=c.innerHTML;
-          if(t)document.title=t.textContent;
-          history.pushState({},'',r.url);
-          window.scrollTo(0,0);
-        }else{location.href=r.url}
+        cache={};
+        var p=parse(await r.text());
+        if(!swap(p,r.url,true))location.href=r.url;
       }catch(err){f.submit()}
     });
-    window.addEventListener('popstate',function(){go(location.href,false)});
+    window.addEventListener('popstate',function(){
+      cache={};
+      go(location.href,false);
+    });
   })();
   </script>
 </body>
