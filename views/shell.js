@@ -415,6 +415,25 @@ export function shell(data) {
 
   <script>
   document.addEventListener('touchstart',function(){},false);
+
+  // Hide iOS keyboard arrows by making other inputs unfocusable
+  document.addEventListener('focusin', function(e){
+    if(e.target.matches('input,textarea')){
+      var all = document.querySelectorAll('input,textarea');
+      for(var i=0;i<all.length;i++){
+        if(all[i]!==e.target) all[i].tabIndex = -1;
+      }
+    }
+  });
+  document.addEventListener('focusout', function(e){
+    if(e.target.matches('input,textarea')){
+      setTimeout(function(){
+        var all = document.querySelectorAll('input,textarea');
+        for(var i=0;i<all.length;i++) all[i].removeAttribute('tabindex');
+      }, 50);
+    }
+  });
+
   (function(){
     // --- Data store ---
     var D = ${JSON.stringify(data)};
