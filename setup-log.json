@@ -1,0 +1,9 @@
+{
+  "service_id": "split-tracker",
+  "service_name": "Split Tracker",
+  "domain": "https://split.noshado.ws",
+  "host": "localhost",
+  "port": "3124",
+  "author": "leo",
+  "created_on": "Tue 24 Feb 2026 04:42:54 AM EST"
+}
