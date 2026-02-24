@@ -564,7 +564,7 @@ export function shell(data) {
         D.groups.forEach(function(g){
           h += '<div class="card card-link" style="margin-bottom:1rem" data-link="/groups/'+g.id+'">'
             + '<div style="font-weight:600;font-size:1.125rem">'+esc(g.name)+'</div>'
-            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.75rem">'+avatarStack(g.member_avatars)+'</div>' : '')
+            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.75rem;margin-bottom:0.25rem">'+avatarStack(g.member_avatars)+'</div>' : '')
             + '</div>';
         });
       } else {
