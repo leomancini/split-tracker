@@ -160,7 +160,7 @@ export function shell(data) {
     .btn-danger {
       background: white;
       color: #dc2626;
-      border: 2px solid #fca5a5;
+      border: 2px solid #dc2626;
     }
 
     @media (hover: hover) { .btn-danger:hover { background: #fef2f2; } }
@@ -377,15 +377,6 @@ export function shell(data) {
     .info-row:last-child { border-bottom: none; }
     .info-label { color: var(--gray-500); }
     .info-value { font-weight: 500; color: var(--gray-900); }
-
-    .btn-danger {
-      background: white;
-      color: #dc2626;
-      border: 2px solid #dc2626;
-      border-radius: var(--radius);
-    }
-    @media (hover: hover) { .btn-danger:hover { background: #fef2f2; } }
-    .btn-danger:active { transform: scale(0.93); transition: transform 150ms; }
 
     .spinner {
       width: 36px; height: 36px;
