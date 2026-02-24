@@ -201,6 +201,10 @@ export function shell(data) {
     .expense-row { transition: background 150ms; border-radius: var(--radius); margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
     .expense-row:active { background: var(--gray-50); }
 
+    .expense-sep { height: 2px; border-radius: 999px; background: var(--gray-100); transition: visibility 0s; }
+    .expense-row:active + .expense-sep { visibility: hidden; }
+    .expense-sep:has(+ .expense-row:active) { visibility: hidden; }
+
     label {
       display: block;
       font-size: 0.875rem;
@@ -638,12 +642,12 @@ export function shell(data) {
       var expenses = detail.expenses || [];
       if(expenses.length){
         expenses.forEach(function(ex, idx){
-          var isLast = idx === expenses.length - 1;
-          h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;'+(isLast?'':'border-bottom:2px solid var(--gray-100);')+'cursor:pointer">'
+          h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
             + '<div class="expense-icon">'+catIcon(ex.category)+'</div>'
             + '<span class="expense-name" style="flex:1;min-width:0">'+esc(ex.name)+'</span>'
             + '<span class="expense-amount">'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
+          if(idx < expenses.length - 1) h += '<div class="expense-sep"></div>';
         });
       } else {
         h += '<div class="empty">No items yet</div>';
