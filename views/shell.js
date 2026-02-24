@@ -14,6 +14,7 @@ export function shell(data) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Split Tracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   <style>
     :root {
       --green-50: #f0fdf4;
@@ -267,6 +268,51 @@ export function shell(data) {
     }
 
     .back-link:hover { color: var(--gray-700); }
+
+    .expense-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--green-50);
+      color: var(--green-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .expense-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .expense-amount {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      white-space: nowrap;
+      margin-left: 0.5rem;
+    }
+
+    .expense-delete {
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      padding: 0.25rem;
+      font-size: 0.875rem;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .expense-delete:hover {
+      color: #dc2626;
+      background: #fef2f2;
+    }
   </style>
 </head>
 <body>
@@ -290,6 +336,24 @@ export function shell(data) {
       if(!s)return '';
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
+
+    // --- Category detection ---
+    var CATS = {
+      food:          {icon:'fa-utensils',       kw:['food','grocery','groceries','restaurant','pizza','burger','sushi','lunch','dinner','breakfast','cafe','coffee','starbucks','mcdonald','kfc','subway','taco','noodle','rice','bread','meal','eat','snack','bakery','deli','brunch']},
+      transport:     {icon:'fa-car',            kw:['uber','lyft','taxi','cab','bus','train','metro','gas','fuel','parking','toll','flight','airline','airbnb','hotel','travel','trip']},
+      entertainment: {icon:'fa-film',           kw:['movie','cinema','netflix','spotify','concert','show','theater','game','ticket','museum','bar','club','party','beer','wine','drink','alcohol']},
+      shopping:      {icon:'fa-bag-shopping',   kw:['amazon','walmart','target','clothes','shirt','shoes','electronics','phone','laptop','furniture','ikea','home','decor']},
+      utilities:     {icon:'fa-bolt',           kw:['electric','electricity','water','internet','wifi','phone','mobile','bill','utility','utilities','rent','mortgage','insurance']},
+      health:        {icon:'fa-heart-pulse',    kw:['doctor','hospital','pharmacy','medicine','gym','fitness','health','dental','medical','prescription','vitamin']},
+      education:     {icon:'fa-graduation-cap', kw:['book','books','course','school','tuition','class','study','education','library','textbook']},
+      general:       {icon:'fa-receipt',        kw:[]}
+    };
+    function detectCat(name){
+      var l=name.toLowerCase();
+      for(var c in CATS){if(c==='general')continue;var kw=CATS[c].kw;for(var i=0;i<kw.length;i++){if(l.indexOf(kw[i])!==-1)return c;}}
+      return 'general';
+    }
+    function catIcon(c){return '<i class="fa-solid '+(CATS[c]||CATS.general).icon+'"></i>';}
 
     // --- Views ---
     function dashboardView(alert){
@@ -353,6 +417,36 @@ export function shell(data) {
           + '<span class="badge'+(m.role==='owner'?'':' badge-gray')+'">'+esc(m.role)+'</span></div>';
       });
       h += '</div></div>';
+
+      // --- Expenses ---
+      h += '<div class="section"><h2>Expenses</h2>';
+      h += '<form id="add-expense-form" data-group-id="'+g.id+'" style="margin-bottom:0.75rem">'
+        + '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">'
+        + '<input type="text" name="expense-name" required placeholder="What was it for?" style="flex:2" data-1p-ignore autocomplete="off">'
+        + '<input type="number" name="expense-amount" required placeholder="0.00" step="0.01" min="0.01" style="flex:1" data-1p-ignore autocomplete="off">'
+        + '</div>'
+        + '<button type="submit" class="btn btn-sm">Add expense</button></form>';
+
+      var expenses = detail.expenses || [];
+      if(expenses.length){
+        expenses.forEach(function(ex){
+          h += '<div class="card" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem">'
+            + '<div class="expense-icon">'+catIcon(ex.category)+'</div>'
+            + '<div style="flex:1;min-width:0">'
+            + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
+            + '<span class="expense-name">'+esc(ex.name)+'</span>'
+            + '<span class="expense-amount">$'+parseFloat(ex.amount).toFixed(2)+'</span></div>'
+            + '<div style="font-size:0.8125rem;color:var(--gray-500)">'+esc(ex.paid_by_name)+'</div></div>';
+          if(ex.paid_by === D.user.id || isOwner){
+            h += '<button class="expense-delete" data-action="delete-expense" data-id="'+ex.id+'" data-group-id="'+g.id+'" title="Delete">'
+              + '<i class="fa-solid fa-xmark"></i></button>';
+          }
+          h += '</div>';
+        });
+      } else {
+        h += '<div class="empty">No expenses yet</div>';
+      }
+      h += '</div>';
 
       if(invites.length || isOwner){
         h += '<div class="section"><h2>Pending invites</h2><div class="card">';
@@ -479,6 +573,25 @@ export function shell(data) {
         return;
       }
 
+      // Delete expense
+      var delExpBtn = e.target.closest('[data-action="delete-expense"]');
+      if(delExpBtn){
+        e.preventDefault();
+        if(!confirm('Delete this expense?'))return;
+        var expId = delExpBtn.getAttribute('data-id');
+        var expGid = delExpBtn.getAttribute('data-group-id');
+        delExpBtn.disabled = true;
+        fetch('/api/groups/'+expGid+'/expenses/'+expId,{method:'DELETE'})
+          .then(function(r){return r.json()})
+          .then(function(d){
+            if(d.ok){
+              delete groupCache[expGid];
+              route('/groups/'+expGid);
+            }
+          }).catch(function(){delExpBtn.disabled=false});
+        return;
+      }
+
       // Decline invite
       var declineBtn = e.target.closest('[data-action="decline-invite"]');
       if(declineBtn){
@@ -497,9 +610,33 @@ export function shell(data) {
       }
     });
 
-    // Create group form
+    // Form submissions
     document.addEventListener('submit', function(e){
       var form = e.target;
+
+      if(form.id === 'add-expense-form'){
+        e.preventDefault();
+        var gid3 = form.getAttribute('data-group-id');
+        var expName = form['expense-name'].value.trim();
+        var expAmount = form['expense-amount'].value;
+        if(!expName||!expAmount) return;
+        var cat = detectCat(expName);
+        var btn3 = form.querySelector('button[type="submit"]');
+        btn3.disabled = true;
+        fetch('/api/groups/'+gid3+'/expenses',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({name:expName,amount:expAmount,category:cat})
+        }).then(function(r){return r.json()})
+          .then(function(d){
+            btn3.disabled = false;
+            if(d.ok){
+              delete groupCache[gid3];
+              route('/groups/'+gid3, {alert:{text:'Expense added!',type:'success'}});
+            }
+          }).catch(function(){btn3.disabled=false});
+        return;
+      }
 
       if(form.id === 'create-group-form'){
         e.preventDefault();

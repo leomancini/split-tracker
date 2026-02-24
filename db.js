@@ -42,6 +42,16 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now')),
     UNIQUE(group_id, email)
   );
+
+  CREATE TABLE IF NOT EXISTS expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL REFERENCES groups(id),
+    paid_by INTEGER NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL,
+    amount REAL NOT NULL,
+    category TEXT NOT NULL DEFAULT 'general',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
 `);
 
 // --- User helpers ---
@@ -171,6 +181,33 @@ export function acceptInvite(inviteId, userId) {
 
 export function declineInvite(inviteId) {
   db.prepare("UPDATE group_invites SET status = 'declined' WHERE id = ?").run(inviteId);
+}
+
+// --- Expense helpers ---
+
+export function getGroupExpenses(groupId) {
+  return db.prepare(`
+    SELECT e.*, u.name as paid_by_name, u.avatar_url as paid_by_avatar
+    FROM expenses e
+    JOIN users u ON u.id = e.paid_by
+    WHERE e.group_id = ?
+    ORDER BY e.created_at DESC
+  `).all(groupId);
+}
+
+export function createExpense(groupId, paidBy, name, amount, category) {
+  const result = db.prepare(
+    'INSERT INTO expenses (group_id, paid_by, name, amount, category) VALUES (?, ?, ?, ?, ?)'
+  ).run(groupId, paidBy, name, amount, category);
+  return result.lastInsertRowid;
+}
+
+export function getExpenseById(id) {
+  return db.prepare('SELECT * FROM expenses WHERE id = ?').get(id);
+}
+
+export function deleteExpense(id) {
+  db.prepare('DELETE FROM expenses WHERE id = ?').run(id);
 }
 
 export default db;

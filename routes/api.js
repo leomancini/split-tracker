@@ -11,6 +11,10 @@ import {
   getInviteById,
   acceptInvite,
   declineInvite,
+  getGroupExpenses,
+  createExpense,
+  getExpenseById,
+  deleteExpense,
 } from '../db.js';
 
 export function registerApiRoutes(app, ensureAuth) {
@@ -36,8 +40,9 @@ export function registerApiRoutes(app, ensureAuth) {
     const members = getGroupMembers(groupId);
     const invites = getGroupInvites(groupId);
     const isOwner = isGroupOwner(groupId, req.user.id);
+    const expenses = getGroupExpenses(groupId);
 
-    res.json({ group, members, invites, isOwner });
+    res.json({ group, members, invites, isOwner, expenses });
   });
 
   // Create group
@@ -72,6 +77,40 @@ export function registerApiRoutes(app, ensureAuth) {
     const result = createInvite(groupId, email, req.user.id);
     if (result.error) return res.status(409).json({ error: result.error });
 
+    res.json({ ok: true });
+  });
+
+  // Add expense
+  app.post('/api/groups/:id/expenses', ensureAuth, (req, res) => {
+    const groupId = parseInt(req.params.id);
+    if (!isGroupMember(groupId, req.user.id)) return res.status(403).json({ error: 'Not a member' });
+
+    const name = req.body.name?.trim();
+    const amount = parseFloat(req.body.amount);
+    const category = req.body.category?.trim() || 'general';
+
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+    if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: 'Valid amount is required' });
+
+    const id = createExpense(groupId, req.user.id, name, amount, category);
+    res.json({ ok: true, id });
+  });
+
+  // Delete expense
+  app.delete('/api/groups/:gid/expenses/:eid', ensureAuth, (req, res) => {
+    const groupId = parseInt(req.params.gid);
+    const expenseId = parseInt(req.params.eid);
+
+    if (!isGroupMember(groupId, req.user.id)) return res.status(403).json({ error: 'Not a member' });
+
+    const expense = getExpenseById(expenseId);
+    if (!expense || expense.group_id !== groupId) return res.status(404).json({ error: 'Expense not found' });
+
+    if (expense.paid_by !== req.user.id && !isGroupOwner(groupId, req.user.id)) {
+      return res.status(403).json({ error: 'Only the payer or group owner can delete' });
+    }
+
+    deleteExpense(expenseId);
     res.json({ ok: true });
   });
 
