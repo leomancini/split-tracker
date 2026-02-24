@@ -4,7 +4,17 @@ export function loginPage() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Login - Split Tracker</title>
+  <title>Split</title>
+  <meta name="description" content="Split costs with friends">
+  <meta property="og:title" content="Split">
+  <meta property="og:description" content="Split costs with friends">
+  <meta property="og:image" content="https://split.noshado.ws/og-image.png">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://split.noshado.ws">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Split">
+  <meta name="twitter:description" content="Split costs with friends">
+  <meta name="twitter:image" content="https://split.noshado.ws/og-image.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#22c55e">
@@ -60,8 +70,9 @@ export function loginPage() {
 </head>
 <body>
   <div style="text-align: center; padding: 3rem 1rem;">
-    <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Split Tracker</h1>
-    <p style="color: #6b7280; margin-bottom: 2rem;">Track shared expenses with friends</p>
+    <div style="width:72px;height:72px;border-radius:20px;background:#22c55e;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1.5rem"><span style="font-size:2.5rem;font-weight:800;color:white">%</span></div>
+    <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Split</h1>
+    <p style="color: #6b7280; margin-bottom: 2rem;">Split costs with friends</p>
     <a href="/auth/google" class="btn">Sign in with Google</a>
   </div>
   <script>document.addEventListener('touchstart',function(){},false);</script>

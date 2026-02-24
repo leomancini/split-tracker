@@ -17,13 +17,13 @@ export function shell(data) {
   <meta name="description" content="Split costs with friends">
   <meta property="og:title" content="Split">
   <meta property="og:description" content="Split costs with friends">
-  <meta property="og:image" content="https://split.noshado.ws/og-image.svg">
+  <meta property="og:image" content="https://split.noshado.ws/og-image.png">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://split.noshado.ws">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Split">
   <meta name="twitter:description" content="Split costs with friends">
-  <meta name="twitter:image" content="https://split.noshado.ws/og-image.svg">
+  <meta name="twitter:image" content="https://split.noshado.ws/og-image.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#ffffff">
@@ -197,6 +197,9 @@ export function shell(data) {
 
     @media (hover: hover) { .card-link:hover { border-color: var(--green-500); } }
     .card-link:active { transform: scale(0.95); transition: transform 150ms; }
+
+    .expense-row { transition: background 150ms; border-radius: var(--radius); margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
+    .expense-row:active { background: var(--gray-50); }
 
     label {
       display: block;
@@ -636,11 +639,10 @@ export function shell(data) {
       if(expenses.length){
         expenses.forEach(function(ex, idx){
           var isLast = idx === expenses.length - 1;
-          h += '<div data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0;'+(isLast?'':'border-bottom:2px solid var(--gray-100);')+'cursor:pointer">'
+          h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;'+(isLast?'':'border-bottom:2px solid var(--gray-100);')+'cursor:pointer">'
             + '<div class="expense-icon">'+catIcon(ex.category)+'</div>'
             + '<span class="expense-name" style="flex:1;min-width:0">'+esc(ex.name)+'</span>'
             + '<span class="expense-amount">'+fmtAmt(ex.amount)+'</span>'
-            + '<i class="fa-solid fa-chevron-right" style="color:var(--gray-400);font-size:0.75rem"></i>'
             + '</div>';
         });
       } else {
