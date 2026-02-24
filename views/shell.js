@@ -344,6 +344,16 @@ export function shell(data) {
       }
     }
 
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--green-500);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin: 2rem auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
   </style>
 </head>
 <body>
@@ -630,7 +640,7 @@ export function shell(data) {
         } else {
           var gInfo = D.groups.find(function(g){return g.id==gid});
           document.title = 'Members - ' + (gInfo?gInfo.name:'Group');
-          app.innerHTML = '<span class="back-link" data-link="/groups/'+gid+'">&larr; Back</span><div class="empty" style="padding:3rem 1rem">Loading...</div>';
+          app.innerHTML = '<span class="back-link" data-link="/groups/'+gid+'">&larr; Back</span><div class="spinner"></div>';
         }
         try{
           var r = await fetch('/api/groups/'+gid);
@@ -652,7 +662,7 @@ export function shell(data) {
         } else {
           var gInfo = D.groups.find(function(g){return g.id==gid});
           document.title = (gInfo?gInfo.name:'Group') + ' - Split Tracker';
-          app.innerHTML = '<span class="back-link" data-link="/">&larr; Back to dashboard</span><h1>'+(gInfo?esc(gInfo.name):'')+'</h1><div class="empty" style="padding:3rem 1rem">Loading...</div>';
+          app.innerHTML = '<span class="back-link" data-link="/">&larr; Back to dashboard</span><h1>'+(gInfo?esc(gInfo.name):'')+'</h1><div class="spinner"></div>';
         }
         try{
           var r = await fetch('/api/groups/'+gid);
