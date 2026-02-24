@@ -106,7 +106,7 @@ export function shell(data) {
       padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
     }
 
-    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; }
     h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; }
 
     .btn {
@@ -311,15 +311,15 @@ export function shell(data) {
     .balance-row + .balance-row { border-top: 2px solid var(--gray-100); }
 
     .expense-icon {
-      width: 36px;
-      height: 36px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       background: var(--green-50);
       color: var(--green-600);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.875rem;
+      font-size: 1rem;
       flex-shrink: 0;
     }
 
@@ -332,7 +332,7 @@ export function shell(data) {
     }
 
     .expense-amount {
-      font-size: 0.875rem;
+      font-size: 1.125rem;
       font-weight: 600;
       color: var(--gray-900);
       white-space: nowrap;
@@ -358,7 +358,7 @@ export function shell(data) {
     }
 
     .spinner {
-      width: 28px; height: 28px;
+      width: 36px; height: 36px;
       border: 3px solid var(--gray-200);
       border-top-color: var(--green-500);
       border-radius: 50%;
