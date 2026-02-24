@@ -558,10 +558,10 @@ export function shell(data) {
     function groupCreateView(){
       return '<h1>Create a group</h1>'
         + '<form id="create-group-form">'
-        + '<div class="form-group"><label for="grp-title">Group name</label>'
-        + '<input type="text" id="grp-title" name="grp-title" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="do-not-autofill"></div>'
-        + '<div class="form-group"><label for="grp-inv">Invite members (optional)</label>'
-        + '<textarea id="grp-inv" name="grp-inv" placeholder="Enter email addresses, one per line" data-1p-ignore autocomplete="do-not-autofill"></textarea>'
+        + '<div class="form-group"><label for="grp-title">Title</label>'
+        + '<input type="text" id="grp-title" name="grp-title" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="off" autocorrect="off" spellcheck="false"></div>'
+        + '<div class="form-group"><label for="grp-inv">Invite (optional)</label>'
+        + '<textarea id="grp-inv" name="grp-inv" placeholder="Enter email addresses, one per line" data-1p-ignore autocomplete="off" autocorrect="off" spellcheck="false"></textarea>'
         + '<div class="form-hint">Enter the Google account emails of people you want to invite.</div></div>'
         + '<button type="submit" class="btn">Create group</button></form>';
     }
