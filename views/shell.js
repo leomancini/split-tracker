@@ -203,6 +203,7 @@ export function shell(data) {
       padding: 0.625rem 0.75rem;
       font-size: 16px;
       font-family: inherit;
+      background: white;
       color: var(--gray-900);
       -webkit-appearance: none;
     }
