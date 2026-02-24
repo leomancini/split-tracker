@@ -201,9 +201,9 @@ export function shell(data) {
     .expense-row { transition: background 150ms; border-radius: var(--radius); margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
     .expense-row:active { background: var(--gray-50); }
 
-    .expense-sep { height: 2px; border-radius: 999px; background: var(--gray-100); transition: visibility 0s; }
-    .expense-row:active + .expense-sep { visibility: hidden; }
-    .expense-sep:has(+ .expense-row:active) { visibility: hidden; }
+    .expense-sep { height: 2px; border-radius: 999px; background: var(--gray-100); transition: opacity 150ms; }
+    .expense-row:active + .expense-sep { opacity: 0; }
+    .expense-sep:has(+ .expense-row:active) { opacity: 0; }
 
     label {
       display: block;
