@@ -87,6 +87,8 @@ export function shell(data) {
       color: var(--green-500);
       text-decoration: none;
       cursor: pointer;
+      padding: 0.75rem 1rem;
+      margin: -0.75rem -1rem;
     }
 
     nav .user-info {
