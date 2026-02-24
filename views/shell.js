@@ -434,6 +434,13 @@ export function shell(data) {
     }
   });
 
+  // Prevent iOS viewport shift when keyboard opens
+  document.addEventListener('focusin', function(e){
+    if(e.target.matches('input,textarea')){
+      setTimeout(function(){ window.scrollTo(0,0); }, 50);
+    }
+  });
+
   (function(){
     // --- Data store ---
     var D = ${JSON.stringify(data)};
