@@ -550,11 +550,10 @@ export function shell(data) {
       h += '<div class="section">';
       if(D.groups.length){
         D.groups.forEach(function(g){
-          h += '<div class="card card-link" data-link="/groups/'+g.id+'">'
-            + '<div style="display:flex;justify-content:space-between;align-items:center">'
+          h += '<div class="card card-link" style="margin-bottom:1rem" data-link="/groups/'+g.id+'">'
             + '<div style="font-weight:600;font-size:1.125rem">'+esc(g.name)+'</div>'
-            + avatarStack(g.member_avatars)
-            + '</div></div>';
+            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.5rem">'+avatarStack(g.member_avatars)+'</div>' : '')
+            + '</div>';
         });
       } else {
         h += '<div class="empty">No groups yet. Create one to get started!</div>';
@@ -603,7 +602,7 @@ export function shell(data) {
         });
         h += '</div>';
       } else if(detail.expenses && detail.expenses.length){
-        h += '<div class="card" style="margin-bottom:1.25rem;text-align:center;font-size:0.875rem;color:var(--green-600);font-weight:500;padding:0.75rem"><i class="fa-solid fa-check" style="margin-right:0.375rem"></i>All settled up</div>';
+        h += '<div style="text-align:center;margin-bottom:1.25rem"><span style="display:inline-flex;align-items:center;font-size:0.875rem;color:var(--green-700);font-weight:500;padding:0.5rem 1rem;background:var(--green-100);border-radius:999px"><i class="fa-solid fa-check" style="margin-right:0.375rem"></i>All settled up</span></div>';
       }
 
       var expenses = detail.expenses || [];
