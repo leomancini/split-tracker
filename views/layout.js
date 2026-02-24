@@ -103,8 +103,8 @@ export function layout(title, content, user) {
       border: none;
       border-radius: 999px;
       padding: 0.875rem 1.5rem;
-      font-size: 1.0625rem;
-      font-weight: 500;
+      font-size: 1.125rem;
+      font-weight: 600;
       font-family: inherit;
       cursor: pointer;
       text-decoration: none;
@@ -113,6 +113,7 @@ export function layout(title, content, user) {
 
     .btn:hover { background: var(--green-600); }
     .btn:active { transform: scale(0.97); }
+    .btn { -webkit-touch-callout: none; user-select: none; }
 
     .card-link:active { transform: scale(0.98); }
 
