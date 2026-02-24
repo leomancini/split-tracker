@@ -692,13 +692,16 @@ export function shell(data) {
     var routeVer = 0;
 
     var brandEl = document.querySelector('nav .brand');
+    var avatarEl = document.querySelector('nav .user-info');
     function updateNav(path){
       if(path === '/' || path === ''){
         brandEl.innerHTML = 'Split';
         brandEl.setAttribute('data-link','/');
         brandEl.style.fontSize = '1.35rem';
         brandEl.style.color = '';
+        avatarEl.style.display = '';
       } else {
+        avatarEl.style.display = 'none';
         brandEl.innerHTML = '&larr;';
         brandEl.style.fontSize = '1.5rem';
         brandEl.style.color = 'var(--gray-500)';
