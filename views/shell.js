@@ -325,9 +325,24 @@ export function shell(data) {
       color: #dc2626;
       background: #fef2f2;
     }
+
+    #splash {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9999;
+      background: #22c55e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.3s;
+    }
+    #splash.hide { opacity: 0; pointer-events: none; }
   </style>
 </head>
 <body>
+  <div id="splash">
+    <span style="font-family:Inter,system-ui,sans-serif;font-weight:700;font-size:5rem;color:white">%</span>
+  </div>
   <nav>
     <span class="brand" data-link="/">Split</span>
     <span class="user-info" data-link="/profile">
@@ -782,6 +797,10 @@ export function shell(data) {
 
     // Initial render
     route(location.pathname);
+
+    // Dismiss splash
+    var splash = document.getElementById('splash');
+    if(splash){ splash.classList.add('hide'); setTimeout(function(){ splash.remove(); }, 400); }
   })();
 
   // Register service worker
