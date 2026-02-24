@@ -314,7 +314,7 @@ export function shell(data) {
 
     .balance-row + .balance-row { border-top: 2px solid var(--gray-100); }
 
-    .avatar-stack { display: flex; gap: 0.375rem; }
+    .avatar-stack { display: flex; gap: 0.5rem; }
     .avatar-stack img, .avatar-stack .avatar-placeholder {
       width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
     }
