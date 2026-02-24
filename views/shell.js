@@ -552,8 +552,10 @@ export function shell(data) {
     var app = document.getElementById('app');
     var groupCache = {};
     var lastNav = 0;
+    var routeVer = 0;
 
     async function route(path, opts){
+      var myVer = ++routeVer;
       opts = opts || {};
       var m;
 
@@ -580,12 +582,14 @@ export function shell(data) {
         }
         try{
           var r = await fetch('/api/groups/'+gid);
+          if(myVer !== routeVer) return;
           if(!r.ok) { nav('/'); return; }
           var detail = await r.json();
+          if(myVer !== routeVer) return;
           groupCache[gid] = detail;
           document.title = detail.group.name + ' - Split Tracker';
           app.innerHTML = groupDetailView(detail, opts.alert);
-        }catch(e){ if(!groupCache[gid]) nav('/'); }
+        }catch(e){ if(myVer === routeVer && !groupCache[gid]) nav('/'); }
       }
       else if(path === '/profile'){
         document.title = 'Profile - Split Tracker';
