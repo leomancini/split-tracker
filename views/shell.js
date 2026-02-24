@@ -558,10 +558,10 @@ export function shell(data) {
     function groupCreateView(){
       return '<h1>Create a group</h1>'
         + '<form id="create-group-form">'
-        + '<div class="form-group"><label for="name">Group name</label>'
-        + '<input type="text" id="name" name="name" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="do-not-autofill"></div>'
-        + '<div class="form-group"><label for="emails">Invite members (optional)</label>'
-        + '<textarea id="emails" name="emails" placeholder="Enter email addresses, one per line" data-1p-ignore autocomplete="do-not-autofill"></textarea>'
+        + '<div class="form-group"><label for="grp-title">Group name</label>'
+        + '<input type="text" id="grp-title" name="grp-title" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="do-not-autofill"></div>'
+        + '<div class="form-group"><label for="grp-inv">Invite members (optional)</label>'
+        + '<textarea id="grp-inv" name="grp-inv" placeholder="Enter email addresses, one per line" data-1p-ignore autocomplete="do-not-autofill"></textarea>'
         + '<div class="form-hint">Enter the Google account emails of people you want to invite.</div></div>'
         + '<button type="submit" class="btn">Create group</button></form>';
     }
@@ -756,7 +756,7 @@ export function shell(data) {
       else if(path === '/groups/new'){
         document.title = 'Create Group - Split Tracker';
         app.innerHTML = groupCreateView();
-        var nameInput = document.getElementById('name');
+        var nameInput = document.getElementById('grp-title');
         if(nameInput) nameInput.focus();
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/add-expense$/))){
@@ -985,15 +985,15 @@ export function shell(data) {
 
       if(form.id === 'create-group-form'){
         e.preventDefault();
-        var name = form.name.value.trim();
+        var name = form['grp-title'].value.trim();
         if(!name) return;
-        var emails = form.emails.value.trim();
+        var emails = form['grp-inv'].value.trim();
         var btn = form.querySelector('button[type="submit"]');
         var btnText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
-        form.name.disabled = true;
-        form.emails.disabled = true;
+        form['grp-title'].disabled = true;
+        form['grp-inv'].disabled = true;
         fetch('/api/groups',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
@@ -1005,8 +1005,8 @@ export function shell(data) {
                 nav('/groups/'+d.groupId, {alert:{text:'Group created!',type:'success'}});
               });
             }
-            btn.disabled=false;btn.innerHTML=btnText;form.name.disabled=false;form.emails.disabled=false;
-          }).catch(function(){btn.disabled=false;btn.innerHTML=btnText;form.name.disabled=false;form.emails.disabled=false;});
+            btn.disabled=false;btn.innerHTML=btnText;form['grp-title'].disabled=false;form['grp-inv'].disabled=false;
+          }).catch(function(){btn.disabled=false;btn.innerHTML=btnText;form['grp-title'].disabled=false;form['grp-inv'].disabled=false;});
         return;
       }
 
