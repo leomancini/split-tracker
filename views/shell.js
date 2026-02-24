@@ -16,7 +16,7 @@ export function shell(data) {
   <title>Split Tracker</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="theme-color" content="#22c55e">
+  <meta name="theme-color" content="#ffffff">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icon.svg">
   <link rel="apple-touch-startup-image" media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" href="/splash-640x1136.png">
@@ -67,7 +67,7 @@ export function shell(data) {
 
     body {
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #22c55e;
+      background: white;
       color: var(--gray-900);
       line-height: 1.5;
       padding-top: env(safe-area-inset-top);
@@ -889,7 +889,6 @@ export function shell(data) {
     var splash = document.getElementById('splash');
     if(splash){
       document.fonts.ready.then(function(){
-        document.body.style.background = 'white';
         document.querySelector('nav').style.visibility = 'visible';
         app.style.visibility = 'visible';
         splash.classList.add('hide');
