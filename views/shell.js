@@ -393,7 +393,7 @@ export function shell(data) {
 
     .spinner {
       width: 48px; height: 48px;
-      border: 3px solid var(--gray-200);
+      border: 4px solid var(--gray-200);
       border-top-color: var(--green-500);
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
@@ -950,7 +950,7 @@ export function shell(data) {
         var expGid = delItemBtn.getAttribute('data-group-id');
         var btnText = delItemBtn.innerHTML;
         delItemBtn.disabled = true;
-        delItemBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(220,38,38,0.3);border-top-color:#dc2626"></div>';
+        delItemBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:3px;margin:0;border-color:rgba(220,38,38,0.3);border-top-color:#dc2626"></div>';
         fetch('/api/groups/'+expGid+'/expenses/'+expId,{method:'DELETE'})
           .then(function(r){return r.json()})
           .then(function(d){
@@ -997,7 +997,7 @@ export function shell(data) {
         var btn = e.target.querySelector('button[type="submit"]');
         var btnText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
+        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:3px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
         descEl.disabled = true;
         costEl.disabled = true;
         fetch('/api/groups/'+gid3+'/expenses',{
@@ -1029,7 +1029,7 @@ export function shell(data) {
         var btn = e.target.querySelector('button[type="submit"]');
         var btnText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
+        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:3px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
         titleEl.disabled = true;
         invEl.disabled = true;
         fetch('/api/groups',{
@@ -1060,7 +1060,7 @@ export function shell(data) {
         var btn = e.target.querySelector('button[type="submit"]');
         var btnText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
+        btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:3px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
         emailEl.disabled = true;
         fetch('/api/groups/'+gid2+'/invite',{
           method:'POST',
