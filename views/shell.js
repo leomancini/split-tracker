@@ -348,23 +348,9 @@ export function shell(data) {
       }
     }
 
-    #splash {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      z-index: 9999;
-      background: #22c55e;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.3s;
-    }
-    #splash.hide { opacity: 0; pointer-events: none; }
   </style>
 </head>
 <body>
-  <div id="splash">
-    <span style="font-family:Inter,system-ui,sans-serif;font-weight:700;font-size:5rem;color:white">%</span>
-  </div>
   <nav style="visibility:hidden">
     <span class="brand" data-link="/">Split</span>
     <span class="user-info" data-link="/profile">
@@ -885,16 +871,11 @@ export function shell(data) {
     // Initial render
     route(location.pathname);
 
-    // Dismiss splash after fonts are ready (prevents staggered text rendering)
-    var splash = document.getElementById('splash');
-    if(splash){
-      document.fonts.ready.then(function(){
-        document.querySelector('nav').style.visibility = 'visible';
-        app.style.visibility = 'visible';
-        splash.classList.add('hide');
-        setTimeout(function(){ splash.remove(); }, 400);
-      });
-    }
+    // Show app after fonts are ready (prevents staggered text rendering)
+    document.fonts.ready.then(function(){
+      document.querySelector('nav').style.visibility = 'visible';
+      app.style.visibility = 'visible';
+    });
   })();
 
   // Register service worker
