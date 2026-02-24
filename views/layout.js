@@ -107,13 +107,16 @@ export function layout(title, content, user) {
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      text-decoration: none;
+      text-decoration: none !important;
       transition: background 150ms, transform 100ms;
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
     }
 
     .btn:hover { background: var(--green-600); }
     .btn:active { transform: scale(0.97); }
-    .btn { -webkit-touch-callout: none; user-select: none; }
 
     .card-link:active { transform: scale(0.98); }
 
@@ -155,6 +158,7 @@ export function layout(title, content, user) {
       text-decoration: none;
       color: inherit;
       transition: transform 100ms;
+      -webkit-touch-callout: none;
     }
 
     .card-link:hover {
@@ -326,7 +330,67 @@ export function layout(title, content, user) {
   <div class="container">
     ${content}
   </div>
-  <script>document.addEventListener('touchstart',function(){},false);</script>
+  <script>
+  document.addEventListener('touchstart',function(){},false);
+  (function(){
+    function ok(url){
+      try{ var u=new URL(url,location.origin); }catch(e){return false}
+      if(u.origin!==location.origin)return false;
+      if(u.pathname.startsWith('/auth/'))return false;
+      if(u.pathname==='/logout')return false;
+      if(u.pathname==='/login')return false;
+      return true;
+    }
+    async function go(url,push){
+      try{
+        var r=await fetch(url);
+        var h=await r.text();
+        var d=new DOMParser().parseFromString(h,'text/html');
+        var c=d.querySelector('.container');
+        var t=d.querySelector('title');
+        if(c){
+          document.querySelector('.container').innerHTML=c.innerHTML;
+          if(t)document.title=t.textContent;
+          if(push!==false)history.pushState({},'',url);
+          window.scrollTo(0,0);
+        }else{location.href=url}
+      }catch(e){location.href=url}
+    }
+    document.addEventListener('click',function(e){
+      var a=e.target.closest('a[href]');
+      if(!a)return;
+      if(!ok(a.href))return;
+      e.preventDefault();
+      go(a.href);
+    });
+    document.addEventListener('submit',async function(e){
+      var f=e.target;
+      if(!f||f.tagName!=='FORM')return;
+      var action=f.action||location.href;
+      if(!ok(action))return;
+      e.preventDefault();
+      try{
+        var r=await fetch(action,{
+          method:f.method||'GET',
+          headers:{'Content-Type':'application/x-www-form-urlencoded'},
+          body:new URLSearchParams(new FormData(f)).toString(),
+          redirect:'follow'
+        });
+        var h=await r.text();
+        var d=new DOMParser().parseFromString(h,'text/html');
+        var c=d.querySelector('.container');
+        var t=d.querySelector('title');
+        if(c){
+          document.querySelector('.container').innerHTML=c.innerHTML;
+          if(t)document.title=t.textContent;
+          history.pushState({},'',r.url);
+          window.scrollTo(0,0);
+        }else{location.href=r.url}
+      }catch(err){f.submit()}
+    });
+    window.addEventListener('popstate',function(){go(location.href,false)});
+  })();
+  </script>
 </body>
 </html>`;
 }
