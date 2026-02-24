@@ -578,8 +578,9 @@ export function shell(data) {
 
       var expenses = detail.expenses || [];
       if(expenses.length){
-        expenses.forEach(function(ex){
-          h += '<div data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0;border-bottom:2px solid var(--gray-100);cursor:pointer">'
+        expenses.forEach(function(ex, idx){
+          var isLast = idx === expenses.length - 1;
+          h += '<div data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0;'+(isLast?'':'border-bottom:2px solid var(--gray-100);')+'cursor:pointer">'
             + '<div class="expense-icon">'+catIcon(ex.category)+'</div>'
             + '<div style="flex:1;min-width:0">'
             + '<span class="expense-name">'+esc(ex.name)+'</span>'
@@ -694,9 +695,11 @@ export function shell(data) {
         brandEl.innerHTML = 'Split';
         brandEl.setAttribute('data-link','/');
         brandEl.style.fontSize = '1.35rem';
+        brandEl.style.color = '';
       } else {
         brandEl.innerHTML = '&larr;';
         brandEl.style.fontSize = '1.5rem';
+        brandEl.style.color = 'var(--gray-500)';
         // Set back target based on route depth
         if(path.match(/^\\/groups\\/\\d+\\/(items|add-expense|members)/)){
           var gid = path.match(/^\\/groups\\/(\\d+)/)[1];
