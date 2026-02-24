@@ -128,7 +128,7 @@ export function shell(data) {
     }
 
     @media (hover: hover) { .btn:hover { background: var(--green-600); } }
-    .btn:active { transform: scale(0.93); transition: transform 60ms; }
+    .btn:active { transform: scale(0.93); transition: transform 150ms; }
 
     .btn-sm { padding: 0.625rem 1.25rem; font-size: 1rem; }
 
@@ -166,7 +166,7 @@ export function shell(data) {
     }
 
     @media (hover: hover) { .card-link:hover { border-color: var(--green-500); } }
-    .card-link:active { transform: scale(0.95); transition: transform 60ms; }
+    .card-link:active { transform: scale(0.95); transition: transform 150ms; }
 
     label {
       display: block;
