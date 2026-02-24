@@ -69,7 +69,7 @@ export function shell(data) {
       padding-top: env(safe-area-inset-top);
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
-      padding-bottom: env(safe-area-inset-bottom);
+      padding-bottom: 0;
     }
 
     nav {
@@ -103,7 +103,7 @@ export function shell(data) {
     .container {
       max-width: 600px;
       margin: 0 auto;
-      padding: 1.5rem 1rem;
+      padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
     }
 
     h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; }
