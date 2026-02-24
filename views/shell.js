@@ -573,8 +573,9 @@ export function shell(data) {
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
       h += '<h1 style="margin-bottom:0.5rem">'+esc(g.name)+'</h1>';
-      h += '<div data-link="/groups/'+g.id+'/members" style="margin-bottom:1rem;cursor:pointer">'
+      h += '<div data-link="/groups/'+g.id+'/members" style="margin-bottom:1rem;cursor:pointer;display:flex;align-items:center">'
         + avatarStack(members.map(function(m){return m.avatar_url}))
+        + '<div style="width:28px;height:28px;border-radius:50%;border:2px solid var(--gray-200);margin-left:-8px;display:flex;align-items:center;justify-content:center;font-size:0.875rem;color:var(--gray-400);background:white;flex-shrink:0">+</div>'
         + '</div>';
 
       // --- Balances ---
