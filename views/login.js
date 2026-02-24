@@ -10,6 +10,7 @@ export function loginPage() {
   <meta name="theme-color" content="#22c55e">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icon.svg">
+  <link rel="apple-touch-startup-image" href="/splash.png">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
