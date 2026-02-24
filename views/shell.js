@@ -136,6 +136,19 @@ export function shell(data) {
 
     .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; }
 
+    .sticky-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0 1.5rem calc(env(safe-area-inset-bottom, 0px) + 1rem);
+      background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 35%);
+      padding-top: 2.5rem;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .sticky-bottom .btn { pointer-events: auto; width: 100%; }
+
     .btn-outline {
       background: white;
       color: var(--green-600);
@@ -514,8 +527,6 @@ export function shell(data) {
         h += '<div class="card" style="margin-bottom:1.25rem;text-align:center;font-size:0.875rem;color:var(--green-600);font-weight:500;padding:0.75rem"><i class="fa-solid fa-check" style="margin-right:0.375rem"></i>All settled up</div>';
       }
 
-      h += '<button class="btn btn-sm" data-link="/groups/'+g.id+'/add-expense" style="margin-bottom:0.75rem">Add item</button>';
-
       var expenses = detail.expenses || [];
       if(expenses.length){
         expenses.forEach(function(ex){
@@ -535,6 +546,12 @@ export function shell(data) {
       } else {
         h += '<div class="empty">No items yet</div>';
       }
+
+      // Bottom padding so list isn't hidden behind sticky button
+      h += '<div style="height:5rem"></div>';
+
+      // Sticky add item button
+      h += '<div class="sticky-bottom"><button class="btn" data-link="/groups/'+g.id+'/add-expense">Add item</button></div>';
 
       return h;
     }
