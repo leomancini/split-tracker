@@ -491,12 +491,14 @@ export function shell(data) {
     }
 
     function groupDetailView(detail, alert){
-      var g = detail.group, members = detail.members, invites = detail.invites, isOwner = detail.isOwner;
+      var g = detail.group, members = detail.members, isOwner = detail.isOwner;
       var h = '<span class="back-link" data-link="/">&larr; Back to dashboard</span>';
 
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
-      h += '<h1>'+esc(g.name)+'</h1>';
+      h += '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem">'
+        + '<h1 style="margin-bottom:0">'+esc(g.name)+'</h1>'
+        + '<span class="back-link" style="margin-bottom:0" data-link="/groups/'+g.id+'/members">'+members.length+' member'+(members.length!==1?'s':'')+'&nbsp;&rarr;</span></div>';
 
       // --- Balances ---
       var settlements = calcSettlements(members, detail.expenses);
@@ -518,29 +520,12 @@ export function shell(data) {
         h += '<div class="card" style="margin-bottom:1.25rem;text-align:center;font-size:0.875rem;color:var(--green-600);font-weight:500;padding:0.75rem"><i class="fa-solid fa-check" style="margin-right:0.375rem"></i>All settled up</div>';
       }
 
-      h += '<div class="section"><h2>Members</h2><div class="card">';
-      members.forEach(function(m){
-        h += '<div class="member-row">'
-          + (m.avatar_url ? '<img src="'+esc(m.avatar_url)+'" class="member-avatar" alt="">' : '<div class="member-avatar"></div>')
-          + '<div class="member-info"><div class="member-name">'+esc(m.name)+'</div>'
-          + '<div class="member-email">'+esc(m.email)+'</div></div>'
-          + '<span class="badge'+(m.role==='owner'?'':' badge-gray')+'">'+esc(m.role)+'</span></div>';
-      });
-      h += '</div></div>';
-
-      // --- Expenses ---
-      h += '<div class="section"><h2>Expenses</h2>';
-      h += '<form id="add-expense-form" data-group-id="'+g.id+'" style="margin-bottom:0.75rem">'
-        + '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">'
-        + '<input type="text" name="expense-name" required placeholder="What was it for?" style="flex:2" data-1p-ignore autocomplete="do-not-autofill">'
-        + '<input type="number" name="expense-amount" required placeholder="0.00" step="0.01" min="0.01" style="flex:1" data-1p-ignore autocomplete="do-not-autofill">'
-        + '</div>'
-        + '<button type="submit" class="btn btn-sm">Add expense</button></form>';
+      h += '<button class="btn btn-sm" data-link="/groups/'+g.id+'/add-expense" style="margin-bottom:0.75rem">Add expense</button>';
 
       var expenses = detail.expenses || [];
       if(expenses.length){
         expenses.forEach(function(ex){
-          h += '<div class="card" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem">'
+          h += '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0;border-bottom:2px solid var(--gray-100)">'
             + '<div class="expense-icon">'+catIcon(ex.category)+'</div>'
             + '<div style="flex:1;min-width:0">'
             + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
@@ -556,10 +541,42 @@ export function shell(data) {
       } else {
         h += '<div class="empty">No expenses yet</div>';
       }
+
+      return h;
+    }
+
+    function addExpenseView(gid){
+      var gInfo = groupCache[gid] ? groupCache[gid].group : D.groups.find(function(g){return g.id==gid});
+      var gName = gInfo ? gInfo.name : 'Group';
+      return '<span class="back-link" data-link="/groups/'+gid+'">&larr; Back to '+esc(gName)+'</span>'
+        + '<h1>Add expense</h1>'
+        + '<form id="add-expense-form" data-group-id="'+gid+'">'
+        + '<div class="form-group"><label for="expense-name">What was it for?</label>'
+        + '<input type="text" id="expense-name" name="expense-name" required placeholder="e.g. Pizza, Uber, Groceries" data-1p-ignore autocomplete="do-not-autofill"></div>'
+        + '<div class="form-group"><label for="expense-amount">Amount</label>'
+        + '<input type="number" id="expense-amount" name="expense-amount" required placeholder="0.00" step="0.01" min="0.01" data-1p-ignore autocomplete="do-not-autofill"></div>'
+        + '<button type="submit" class="btn">Add expense</button></form>';
+    }
+
+    function groupMembersView(detail, alert){
+      var g = detail.group, members = detail.members, invites = detail.invites, isOwner = detail.isOwner;
+      var h = '<span class="back-link" data-link="/groups/'+g.id+'">&larr; Back to '+esc(g.name)+'</span>';
+
+      if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
+
+      h += '<h1>Members</h1>';
+      h += '<div class="card">';
+      members.forEach(function(m){
+        h += '<div class="member-row">'
+          + (m.avatar_url ? '<img src="'+esc(m.avatar_url)+'" class="member-avatar" alt="">' : '<div class="member-avatar"></div>')
+          + '<div class="member-info"><div class="member-name">'+esc(m.name)+'</div>'
+          + '<div class="member-email">'+esc(m.email)+'</div></div>'
+          + '<span class="badge'+(m.role==='owner'?'':' badge-gray')+'">'+esc(m.role)+'</span></div>';
+      });
       h += '</div>';
 
       if(invites.length || isOwner){
-        h += '<div class="section"><h2>Pending invites</h2><div class="card">';
+        h += '<div class="section" style="margin-top:1.5rem"><h2>Pending invites</h2><div class="card">';
         if(invites.length){
           invites.forEach(function(i){
             h += '<div class="invite-row"><span style="font-size:0.875rem">'+esc(i.email)+'</span>'
@@ -572,7 +589,7 @@ export function shell(data) {
       }
 
       if(isOwner){
-        h += '<div class="section"><h2>Invite member</h2>'
+        h += '<div class="section" style="margin-top:1.5rem"><h2>Invite member</h2>'
           + '<form id="invite-form" data-group-id="'+g.id+'" class="inline-form">'
           + '<input type="email" name="email" required placeholder="Email address" data-1p-ignore autocomplete="do-not-autofill">'
           + '<button type="submit" class="btn btn-sm">Invite</button></form></div>';
@@ -613,6 +630,34 @@ export function shell(data) {
         app.innerHTML = groupCreateView();
         var nameInput = document.getElementById('name');
         if(nameInput) nameInput.focus();
+      }
+      else if((m = path.match(/^\\/groups\\/(\\d+)\\/add-expense$/))){
+        var gid = m[1];
+        document.title = 'Add Expense - Split Tracker';
+        app.innerHTML = addExpenseView(gid);
+        var expInput = document.getElementById('expense-name');
+        if(expInput) expInput.focus();
+      }
+      else if((m = path.match(/^\\/groups\\/(\\d+)\\/members$/))){
+        var gid = m[1];
+        if(groupCache[gid]){
+          document.title = 'Members - ' + groupCache[gid].group.name;
+          app.innerHTML = groupMembersView(groupCache[gid], opts.alert);
+        } else {
+          var gInfo = D.groups.find(function(g){return g.id==gid});
+          document.title = 'Members - ' + (gInfo?gInfo.name:'Group');
+          app.innerHTML = '<span class="back-link" data-link="/groups/'+gid+'">&larr; Back</span><div class="empty" style="padding:3rem 1rem">Loading...</div>';
+        }
+        try{
+          var r = await fetch('/api/groups/'+gid);
+          if(myVer !== routeVer) return;
+          if(!r.ok) { nav('/'); return; }
+          var detail = await r.json();
+          if(myVer !== routeVer) return;
+          groupCache[gid] = detail;
+          document.title = 'Members - ' + detail.group.name;
+          app.innerHTML = groupMembersView(detail, opts.alert);
+        }catch(e){ if(myVer === routeVer && !groupCache[gid]) nav('/groups/'+gid); }
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)$/))){
         var gid = m[1];
@@ -774,7 +819,7 @@ export function shell(data) {
             btn3.disabled = false;
             if(d.ok){
               delete groupCache[gid3];
-              route('/groups/'+gid3, {alert:{text:'Expense added!',type:'success'}});
+              nav('/groups/'+gid3, {alert:{text:'Expense added!',type:'success'}});
             }
           }).catch(function(){btn3.disabled=false});
         return;
@@ -819,11 +864,11 @@ export function shell(data) {
             btn2.disabled = false;
             if(d.ok){
               delete groupCache[gid2];
-              route('/groups/'+gid2, {alert:{text:'Invite sent!',type:'success'}});
+              route('/groups/'+gid2+'/members', {alert:{text:'Invite sent!',type:'success'}});
             } else if(d.error === 'Already a member'){
-              route('/groups/'+gid2, {alert:{text:'That person is already a member.',type:'error'}});
+              route('/groups/'+gid2+'/members', {alert:{text:'That person is already a member.',type:'error'}});
             } else if(d.error === 'Already invited'){
-              route('/groups/'+gid2, {alert:{text:'That email has already been invited.',type:'error'}});
+              route('/groups/'+gid2+'/members', {alert:{text:'That email has already been invited.',type:'error'}});
             }
           }).catch(function(){btn2.disabled=false});
         return;
