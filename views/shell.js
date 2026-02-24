@@ -1008,7 +1008,10 @@ export function shell(data) {
           .then(function(d){
             if(d.ok){
               delete groupCache[gid3];
-              nav('/groups/'+gid3, {alert:{text:'Item added!',type:'success'}});
+              return fetch('/api/groups/'+gid3).then(function(r2){return r2.json()}).then(function(detail){
+                groupCache[gid3] = detail;
+                nav('/groups/'+gid3);
+              });
             } else {
               btn.disabled=false;btn.innerHTML=btnText;
               descEl.disabled=false;costEl.disabled=false;
