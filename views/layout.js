@@ -31,7 +31,12 @@ export function layout(title, content, user) {
       --radius: 8px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -102,10 +107,13 @@ export function layout(title, content, user) {
       font-family: inherit;
       cursor: pointer;
       text-decoration: none;
-      transition: background 150ms;
+      transition: background 150ms, transform 100ms;
     }
 
     .btn:hover { background: var(--green-600); }
+    .btn:active { transform: scale(0.96); }
+
+    .card-link:active { transform: scale(0.98); }
 
     .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
 
@@ -144,6 +152,7 @@ export function layout(title, content, user) {
       display: block;
       text-decoration: none;
       color: inherit;
+      transition: transform 100ms;
     }
 
     .card-link:hover {
@@ -166,7 +175,10 @@ export function layout(title, content, user) {
       font-size: 16px;
       font-family: inherit;
       color: var(--gray-900);
+      -webkit-appearance: none;
     }
+
+    input[data-1p-ignore], textarea[data-1p-ignore] { /* specificity bump */ }
 
     input:focus, textarea:focus {
       outline: 2px solid var(--green-500);

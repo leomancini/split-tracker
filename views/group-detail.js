@@ -33,7 +33,7 @@ export function groupDetailPage(group, members, invites, currentUser, query) {
     <div class="section">
       <h2>Invite Member</h2>
       <form method="POST" action="/groups/${group.id}/invite" class="inline-form">
-        <input type="email" name="email" required placeholder="Email address">
+        <input type="email" name="email" required placeholder="Email address" data-1p-ignore autocomplete="off">
         <button type="submit" class="btn btn-sm">Invite</button>
       </form>
     </div>
