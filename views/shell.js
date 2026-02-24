@@ -269,6 +269,8 @@ export function shell(data) {
 
     .back-link:hover { color: var(--gray-700); }
 
+    .balance-row + .balance-row { border-top: 2px solid var(--gray-100); }
+
     .expense-icon {
       width: 36px;
       height: 36px;
@@ -355,6 +357,47 @@ export function shell(data) {
     }
     function catIcon(c){return '<i class="fa-solid '+(CATS[c]||CATS.general).icon+'"></i>';}
 
+    // --- Balance calculation ---
+    function calcSettlements(members, expenses){
+      if(!expenses||!expenses.length||!members.length) return [];
+      var n = members.length;
+      var bal = {}; // userId -> net balance (positive = owed money, negative = owes)
+      members.forEach(function(m){bal[m.id]=0;});
+      expenses.forEach(function(ex){
+        var share = ex.amount / n;
+        members.forEach(function(m){
+          if(m.id === ex.paid_by) bal[m.id] += ex.amount - share;
+          else bal[m.id] -= share;
+        });
+      });
+      // Build name map
+      var names = {};
+      members.forEach(function(m){names[m.id]=m.name;});
+      // Greedy settle: debtors pay creditors
+      var debtors=[], creditors=[];
+      for(var id in bal){
+        var v=Math.round(bal[id]*100)/100;
+        if(v<-0.01) debtors.push({id:id,amt:-v});
+        else if(v>0.01) creditors.push({id:id,amt:v});
+      }
+      debtors.sort(function(a,b){return b.amt-a.amt;});
+      creditors.sort(function(a,b){return b.amt-a.amt;});
+      var settlements=[];
+      var di=0,ci=0;
+      while(di<debtors.length && ci<creditors.length){
+        var pay=Math.min(debtors[di].amt,creditors[ci].amt);
+        if(pay>0.01){
+          settlements.push({from:debtors[di].id,to:creditors[ci].id,amt:pay,
+            fromName:names[debtors[di].id],toName:names[creditors[ci].id]});
+        }
+        debtors[di].amt-=pay;
+        creditors[ci].amt-=pay;
+        if(debtors[di].amt<0.01) di++;
+        if(creditors[ci].amt<0.01) ci++;
+      }
+      return settlements;
+    }
+
     // --- Views ---
     function dashboardView(alert){
       var h = '';
@@ -408,7 +451,29 @@ export function shell(data) {
 
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
-      h += '<h1>'+esc(g.name)+'</h1><div class="section"><h2>Members</h2><div class="card">';
+      h += '<h1>'+esc(g.name)+'</h1>';
+
+      // --- Balances ---
+      var settlements = calcSettlements(members, detail.expenses);
+      if(settlements.length){
+        h += '<div class="card" style="margin-bottom:1.25rem">';
+        settlements.forEach(function(s){
+          var isYou = s.from==D.user.id;
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.375rem 0">'
+            + '<span style="font-size:0.875rem">'
+            + '<span style="font-weight:500">'+(isYou?'You':esc(s.fromName))+'</span>'
+            + ' owes '
+            + '<span style="font-weight:500">'+(s.to==D.user.id?'you':esc(s.toName))+'</span>'
+            + '</span>'
+            + '<span style="font-size:0.875rem;font-weight:600;color:'+(isYou?'#dc2626':'var(--green-600)')+'">$'+s.amt.toFixed(2)+'</span>'
+            + '</div>';
+        });
+        h += '</div>';
+      } else if(detail.expenses && detail.expenses.length){
+        h += '<div class="card" style="margin-bottom:1.25rem;text-align:center;font-size:0.875rem;color:var(--green-600);font-weight:500;padding:0.75rem"><i class="fa-solid fa-check" style="margin-right:0.375rem"></i>All settled up</div>';
+      }
+
+      h += '<div class="section"><h2>Members</h2><div class="card">';
       members.forEach(function(m){
         h += '<div class="member-row">'
           + (m.avatar_url ? '<img src="'+esc(m.avatar_url)+'" class="member-avatar" alt="">' : '<div class="member-avatar"></div>')
