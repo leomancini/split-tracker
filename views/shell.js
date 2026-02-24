@@ -216,6 +216,38 @@ export function shell(data) {
 
     textarea { resize: vertical; min-height: 80px; }
 
+    .ce-input {
+      width: 100%;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 0.625rem 0.75rem;
+      font-size: 16px;
+      font-family: inherit;
+      background: white;
+      color: var(--gray-900);
+      min-height: 1.5em;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    .ce-input:focus {
+      outline: 2px solid var(--green-500);
+      outline-offset: -1px;
+      border-color: var(--green-500);
+    }
+    .ce-input:empty::before {
+      content: attr(data-placeholder);
+      color: var(--gray-400);
+      pointer-events: none;
+    }
+    .ce-input.ce-multi {
+      min-height: 80px;
+      white-space: pre-wrap;
+    }
+    .ce-input[data-disabled="true"] {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
     .form-group { margin-bottom: 1rem; }
 
     .form-hint {
@@ -416,28 +448,19 @@ export function shell(data) {
   <script>
   document.addEventListener('touchstart',function(){},false);
 
-  // Hide iOS keyboard arrows by making other inputs unfocusable
+  // Prevent iOS viewport shift when keyboard opens
   document.addEventListener('focusin', function(e){
-    if(e.target.matches('input,textarea')){
-      var all = document.querySelectorAll('input,textarea');
-      for(var i=0;i<all.length;i++){
-        if(all[i]!==e.target) all[i].tabIndex = -1;
-      }
-    }
-  });
-  document.addEventListener('focusout', function(e){
-    if(e.target.matches('input,textarea')){
-      setTimeout(function(){
-        var all = document.querySelectorAll('input,textarea');
-        for(var i=0;i<all.length;i++) all[i].removeAttribute('tabindex');
-      }, 50);
+    if(e.target.matches('.ce-input')){
+      setTimeout(function(){ window.scrollTo(0,0); }, 50);
     }
   });
 
-  // Prevent iOS viewport shift when keyboard opens
-  document.addEventListener('focusin', function(e){
-    if(e.target.matches('input,textarea')){
-      setTimeout(function(){ window.scrollTo(0,0); }, 50);
+  // Force plain text paste in contenteditable
+  document.addEventListener('paste', function(e){
+    if(e.target.matches('.ce-input')){
+      e.preventDefault();
+      var text = (e.clipboardData||window.clipboardData).getData('text/plain');
+      document.execCommand('insertText', false, text);
     }
   });
 
@@ -583,11 +606,11 @@ export function shell(data) {
     function groupCreateView(){
       return '<h1>Create a group</h1>'
         + '<div id="create-group-form">'
-        + '<form class="form-group" onsubmit="return false" autocomplete="off"><label for="grp-title">Title</label>'
-        + '<input type="search" id="grp-title" required placeholder="e.g. Apartment, Trip to Paris" data-1p-ignore autocomplete="off" role="presentation" style="-webkit-appearance:none"></form>'
-        + '<form class="form-group" onsubmit="return false" autocomplete="off"><label for="grp-inv">Invite (optional)</label>'
-        + '<textarea id="grp-inv" placeholder="One per line" data-1p-ignore autocomplete="off" role="presentation"></textarea>'
-        + '<div class="form-hint">Enter the Google account addresses of people you want to invite.</div></form>'
+        + '<div class="form-group"><label>Title</label>'
+        + '<div class="ce-input" contenteditable="true" id="grp-title" data-placeholder="e.g. Apartment, Trip to Paris"></div></div>'
+        + '<div class="form-group"><label>Invite (optional)</label>'
+        + '<div class="ce-input ce-multi" contenteditable="true" id="grp-inv" data-placeholder="One per line"></div>'
+        + '<div class="form-hint">Enter the Google account addresses of people you want to invite.</div></div>'
         + '<button type="button" class="btn" id="create-group-btn">Create group</button></div>';
     }
 
@@ -654,10 +677,10 @@ export function shell(data) {
       var gName = gInfo ? gInfo.name : 'Group';
       return '<h1>Add item</h1>'
         + '<div id="add-expense-form" data-group-id="'+gid+'">'
-        + '<form class="form-group" onsubmit="return false" autocomplete="off"><label for="exp-desc">What was it for?</label>'
-        + '<input type="text" id="exp-desc" required placeholder="e.g. Pizza, Uber, Groceries" data-1p-ignore autocomplete="off"></form>'
-        + '<form class="form-group" onsubmit="return false" autocomplete="off"><label for="exp-cost">Amount</label>'
-        + '<input type="number" id="exp-cost" required placeholder="0.00" step="0.01" min="0.01" data-1p-ignore autocomplete="off"></form>'
+        + '<div class="form-group"><label>What was it for?</label>'
+        + '<div class="ce-input" contenteditable="true" id="exp-desc" data-placeholder="e.g. Pizza, Uber, Groceries"></div></div>'
+        + '<div class="form-group"><label>Amount</label>'
+        + '<div class="ce-input" contenteditable="true" id="exp-cost" data-placeholder="0.00" inputmode="decimal"></div></div>'
         + '<button type="button" class="btn" id="add-expense-btn">Add item</button></div>';
     }
 
@@ -711,9 +734,9 @@ export function shell(data) {
 
       if(isOwner){
         h += '<div class="section" style="margin-top:1.5rem"><h2>Invite member</h2>'
-          + '<form id="invite-form" data-group-id="'+g.id+'" class="inline-form">'
-          + '<input type="email" name="email" required placeholder="Email address" data-1p-ignore autocomplete="do-not-autofill">'
-          + '<button type="submit" class="btn btn-sm">Invite</button></form></div>';
+          + '<div id="invite-form" data-group-id="'+g.id+'" class="inline-form">'
+          + '<div class="ce-input" contenteditable="true" id="invite-email" data-placeholder="Email address" style="flex:1"></div>'
+          + '<button type="button" class="btn btn-sm" id="invite-btn">Invite</button></div></div>';
       }
 
       return h;
@@ -984,15 +1007,15 @@ export function shell(data) {
         var gid3 = wrap.getAttribute('data-group-id');
         var descEl = document.getElementById('exp-desc');
         var costEl = document.getElementById('exp-cost');
-        var expName = descEl.value.trim();
-        var expAmount = costEl.value;
+        var expName = descEl.textContent.trim();
+        var expAmount = costEl.textContent.trim();
         if(!expName||!expAmount) return;
         var cat = detectCat(expName);
         var btnText = addBtn.innerHTML;
         addBtn.disabled = true;
         addBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
-        descEl.disabled = true;
-        costEl.disabled = true;
+        descEl.setAttribute('data-disabled','true');descEl.contentEditable='false';
+        costEl.setAttribute('data-disabled','true');costEl.contentEditable='false';
         fetch('/api/groups/'+gid3+'/expenses',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
@@ -1003,9 +1026,15 @@ export function shell(data) {
               delete groupCache[gid3];
               nav('/groups/'+gid3, {alert:{text:'Item added!',type:'success'}});
             } else {
-              addBtn.disabled=false;addBtn.innerHTML=btnText;descEl.disabled=false;costEl.disabled=false;
+              addBtn.disabled=false;addBtn.innerHTML=btnText;
+              descEl.removeAttribute('data-disabled');descEl.contentEditable='true';
+              costEl.removeAttribute('data-disabled');costEl.contentEditable='true';
             }
-          }).catch(function(){addBtn.disabled=false;addBtn.innerHTML=btnText;descEl.disabled=false;costEl.disabled=false;});
+          }).catch(function(){
+            addBtn.disabled=false;addBtn.innerHTML=btnText;
+            descEl.removeAttribute('data-disabled');descEl.contentEditable='true';
+            costEl.removeAttribute('data-disabled');costEl.contentEditable='true';
+          });
         return;
       }
 
@@ -1013,14 +1042,14 @@ export function shell(data) {
       if(createBtn){
         var titleEl = document.getElementById('grp-title');
         var invEl = document.getElementById('grp-inv');
-        var name = titleEl.value.trim();
+        var name = titleEl.textContent.trim();
         if(!name) return;
-        var emails = invEl.value.trim();
+        var emails = invEl.textContent.trim();
         var btnText = createBtn.innerHTML;
         createBtn.disabled = true;
         createBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
-        titleEl.disabled = true;
-        invEl.disabled = true;
+        titleEl.setAttribute('data-disabled','true');titleEl.contentEditable='false';
+        invEl.setAttribute('data-disabled','true');invEl.contentEditable='false';
         fetch('/api/groups',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
@@ -1032,41 +1061,44 @@ export function shell(data) {
                 nav('/groups/'+d.groupId, {alert:{text:'Group created!',type:'success'}});
               });
             }
-            createBtn.disabled=false;createBtn.innerHTML=btnText;titleEl.disabled=false;invEl.disabled=false;
-          }).catch(function(){createBtn.disabled=false;createBtn.innerHTML=btnText;titleEl.disabled=false;invEl.disabled=false;});
+            createBtn.disabled=false;createBtn.innerHTML=btnText;
+            titleEl.removeAttribute('data-disabled');titleEl.contentEditable='true';
+            invEl.removeAttribute('data-disabled');invEl.contentEditable='true';
+          }).catch(function(){
+            createBtn.disabled=false;createBtn.innerHTML=btnText;
+            titleEl.removeAttribute('data-disabled');titleEl.contentEditable='true';
+            invEl.removeAttribute('data-disabled');invEl.contentEditable='true';
+          });
         return;
       }
     });
 
-    // Form submissions
-    document.addEventListener('submit', function(e){
-      var form = e.target;
-
-      if(form.id === 'invite-form'){
-        e.preventDefault();
-        var gid2 = form.getAttribute('data-group-id');
-        var email = form.email.value.trim().toLowerCase();
-        if(!email) return;
-        var btn2 = form.querySelector('button[type="submit"]');
-        btn2.disabled = true;
-        fetch('/api/groups/'+gid2+'/invite',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({email:email})
-        }).then(function(r){return r.json()})
-          .then(function(d){
-            btn2.disabled = false;
-            if(d.ok){
-              delete groupCache[gid2];
-              route('/groups/'+gid2+'/members', {alert:{text:'Invite sent!',type:'success'}});
-            } else if(d.error === 'Already a member'){
-              route('/groups/'+gid2+'/members', {alert:{text:'That person is already a member.',type:'error'}});
-            } else if(d.error === 'Already invited'){
-              route('/groups/'+gid2+'/members', {alert:{text:'That email has already been invited.',type:'error'}});
-            }
-          }).catch(function(){btn2.disabled=false});
-        return;
-      }
+    // Invite button
+    document.addEventListener('click', function(e){
+      var invBtn = e.target.closest('#invite-btn');
+      if(!invBtn) return;
+      var wrap = document.getElementById('invite-form');
+      var gid2 = wrap.getAttribute('data-group-id');
+      var emailEl = document.getElementById('invite-email');
+      var email = emailEl.textContent.trim().toLowerCase();
+      if(!email) return;
+      invBtn.disabled = true;
+      fetch('/api/groups/'+gid2+'/invite',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email})
+      }).then(function(r){return r.json()})
+        .then(function(d){
+          invBtn.disabled = false;
+          if(d.ok){
+            delete groupCache[gid2];
+            route('/groups/'+gid2+'/members', {alert:{text:'Invite sent!',type:'success'}});
+          } else if(d.error === 'Already a member'){
+            route('/groups/'+gid2+'/members', {alert:{text:'That person is already a member.',type:'error'}});
+          } else if(d.error === 'Already invited'){
+            route('/groups/'+gid2+'/members', {alert:{text:'That email has already been invited.',type:'error'}});
+          }
+        }).catch(function(){invBtn.disabled=false});
     });
 
     // Back/forward
