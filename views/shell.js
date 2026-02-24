@@ -374,7 +374,7 @@ export function shell(data) {
       border-bottom: 2px solid var(--gray-100);
       font-size: 0.9375rem;
     }
-    .info-row:first-child { border-top: 2px solid var(--gray-100); }
+    .info-row:last-child { border-bottom: none; }
     .info-label { color: var(--gray-500); }
     .info-value { font-weight: 500; color: var(--gray-900); }
 
