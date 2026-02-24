@@ -135,7 +135,7 @@ export function shell(data) {
       touch-action: manipulation;
     }
 
-    .btn:hover { background: var(--green-600); }
+    @media (hover: hover) { .btn:hover { background: var(--green-600); } }
     .btn:active { transform: scale(0.97); }
 
     .btn-sm { padding: 0.625rem 1.25rem; font-size: 1rem; }
@@ -146,7 +146,7 @@ export function shell(data) {
       border: 2px solid var(--green-500);
     }
 
-    .btn-outline:hover { background: var(--green-50); }
+    @media (hover: hover) { .btn-outline:hover { background: var(--green-50); } }
 
     .btn-danger {
       background: white;
@@ -154,7 +154,7 @@ export function shell(data) {
       border: 2px solid #fca5a5;
     }
 
-    .btn-danger:hover { background: #fef2f2; }
+    @media (hover: hover) { .btn-danger:hover { background: #fef2f2; } }
 
     .card {
       background: white;
@@ -173,7 +173,7 @@ export function shell(data) {
       cursor: pointer;
     }
 
-    .card-link:hover { border-color: var(--green-500); }
+    @media (hover: hover) { .card-link:hover { border-color: var(--green-500); } }
     .card-link:active { transform: scale(0.98); }
 
     label {
@@ -297,7 +297,7 @@ export function shell(data) {
       cursor: pointer;
     }
 
-    .back-link:hover { color: var(--gray-700); }
+    @media (hover: hover) { .back-link:hover { color: var(--gray-700); } }
 
     .balance-row + .balance-row { border-top: 2px solid var(--gray-100); }
 
@@ -341,9 +341,11 @@ export function shell(data) {
       flex-shrink: 0;
     }
 
-    .expense-delete:hover {
-      color: #dc2626;
-      background: #fef2f2;
+    @media (hover: hover) {
+      .expense-delete:hover {
+        color: #dc2626;
+        background: #fef2f2;
+      }
     }
 
     #splash {
