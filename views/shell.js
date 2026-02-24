@@ -391,7 +391,7 @@ export function shell(data) {
     .info-value { font-weight: 500; color: var(--gray-900); }
 
     .spinner {
-      width: 36px; height: 36px;
+      width: 48px; height: 48px;
       border: 3px solid var(--gray-200);
       border-top-color: var(--green-500);
       border-radius: 50%;
