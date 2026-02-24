@@ -883,9 +883,14 @@ export function shell(data) {
     // Initial render
     route(location.pathname);
 
-    // Dismiss splash
+    // Dismiss splash after fonts are ready (prevents staggered text rendering)
     var splash = document.getElementById('splash');
-    if(splash){ splash.classList.add('hide'); setTimeout(function(){ splash.remove(); }, 400); }
+    if(splash){
+      document.fonts.ready.then(function(){
+        splash.classList.add('hide');
+        setTimeout(function(){ splash.remove(); }, 400);
+      });
+    }
   })();
 
   // Register service worker
