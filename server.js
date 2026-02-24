@@ -4,19 +4,17 @@ import session from 'express-session';
 import connectSqlite3 from 'connect-sqlite3';
 import passport from 'passport';
 import { registerAuthRoutes, ensureAuth } from './auth.js';
-import { registerGroupRoutes } from './routes/groups.js';
-import { getUserGroups, getPendingInvitesForUser } from './db.js';
-import { dashboardPage } from './views/dashboard.js';
-import { profilePage } from './views/profile.js';
+import { registerApiRoutes, getAllData } from './routes/api.js';
+import { shell } from './views/shell.js';
 
 const app = express();
 const port = 3124;
 
-// Trust reverse proxy (for secure cookies behind HTTPS)
 app.set('trust proxy', 1);
 
 // Body parsing
 app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 // Sessions (SQLite-backed)
 const SQLiteStore = connectSqlite3(session);
@@ -26,7 +24,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    maxAge: 30 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     secure: 'auto',
     sameSite: 'lax',
@@ -37,22 +35,17 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Auth routes
+// Auth routes (login, google oauth, logout)
 registerAuthRoutes(app);
 
-// Group routes
-registerGroupRoutes(app, ensureAuth);
+// JSON API routes
+registerApiRoutes(app, ensureAuth);
 
-// Profile
-app.get('/profile', ensureAuth, (req, res) => {
-  res.send(profilePage(req.user));
-});
-
-// Dashboard
-app.get('/', ensureAuth, (req, res) => {
-  const groups = getUserGroups(req.user.id);
-  const pendingInvites = getPendingInvitesForUser(req.user.email);
-  res.send(dashboardPage(req.user, groups, pendingInvites, req.query));
+// All other GET routes: serve the SPA shell with embedded data
+app.get('*', (req, res) => {
+  if (!req.isAuthenticated()) return res.redirect('/login');
+  const data = getAllData(req.user);
+  res.send(shell(data));
 });
 
 app.listen(port, () => {

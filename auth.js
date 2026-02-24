@@ -52,5 +52,6 @@ export function registerAuthRoutes(app) {
 
 export function ensureAuth(req, res, next) {
   if (req.isAuthenticated()) return next();
+  if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Not authenticated' });
   res.redirect('/login');
 }
