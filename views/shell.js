@@ -345,7 +345,7 @@ export function shell(data) {
     }
 
     .expense-name {
-      font-size: 0.875rem;
+      font-size: 1rem;
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
@@ -638,9 +638,7 @@ export function shell(data) {
           var isLast = idx === expenses.length - 1;
           h += '<div data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0;'+(isLast?'':'border-bottom:2px solid var(--gray-100);')+'cursor:pointer">'
             + '<div class="expense-icon">'+catIcon(ex.category)+'</div>'
-            + '<div style="flex:1;min-width:0">'
-            + '<span class="expense-name">'+esc(ex.name)+'</span>'
-            + '<div style="font-size:0.8125rem;color:var(--gray-500)">'+esc(ex.paid_by_name)+'</div></div>'
+            + '<span class="expense-name" style="flex:1;min-width:0">'+esc(ex.name)+'</span>'
             + '<span class="expense-amount">'+fmtAmt(ex.amount)+'</span>'
             + '<i class="fa-solid fa-chevron-right" style="color:var(--gray-400);font-size:0.75rem"></i>'
             + '</div>';
