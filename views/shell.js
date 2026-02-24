@@ -514,7 +514,7 @@ export function shell(data) {
         h += '<div class="card" style="margin-bottom:1.25rem;text-align:center;font-size:0.875rem;color:var(--green-600);font-weight:500;padding:0.75rem"><i class="fa-solid fa-check" style="margin-right:0.375rem"></i>All settled up</div>';
       }
 
-      h += '<button class="btn btn-sm" data-link="/groups/'+g.id+'/add-expense" style="margin-bottom:0.75rem">Add expense</button>';
+      h += '<button class="btn btn-sm" data-link="/groups/'+g.id+'/add-expense" style="margin-bottom:0.75rem">Add item</button>';
 
       var expenses = detail.expenses || [];
       if(expenses.length){
@@ -533,7 +533,7 @@ export function shell(data) {
           h += '</div>';
         });
       } else {
-        h += '<div class="empty">No expenses yet</div>';
+        h += '<div class="empty">No items yet</div>';
       }
 
       return h;
@@ -543,13 +543,13 @@ export function shell(data) {
       var gInfo = groupCache[gid] ? groupCache[gid].group : D.groups.find(function(g){return g.id==gid});
       var gName = gInfo ? gInfo.name : 'Group';
       return '<span class="back-link" data-link="/groups/'+gid+'">&larr; Back to '+esc(gName)+'</span>'
-        + '<h1>Add expense</h1>'
+        + '<h1>Add item</h1>'
         + '<form id="add-expense-form" data-group-id="'+gid+'">'
         + '<div class="form-group"><label for="exp-desc">What was it for?</label>'
         + '<input type="text" id="exp-desc" name="exp-desc" required placeholder="e.g. Pizza, Uber, Groceries" data-1p-ignore autocomplete="do-not-autofill"></div>'
         + '<div class="form-group"><label for="exp-cost">Amount</label>'
         + '<input type="number" id="exp-cost" name="exp-cost" required placeholder="0.00" step="0.01" min="0.01" data-1p-ignore autocomplete="do-not-autofill"></div>'
-        + '<button type="submit" class="btn">Add expense</button></form>';
+        + '<button type="submit" class="btn">Add item</button></form>';
     }
 
     function groupMembersView(detail, alert){
@@ -618,6 +618,15 @@ export function shell(data) {
       if(path === '/' || path === ''){
         document.title = 'Dashboard - Split Tracker';
         app.innerHTML = dashboardView(opts.alert);
+        // Prefetch Font Awesome so it's ready when user opens a group
+        if(!document.querySelector('link[data-fa-prefetch]')){
+          var faLink = document.createElement('link');
+          faLink.rel = 'prefetch';
+          faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+          faLink.crossOrigin = 'anonymous';
+          faLink.setAttribute('data-fa-prefetch','1');
+          document.head.appendChild(faLink);
+        }
       }
       else if(path === '/groups/new'){
         document.title = 'Create Group - Split Tracker';
@@ -627,7 +636,7 @@ export function shell(data) {
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/add-expense$/))){
         var gid = m[1];
-        document.title = 'Add Expense - Split Tracker';
+        document.title = 'Add Item - Split Tracker';
         app.innerHTML = addExpenseView(gid);
         var expInput = document.getElementById('exp-desc');
         if(expInput) expInput.focus();
@@ -758,7 +767,7 @@ export function shell(data) {
       var delExpBtn = e.target.closest('[data-action="delete-expense"]');
       if(delExpBtn){
         e.preventDefault();
-        if(!confirm('Delete this expense?'))return;
+        if(!confirm('Delete this item?'))return;
         var expId = delExpBtn.getAttribute('data-id');
         var expGid = delExpBtn.getAttribute('data-group-id');
         delExpBtn.disabled = true;
@@ -803,19 +812,24 @@ export function shell(data) {
         if(!expName||!expAmount) return;
         var cat = detectCat(expName);
         var btn3 = form.querySelector('button[type="submit"]');
+        var btnText = btn3.innerHTML;
         btn3.disabled = true;
+        btn3.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
+        form['exp-desc'].disabled = true;
+        form['exp-cost'].disabled = true;
         fetch('/api/groups/'+gid3+'/expenses',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({name:expName,amount:expAmount,category:cat})
         }).then(function(r){return r.json()})
           .then(function(d){
-            btn3.disabled = false;
             if(d.ok){
               delete groupCache[gid3];
-              nav('/groups/'+gid3, {alert:{text:'Expense added!',type:'success'}});
+              nav('/groups/'+gid3, {alert:{text:'Item added!',type:'success'}});
+            } else {
+              btn3.disabled=false;btn3.innerHTML=btnText;form['exp-desc'].disabled=false;form['exp-cost'].disabled=false;
             }
-          }).catch(function(){btn3.disabled=false});
+          }).catch(function(){btn3.disabled=false;btn3.innerHTML=btnText;form['exp-desc'].disabled=false;form['exp-cost'].disabled=false;});
         return;
       }
 
