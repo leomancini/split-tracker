@@ -141,7 +141,7 @@ export function shell(data) {
       bottom: 0;
       left: 0;
       right: 0;
-      padding: 0 1.5rem calc(env(safe-area-inset-bottom, 0px) + 1rem);
+      padding: 0 1.5rem calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
       background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 35%);
       padding-top: 2.5rem;
       z-index: 10;
