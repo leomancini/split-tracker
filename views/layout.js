@@ -35,7 +35,7 @@ export function layout(title, content, user) {
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--gray-50);
+      background: white;
       color: var(--gray-900);
       line-height: 1.5;
     }
@@ -95,9 +95,9 @@ export function layout(title, content, user) {
       background: var(--green-500);
       color: white;
       border: none;
-      border-radius: var(--radius);
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
+      border-radius: 999px;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
       font-weight: 500;
       font-family: inherit;
       cursor: pointer;
@@ -107,12 +107,12 @@ export function layout(title, content, user) {
 
     .btn:hover { background: var(--green-600); }
 
-    .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8125rem; }
+    .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
 
     .btn-outline {
       background: white;
       color: var(--green-600);
-      border: 1px solid var(--green-500);
+      border: 2px solid var(--green-500);
     }
 
     .btn-outline:hover {
@@ -122,7 +122,7 @@ export function layout(title, content, user) {
     .btn-danger {
       background: white;
       color: #dc2626;
-      border: 1px solid #fca5a5;
+      border: 2px solid #fca5a5;
     }
 
     .btn-danger:hover { background: #fef2f2; }
@@ -162,8 +162,8 @@ export function layout(title, content, user) {
       width: 100%;
       border: 1px solid var(--gray-200);
       border-radius: var(--radius);
-      padding: 0.5rem 0.75rem;
-      font-size: 0.875rem;
+      padding: 0.625rem 0.75rem;
+      font-size: 16px;
       font-family: inherit;
       color: var(--gray-900);
     }
