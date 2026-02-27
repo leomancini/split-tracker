@@ -29,7 +29,7 @@ export function sendInviteEmail({ to, inviterName, groupName }) {
       appUrl,
     ].join('\n'),
     html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 16px;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 0;">
         <h2 style="margin: 0 0 16px;">You're invited!</h2>
         <p style="color: #333; font-size: 16px; line-height: 1.5;">
           <strong>${inviterName}</strong> invited you to the group <strong>"${groupName}"</strong> on Split Tracker.

@@ -607,7 +607,11 @@ export function shell(data) {
 
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
-      h += '<h1 style="margin-bottom:0.5rem">'+esc(g.name)+'</h1>';
+      if(isOwner){
+        h += '<h1 style="margin-bottom:0.5rem;cursor:pointer" data-action="rename-group" data-group-id="'+g.id+'">'+esc(g.name)+' <i class="fa-solid fa-pen" style="font-size:0.75rem;color:var(--gray-400);vertical-align:middle"></i></h1>';
+      } else {
+        h += '<h1 style="margin-bottom:0.5rem">'+esc(g.name)+'</h1>';
+      }
 
       // Avatar row with settled pill
       var settlements = calcSettlements(members, detail.expenses);
@@ -700,15 +704,25 @@ export function shell(data) {
         h += '<div class="member-row">'
           + (m.avatar_url ? '<img src="'+esc(m.avatar_url)+'" class="member-avatar" alt="">' : '<div class="member-avatar"></div>')
           + '<div class="member-info"><div class="member-name">'+esc(m.name)+'</div>'
-          + '<div class="member-email">'+esc(m.email)+'</div></div>'
-          + '<span class="badge'+(m.role==='owner'?'':' badge-gray')+'">'+esc(m.role)+'</span></div>';
+          + '<div class="member-email">'+esc(m.email)+'</div></div>';
+        if(isOwner && m.role !== 'owner'){
+          h += '<button class="btn btn-sm btn-danger" data-action="remove-member" data-group-id="'+g.id+'" data-user-id="'+m.id+'">Remove</button>';
+        } else {
+          h += '<span class="badge'+(m.role==='owner'?'':' badge-gray')+'">'+esc(m.role)+'</span>';
+        }
+        h += '</div>';
       });
 
       if(invites.length){
         h += '<div style="margin-top:1.5rem"><h2>Pending invites</h2>';
         invites.forEach(function(i){
-          h += '<div class="invite-row"><span style="font-size:0.875rem">'+esc(i.email)+'</span>'
-            + '<span class="badge badge-gray">pending</span></div>';
+          h += '<div class="invite-row"><span style="font-size:0.875rem">'+esc(i.email)+'</span>';
+          if(isOwner){
+            h += '<button class="btn btn-sm btn-danger" data-action="cancel-invite" data-group-id="'+g.id+'" data-invite-id="'+i.id+'">Cancel</button>';
+          } else {
+            h += '<span class="badge badge-gray">pending</span>';
+          }
+          h += '</div>';
         });
         h += '</div>';
       }
@@ -974,6 +988,66 @@ export function shell(data) {
               delItemBtn.disabled=false;delItemBtn.innerHTML=btnText;
             }
           }).catch(function(){delItemBtn.disabled=false;delItemBtn.innerHTML=btnText;});
+        return;
+      }
+
+      // Rename group
+      var renameEl = e.target.closest('[data-action="rename-group"]');
+      if(renameEl){
+        e.preventDefault();
+        var rgId = renameEl.getAttribute('data-group-id');
+        var current = renameEl.textContent.trim();
+        var newName = prompt('Rename group:', current);
+        if(newName && newName.trim() && newName.trim() !== current){
+          fetch('/api/groups/'+rgId,{
+            method:'PUT',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({name:newName.trim()})
+          }).then(function(r){return r.json()})
+            .then(function(d){
+              if(d.ok){
+                delete groupCache[rgId];
+                refreshData().then(function(){ nav('/groups/'+rgId, {alert:{text:'Group renamed.',type:'success'}}); });
+              }
+            });
+        }
+        return;
+      }
+
+      // Remove member
+      var rmBtn = e.target.closest('[data-action="remove-member"]');
+      if(rmBtn){
+        e.preventDefault();
+        if(!confirm('Remove this member from the group?'))return;
+        var rmGid = rmBtn.getAttribute('data-group-id');
+        var rmUid = rmBtn.getAttribute('data-user-id');
+        rmBtn.disabled = true;
+        fetch('/api/groups/'+rmGid+'/members/'+rmUid,{method:'DELETE'})
+          .then(function(r){return r.json()})
+          .then(function(d){
+            if(d.ok){
+              delete groupCache[rmGid];
+              nav('/groups/'+rmGid+'/members', {alert:{text:'Member removed.',type:'success'}});
+            } else { rmBtn.disabled=false; }
+          }).catch(function(){rmBtn.disabled=false});
+        return;
+      }
+
+      // Cancel invite
+      var cancelBtn = e.target.closest('[data-action="cancel-invite"]');
+      if(cancelBtn){
+        e.preventDefault();
+        var ciGid = cancelBtn.getAttribute('data-group-id');
+        var ciIid = cancelBtn.getAttribute('data-invite-id');
+        cancelBtn.disabled = true;
+        fetch('/api/groups/'+ciGid+'/invites/'+ciIid,{method:'DELETE'})
+          .then(function(r){return r.json()})
+          .then(function(d){
+            if(d.ok){
+              delete groupCache[ciGid];
+              nav('/groups/'+ciGid+'/members', {alert:{text:'Invite cancelled.',type:'success'}});
+            } else { cancelBtn.disabled=false; }
+          }).catch(function(){cancelBtn.disabled=false});
         return;
       }
 

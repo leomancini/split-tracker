@@ -112,6 +112,10 @@ export function getGroup(groupId) {
   return db.prepare('SELECT * FROM groups WHERE id = ?').get(groupId);
 }
 
+export function renameGroup(groupId, name) {
+  db.prepare('UPDATE groups SET name = ? WHERE id = ?').run(name, groupId);
+}
+
 export function getGroupMembers(groupId) {
   return db.prepare(`
     SELECT u.id, u.name, u.email, u.avatar_url, gm.role, gm.joined_at
@@ -194,6 +198,14 @@ export function acceptInvite(inviteId, userId) {
 
 export function declineInvite(inviteId) {
   db.prepare("UPDATE group_invites SET status = 'declined' WHERE id = ?").run(inviteId);
+}
+
+export function removeMember(groupId, userId) {
+  db.prepare('DELETE FROM group_members WHERE group_id = ? AND user_id = ?').run(groupId, userId);
+}
+
+export function cancelInvite(inviteId) {
+  db.prepare('DELETE FROM group_invites WHERE id = ?').run(inviteId);
 }
 
 // --- Expense helpers ---

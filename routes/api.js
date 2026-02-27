@@ -3,6 +3,7 @@ import {
   getPendingInvitesForUser,
   createGroup,
   getGroup,
+  renameGroup,
   getGroupMembers,
   getGroupInvites,
   isGroupMember,
@@ -11,6 +12,8 @@ import {
   getInviteById,
   acceptInvite,
   declineInvite,
+  removeMember,
+  cancelInvite,
   getGroupExpenses,
   createExpense,
   getExpenseById,
@@ -44,6 +47,18 @@ export function registerApiRoutes(app, ensureAuth) {
     const expenses = getGroupExpenses(groupId);
 
     res.json({ group, members, invites, isOwner, expenses });
+  });
+
+  // Rename group
+  app.put('/api/groups/:id', ensureAuth, (req, res) => {
+    const groupId = parseInt(req.params.id);
+    if (!isGroupOwner(groupId, req.user.id)) return res.status(403).json({ error: 'Only owner can rename' });
+
+    const name = req.body.name?.trim();
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+
+    renameGroup(groupId, name);
+    res.json({ ok: true });
   });
 
   // Create group
@@ -119,6 +134,31 @@ export function registerApiRoutes(app, ensureAuth) {
     }
 
     deleteExpense(expenseId);
+    res.json({ ok: true });
+  });
+
+  // Remove member from group
+  app.delete('/api/groups/:gid/members/:uid', ensureAuth, (req, res) => {
+    const groupId = parseInt(req.params.gid);
+    const userId = parseInt(req.params.uid);
+    if (!isGroupOwner(groupId, req.user.id)) return res.status(403).json({ error: 'Only owner can remove members' });
+    if (userId === req.user.id) return res.status(400).json({ error: 'Cannot remove yourself' });
+
+    removeMember(groupId, userId);
+    res.json({ ok: true });
+  });
+
+  // Cancel pending invite
+  app.delete('/api/groups/:gid/invites/:iid', ensureAuth, (req, res) => {
+    const groupId = parseInt(req.params.gid);
+    const inviteId = parseInt(req.params.iid);
+    if (!isGroupOwner(groupId, req.user.id)) return res.status(403).json({ error: 'Only owner can cancel invites' });
+
+    const invite = getInviteById(inviteId);
+    if (!invite || invite.group_id !== groupId) return res.status(404).json({ error: 'Invite not found' });
+    if (invite.status !== 'pending') return res.status(400).json({ error: 'Invite no longer pending' });
+
+    cancelInvite(inviteId);
     res.json({ ok: true });
   });
 
