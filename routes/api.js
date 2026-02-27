@@ -16,6 +16,7 @@ import {
   getExpenseById,
   deleteExpense,
 } from '../db.js';
+import { sendInviteEmail } from '../mail.js';
 
 export function registerApiRoutes(app, ensureAuth) {
   // Middleware: all /api routes require auth and return JSON
@@ -54,12 +55,16 @@ export function registerApiRoutes(app, ensureAuth) {
 
     const emailsRaw = req.body.emails?.trim();
     if (emailsRaw) {
+      const groupName = name;
       const emails = emailsRaw
         .split(/[\n,]+/)
         .map(e => e.trim().toLowerCase())
         .filter(e => e && e.includes('@') && e !== req.user.email.toLowerCase());
       for (const email of emails) {
-        createInvite(groupId, email, req.user.id);
+        const result = createInvite(groupId, email, req.user.id);
+        if (result.success) {
+          sendInviteEmail({ to: email, inviterName: req.user.name, groupName });
+        }
       }
     }
 
@@ -76,6 +81,9 @@ export function registerApiRoutes(app, ensureAuth) {
 
     const result = createInvite(groupId, email, req.user.id);
     if (result.error) return res.status(409).json({ error: result.error });
+
+    const group = getGroup(groupId);
+    sendInviteEmail({ to: email, inviterName: req.user.name, groupName: group.name });
 
     res.json({ ok: true });
   });
