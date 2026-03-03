@@ -1,6 +1,6 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { findOrCreateUser, getUserById } from './db.js';
+import { findOrCreateUser, getUserById, acceptPendingInvitesForEmail } from './db.js';
 import { loginPage } from './views/login.js';
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -40,6 +40,8 @@ export function registerAuthRoutes(app) {
   app.get('/auth/google/callback', passport.authenticate('google', {
     failureRedirect: '/login',
   }), (req, res) => {
+    // Auto-accept any pending group invites for this user's email
+    acceptPendingInvitesForEmail(req.user.email, req.user.id);
     res.redirect('/');
   });
 

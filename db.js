@@ -200,6 +200,22 @@ export function declineInvite(inviteId) {
   db.prepare("UPDATE group_invites SET status = 'declined' WHERE id = ?").run(inviteId);
 }
 
+export function acceptPendingInvitesForEmail(email, userId) {
+  const pendingInvites = db.prepare(
+    "SELECT id, group_id FROM group_invites WHERE email = ? AND status = 'pending'"
+  ).all(email);
+
+  const accept = db.transaction(() => {
+    for (const invite of pendingInvites) {
+      db.prepare("UPDATE group_invites SET status = 'accepted' WHERE id = ?").run(invite.id);
+      db.prepare('INSERT OR IGNORE INTO group_members (group_id, user_id, role) VALUES (?, ?, ?)').run(invite.group_id, userId, 'member');
+    }
+  });
+
+  accept();
+  return pendingInvites.length;
+}
+
 export function removeMember(groupId, userId) {
   db.prepare('DELETE FROM group_members WHERE group_id = ? AND user_id = ?').run(groupId, userId);
 }
