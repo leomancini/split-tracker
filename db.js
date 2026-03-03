@@ -57,12 +57,15 @@ db.exec(`
 // --- User helpers ---
 
 export function findOrCreateUser({ googleId, email, name, avatarUrl }) {
+  const normalizedEmail = email.toLowerCase();
   const insert = db.prepare(`
     INSERT OR IGNORE INTO users (google_id, email, name, avatar_url)
     VALUES (?, ?, ?, ?)
   `);
+  const update = db.prepare('UPDATE users SET email = ? WHERE google_id = ? AND email != ?');
   const select = db.prepare('SELECT * FROM users WHERE google_id = ?');
-  insert.run(googleId, email, name, avatarUrl);
+  insert.run(googleId, normalizedEmail, name, avatarUrl);
+  update.run(normalizedEmail, googleId, normalizedEmail);
   return select.get(googleId);
 }
 
@@ -153,7 +156,7 @@ export function createInvite(groupId, email, invitedBy) {
   const existing = db.prepare(`
     SELECT 1 FROM group_members gm
     JOIN users u ON u.id = gm.user_id
-    WHERE gm.group_id = ? AND u.email = ?
+    WHERE gm.group_id = ? AND LOWER(u.email) = LOWER(?)
   `).get(groupId, email);
   if (existing) return { error: 'Already a member' };
 
@@ -174,7 +177,7 @@ export function getPendingInvitesForUser(email) {
     FROM group_invites gi
     JOIN groups g ON g.id = gi.group_id
     JOIN users u ON u.id = gi.invited_by
-    WHERE gi.email = ? AND gi.status = 'pending'
+    WHERE LOWER(gi.email) = LOWER(?) AND gi.status = 'pending'
     ORDER BY gi.created_at DESC
   `).all(email);
 }
