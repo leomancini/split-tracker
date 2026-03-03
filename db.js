@@ -54,10 +54,21 @@ db.exec(`
   );
 `);
 
+// --- Helpers ---
+
+export function normalizeEmail(email) {
+  const lower = email.toLowerCase().trim();
+  const [local, domain] = lower.split('@');
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    return local.replace(/\./g, '') + '@' + domain;
+  }
+  return lower;
+}
+
 // --- User helpers ---
 
 export function findOrCreateUser({ googleId, email, name, avatarUrl }) {
-  const normalizedEmail = email.toLowerCase();
+  const normalizedEmail = normalizeEmail(email);
   const insert = db.prepare(`
     INSERT OR IGNORE INTO users (google_id, email, name, avatar_url)
     VALUES (?, ?, ?, ?)
@@ -152,16 +163,17 @@ export function getGroupInvites(groupId) {
 }
 
 export function createInvite(groupId, email, invitedBy) {
+  const normalized = normalizeEmail(email);
   // Check if already a member
   const existing = db.prepare(`
     SELECT 1 FROM group_members gm
     JOIN users u ON u.id = gm.user_id
-    WHERE gm.group_id = ? AND LOWER(u.email) = LOWER(?)
-  `).get(groupId, email);
+    WHERE gm.group_id = ? AND u.email = ?
+  `).get(groupId, normalized);
   if (existing) return { error: 'Already a member' };
 
   try {
-    db.prepare('INSERT INTO group_invites (group_id, email, invited_by) VALUES (?, ?, ?)').run(groupId, email, invitedBy);
+    db.prepare('INSERT INTO group_invites (group_id, email, invited_by) VALUES (?, ?, ?)').run(groupId, normalized, invitedBy);
     return { success: true };
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -177,9 +189,9 @@ export function getPendingInvitesForUser(email) {
     FROM group_invites gi
     JOIN groups g ON g.id = gi.group_id
     JOIN users u ON u.id = gi.invited_by
-    WHERE LOWER(gi.email) = LOWER(?) AND gi.status = 'pending'
+    WHERE gi.email = ? AND gi.status = 'pending'
     ORDER BY gi.created_at DESC
-  `).all(email);
+  `).all(normalizeEmail(email));
 }
 
 export function getInviteById(inviteId) {

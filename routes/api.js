@@ -1,4 +1,5 @@
 import {
+  normalizeEmail,
   getUserGroups,
   getPendingInvitesForUser,
   createGroup,
@@ -166,7 +167,7 @@ export function registerApiRoutes(app, ensureAuth) {
   app.post('/api/invites/:id/accept', ensureAuth, (req, res) => {
     const inviteId = parseInt(req.params.id);
     const invite = getInviteById(inviteId);
-    if (!invite || invite.email.toLowerCase() !== req.user.email.toLowerCase()) {
+    if (!invite || normalizeEmail(invite.email) !== normalizeEmail(req.user.email)) {
       return res.status(403).json({ error: 'Invalid invite' });
     }
     if (invite.status !== 'pending') return res.status(400).json({ error: 'Invite no longer pending' });
@@ -179,7 +180,7 @@ export function registerApiRoutes(app, ensureAuth) {
   app.post('/api/invites/:id/decline', ensureAuth, (req, res) => {
     const inviteId = parseInt(req.params.id);
     const invite = getInviteById(inviteId);
-    if (!invite || invite.email.toLowerCase() !== req.user.email.toLowerCase()) {
+    if (!invite || normalizeEmail(invite.email) !== normalizeEmail(req.user.email)) {
       return res.status(403).json({ error: 'Invalid invite' });
     }
     if (invite.status !== 'pending') return res.status(400).json({ error: 'Invite no longer pending' });
