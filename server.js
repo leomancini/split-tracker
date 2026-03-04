@@ -53,7 +53,7 @@ app.use(express.static('public', {
 // All other GET routes: serve the SPA shell with embedded data
 app.get('*', (req, res) => {
   if (!req.isAuthenticated()) return res.redirect('/login');
-  const data = getAllData(req.user);
+  const data = getAllData(req.user, !!req.session.demoMode);
   res.send(shell(data));
 });
 

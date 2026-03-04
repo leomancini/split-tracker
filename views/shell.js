@@ -159,6 +159,9 @@ export function shell(data) {
     @media (max-width: 600px) { .btn { height: 64px; font-size: 1.25rem; } }
     @media (hover: hover) { .btn:hover { background: var(--green-600); } }
     .btn:active { transform: scale(0.93); transition: transform 150ms; }
+    #demo-toggle { transition: filter 150ms, transform 150ms; }
+    @media (hover: hover) { #demo-toggle:hover { filter: brightness(0.95); } }
+    #demo-toggle:active { transform: scale(0.93); filter: brightness(0.9); }
 
     .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; width: auto; height: auto; }
     .btn-xs { padding: 0.5rem 0.875rem; font-size: 0.8125rem; width: auto; height: auto; }
@@ -659,7 +662,7 @@ export function shell(data) {
 
       // Avatar row with settled pill
       var settlements = calcSettlements(members, detail.expenses);
-      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">';
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;margin-bottom:1rem">';
       h += '<div style="display:flex;align-items:center">'
         + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return m.avatar_url})) + '</div>'
         + '<div class="add-member-icon" data-link="/groups/'+g.id+'/add-member" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.5rem;transition:background 150ms,color 150ms;cursor:pointer">+</div>'
@@ -804,6 +807,8 @@ export function shell(data) {
           : '<div style="width:72px;height:72px;border-radius:50%;background:var(--gray-200);margin:0 auto 1rem"></div>')
         + '<div style="font-size:1.25rem;font-weight:600">'+esc(u.name)+'</div>'
         + '<div style="font-size:0.9375rem;color:var(--gray-500);margin-bottom:2rem">'+esc(u.email)+'</div>'
+        + '<button class="btn" id="demo-toggle" style="margin-bottom:0.75rem;background:var(--gray-100);color:var(--gray-700)">'
+        + (D.demoMode ? 'Disable demo mode' : 'Enable demo mode') + '</button>'
         + '<a href="/logout" class="btn btn-danger" onclick="sessionStorage.clear()">Log out</a></div>';
     }
 
@@ -1006,6 +1011,21 @@ export function shell(data) {
         return;
       }
 
+
+      // Toggle demo mode
+      if(e.target.id === 'demo-toggle'){
+        e.preventDefault();
+        e.target.disabled = true;
+        fetch('/api/demo-mode',{method:'POST'})
+          .then(function(r){return r.json()})
+          .then(function(d){
+            if(d.ok){
+              D.demoMode = d.demoMode;
+              refreshData().then(function(){ nav('/profile'); });
+            }
+          }).catch(function(){ e.target.disabled = false; });
+        return;
+      }
 
       // Delete item from detail page
       var delItemBtn = e.target.closest('[data-action="delete-item"]');

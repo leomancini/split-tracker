@@ -22,6 +22,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     created_by INTEGER NOT NULL REFERENCES users(id),
+    is_demo INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
   );
 
@@ -53,6 +54,13 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now'))
   );
 `);
+
+// --- Migrations ---
+try {
+  db.exec('ALTER TABLE groups ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0');
+} catch (e) {
+  // Column already exists
+}
 
 // --- Helpers ---
 
@@ -86,12 +94,14 @@ export function getUserById(id) {
 
 // --- Group helpers ---
 
-export function getUserGroups(userId) {
+export function getUserGroups(userId, showDemo = false) {
   const groups = db.prepare(`
-    SELECT g.*, gm.role,
+    SELECT g.*, COALESCE(gm.role, 'viewer') as role,
       (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) as member_count
     FROM groups g
-    JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = ?
+    LEFT JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = ?
+    WHERE (gm.user_id IS NOT NULL ${showDemo ? "OR g.is_demo = 1" : ""})
+      ${showDemo ? "" : "AND g.is_demo = 0"}
     ORDER BY g.created_at DESC
   `).all(userId);
 

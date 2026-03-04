@@ -30,9 +30,15 @@ export function registerApiRoutes(app, ensureAuth) {
     next();
   });
 
+  // Toggle demo mode
+  app.post('/api/demo-mode', ensureAuth, (req, res) => {
+    req.session.demoMode = !req.session.demoMode;
+    res.json({ ok: true, demoMode: req.session.demoMode });
+  });
+
   // Get all data for the current user in one payload
   app.get('/api/data', ensureAuth, (req, res) => {
-    res.json(getAllData(req.user));
+    res.json(getAllData(req.user, !!req.session.demoMode));
   });
 
   // Get group detail
@@ -40,7 +46,7 @@ export function registerApiRoutes(app, ensureAuth) {
     const groupId = parseInt(req.params.id);
     const group = getGroup(groupId);
     if (!group) return res.status(404).json({ error: 'Group not found' });
-    if (!isGroupMember(groupId, req.user.id)) return res.status(403).json({ error: 'Not a member' });
+    if (!isGroupMember(groupId, req.user.id) && !(group.is_demo && req.session.demoMode)) return res.status(403).json({ error: 'Not a member' });
 
     const members = getGroupMembers(groupId);
     const invites = getGroupInvites(groupId);
@@ -192,12 +198,12 @@ export function registerApiRoutes(app, ensureAuth) {
   });
 }
 
-export function getAllData(user) {
+export function getAllData(user, demoMode = false) {
   // Auto-accept any pending invites
   const pendingInvites = getPendingInvitesForUser(user.email);
   for (const invite of pendingInvites) {
     acceptInvite(invite.id, user.id);
   }
-  const groups = getUserGroups(user.id);
-  return { user, groups, pendingInvites: [] };
+  const groups = getUserGroups(user.id, demoMode);
+  return { user, groups, pendingInvites: [], demoMode };
 }
