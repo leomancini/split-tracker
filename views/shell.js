@@ -45,8 +45,9 @@ export function shell(data) {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   <style>
     :root {
-      --green-50: #f0fdf4;
+      --green-50: #e5f9ec;
       --green-100: #dcfce7;
+      --green-200: #c0edcf;
       --green-500: #22c55e;
       --green-600: #16a34a;
       --green-700: #15803d;
@@ -84,7 +85,7 @@ export function shell(data) {
 
     nav {
       background: white;
-      padding: 0.75rem 1rem;
+      padding: 0.75rem 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -122,13 +123,11 @@ export function shell(data) {
     .container {
       max-width: 600px;
       margin: 0 auto;
-      padding: 1rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+      padding: 1rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
     }
 
     @media (max-width: 600px) {
       nav { padding: 1rem 1.5rem; }
-      .container { padding-left: 1.5rem; padding-right: 1.5rem; }
-      .sticky-bottom { padding-left: 1.5rem; padding-right: 1.5rem; }
     }
 
     h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
@@ -219,12 +218,9 @@ export function shell(data) {
     @media (hover: hover) { .add-member-icon:hover { background: var(--gray-200) !important; color: var(--gray-700) !important; } }
 
     .expense-row { transition: background 150ms, transform 100ms; border-radius: var(--radius); margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
-    @media (hover: hover) { .expense-row:hover { background: var(--gray-100); } }
-    .expense-row:active { background: var(--gray-100); transform: scale(0.97); }
+    @media (hover: hover) { .expense-row:hover { background: var(--green-50); } }
+    .expense-row:active { background: var(--green-50); transform: scale(0.97); }
 
-    .expense-sep { height: 2px; border-radius: 999px; background: var(--gray-100); transition: opacity 150ms; }
-    .expense-row:active + .expense-sep { opacity: 0; }
-    .expense-sep:has(+ .expense-row:active) { opacity: 0; }
 
     label {
       display: block;
@@ -286,7 +282,7 @@ export function shell(data) {
       margin: 0 -0.5rem;
     }
 
-    .member-row + .member-row { border-top: 2px solid var(--gray-100); margin-top: -1px; }
+
 
     .member-avatar {
       width: 42px;
@@ -372,7 +368,10 @@ export function shell(data) {
       justify-content: center;
       font-size: 1rem;
       flex-shrink: 0;
+      transition: background 150ms, color 150ms;
     }
+    @media (hover: hover) { .expense-row:hover .expense-icon { background: var(--green-200); color: var(--green-700); } }
+    .expense-row:active .expense-icon { background: var(--green-200); color: var(--green-700); }
 
     .expense-name {
       font-size: 1rem;
@@ -389,6 +388,7 @@ export function shell(data) {
       color: var(--gray-900);
       white-space: nowrap;
       margin-left: 0.5rem;
+      padding-right: 0.25rem;
     }
 
     .item-detail-icon {
@@ -664,16 +664,19 @@ export function shell(data) {
         + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return m.avatar_url})) + '</div>'
         + '<div class="add-member-icon" data-link="/groups/'+g.id+'/add-member" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.5rem;transition:background 150ms,color 150ms;cursor:pointer">+</div>'
         + '</div>';
-      if(!settlements.length && detail.expenses && detail.expenses.length){
+      var mySettlements = settlements.filter(function(s){ return s.from==D.user.id || s.to==D.user.id; });
+      if(!mySettlements.length && detail.expenses && detail.expenses.length){
         h += '<span style="display:inline-flex;align-items:center;font-size:0.8125rem;color:var(--green-700);font-weight:500;padding:0.375rem 0.75rem;background:var(--green-100);border-radius:999px"><i class="fa-solid fa-check" style="margin-right:0.4rem"></i>Settled</span>';
       }
       h += '</div>';
 
       // --- Balances ---
-      if(settlements.length){
+      if(mySettlements.length){
         h += '<div class="card" style="margin-top:1.5rem;margin-bottom:1.25rem">';
         settlements.forEach(function(s){
           var isYou = s.from==D.user.id;
+          var involvesYou = s.from==D.user.id || s.to==D.user.id;
+          if(!involvesYou) return;
           h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.125rem 0">'
             + '<span style="font-size:0.875rem">'
             + '<span style="font-weight:500">'+(isYou?'You':esc(s.fromName.split(' ')[0]))+'</span>'
@@ -694,7 +697,6 @@ export function shell(data) {
             + '<span class="expense-name" style="flex:1;min-width:0">'+esc(ex.name)+'</span>'
             + '<span class="expense-amount">'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
-          if(idx < expenses.length - 1) h += '<div class="expense-sep"></div>';
         });
       } else {
         h += '<div class="empty">No items yet</div>';

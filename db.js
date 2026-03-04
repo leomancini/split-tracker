@@ -99,7 +99,7 @@ export function getUserGroups(userId) {
     SELECT u.avatar_url FROM group_members gm
     JOIN users u ON u.id = gm.user_id
     WHERE gm.group_id = ?
-    ORDER BY gm.joined_at ASC
+    ORDER BY (CASE WHEN gm.role = 'owner' THEN 0 ELSE 1 END), gm.joined_at ASC
   `);
 
   for (const g of groups) {
@@ -136,7 +136,7 @@ export function getGroupMembers(groupId) {
     FROM group_members gm
     JOIN users u ON u.id = gm.user_id
     WHERE gm.group_id = ?
-    ORDER BY gm.joined_at ASC
+    ORDER BY (CASE WHEN gm.role = 'owner' THEN 0 ELSE 1 END), gm.joined_at ASC
   `).all(groupId);
 }
 
