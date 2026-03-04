@@ -35,11 +35,11 @@ console.log(`Using real user: ${realUser.name} (${realUser.email})`);
 
 // --- Create demo users ---
 const demoUsers = [
-  { google_id: 'demo_alice',   email: 'alice.martin@demo.split',   name: 'Alice Martin',   avatar_url: 'https://randomuser.me/api/portraits/women/44.jpg' },
-  { google_id: 'demo_bob',     email: 'bob.johnson@demo.split',    name: 'Bob Johnson',    avatar_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
-  { google_id: 'demo_carla',   email: 'carla.diaz@demo.split',     name: 'Carla Diaz',     avatar_url: 'https://randomuser.me/api/portraits/women/65.jpg' },
-  { google_id: 'demo_dan',     email: 'dan.kim@demo.split',        name: 'Dan Kim',        avatar_url: 'https://randomuser.me/api/portraits/men/75.jpg' },
-  { google_id: 'demo_emma',    email: 'emma.wilson@demo.split',    name: 'Emma Wilson',    avatar_url: 'https://randomuser.me/api/portraits/women/22.jpg' },
+  { google_id: 'demo_alice',   email: 'alice.martin@demo.split',   name: 'Alice Martin',   avatar_url: 'https://i.pravatar.cc/150?u=alice' },
+  { google_id: 'demo_bob',     email: 'bob.johnson@demo.split',    name: 'Bob Johnson',    avatar_url: 'https://i.pravatar.cc/150?u=bob' },
+  { google_id: 'demo_carla',   email: 'carla.diaz@demo.split',     name: 'Carla Diaz',     avatar_url: 'https://i.pravatar.cc/150?u=carla' },
+  { google_id: 'demo_dan',     email: 'dan.kim@demo.split',        name: 'Dan Kim',        avatar_url: 'https://i.pravatar.cc/150?u=dan' },
+  { google_id: 'demo_emma',    email: 'emma.wilson@demo.split',    name: 'Emma Wilson',    avatar_url: 'https://i.pravatar.cc/150?u=emma' },
 ];
 
 const insertUser = db.prepare(`

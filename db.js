@@ -100,8 +100,7 @@ export function getUserGroups(userId, showDemo = false) {
       (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) as member_count
     FROM groups g
     LEFT JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = ?
-    WHERE (gm.user_id IS NOT NULL ${showDemo ? "OR g.is_demo = 1" : ""})
-      ${showDemo ? "" : "AND g.is_demo = 0"}
+    WHERE ${showDemo ? "g.is_demo = 1" : "gm.user_id IS NOT NULL AND g.is_demo = 0"}
     ORDER BY g.created_at DESC
   `).all(userId);
 

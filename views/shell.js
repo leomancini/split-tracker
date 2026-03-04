@@ -803,7 +803,7 @@ export function shell(data) {
       var u = D.user;
       var avatarSrc = u.avatar_url ? getCachedAvatar(u.avatar_url) : null;
       return '<div style="text-align:center;padding-top:1.5rem">'
-        + (avatarSrc ? '<img src="'+esc(avatarSrc)+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:1rem" alt="">'
+        + (avatarSrc ? '<img src="'+esc(avatarSrc)+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:1rem;background:var(--gray-200)" alt="">'
           : '<div style="width:72px;height:72px;border-radius:50%;background:var(--gray-200);margin:0 auto 1rem"></div>')
         + '<div style="font-size:1.25rem;font-weight:600">'+esc(u.name)+'</div>'
         + '<div style="font-size:0.9375rem;color:var(--gray-500);margin-bottom:2rem">'+esc(u.email)+'</div>'
