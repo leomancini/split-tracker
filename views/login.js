@@ -46,7 +46,7 @@ export function loginPage() {
       align-items: center;
       justify-content: center;
       width: 100%;
-      max-width: 320px;
+      max-width: 600px;
       margin: 0 auto;
       background: #22c55e;
       color: white;
@@ -69,10 +69,10 @@ export function loginPage() {
   </style>
 </head>
 <body>
-  <div style="text-align: center; padding: 3rem 1rem;">
-    <div style="width:72px;height:72px;border-radius:20px;background:#22c55e;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1.5rem"><span style="font-size:2.5rem;font-weight:800;color:white">%</span></div>
+  <div style="text-align: center; padding: 3rem 1rem; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 15vh;">
+    <img src="/icon.svg" alt="Split" style="width:84px;height:84px;border-radius:20px;margin-bottom:1.5rem">
     <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Split</h1>
-    <p style="color: #6b7280; margin-bottom: 2rem;">Split costs with friends</p>
+    <p style="color: #6b7280; margin-bottom: 5rem;">Keep track of shared costs with a group</p>
     <a href="/auth/google" class="btn">Sign in with Google</a>
   </div>
   <script>document.addEventListener('touchstart',function(){},false);</script>

@@ -66,11 +66,10 @@ export function shell(data) {
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
-      -webkit-user-select: none;
-      user-select: none;
     }
 
-    input, textarea { -webkit-user-select: text; user-select: text; }
+    input, textarea, select { -webkit-user-select: text; user-select: text; }
+    ::selection { background: var(--green-100); }
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -89,23 +88,30 @@ export function shell(data) {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      max-width: 600px;
+      margin: 0 auto;
     }
 
     nav .brand {
       font-weight: 700;
       font-size: 1.5rem;
       color: var(--green-500);
-      text-decoration: none;
-      cursor: pointer;
       padding: 0.75rem 1rem;
       margin: -0.75rem -1rem;
+      -webkit-user-select: none;
+      user-select: none;
     }
+    nav .brand[data-link] { transition: color 150ms, transform 100ms; -webkit-user-select: none; user-select: none; }
+    @media (hover: hover) { nav .brand[data-link]:hover { color: var(--gray-700) !important; } }
+    nav .brand[data-link]:active { transform: scale(0.85); }
 
     nav .user-info {
       display: flex;
       align-items: center;
       cursor: pointer;
+      transition: transform 100ms;
     }
+    nav .user-info:active { transform: scale(0.85); }
 
     nav .user-info img {
       width: 32px;
@@ -147,7 +153,8 @@ export function shell(data) {
     @media (hover: hover) { .btn:hover { background: var(--green-600); } }
     .btn:active { transform: scale(0.93); transition: transform 150ms; }
 
-    .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; }
+    .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; width: auto; }
+    .btn-xs { padding: 0.5rem 0.875rem; font-size: 0.8125rem; width: auto; }
 
     .sticky-bottom {
       position: fixed;
@@ -159,6 +166,8 @@ export function shell(data) {
       padding-top: 2.5rem;
       z-index: 10;
       pointer-events: none;
+      max-width: 600px;
+      margin: 0 auto;
     }
     .sticky-bottom .btn { pointer-events: auto; width: 100%; }
 
@@ -198,8 +207,12 @@ export function shell(data) {
     @media (hover: hover) { .card-link:hover { border-color: var(--green-500); } }
     .card-link:active { transform: scale(0.95); transition: transform 150ms; }
 
-    .expense-row { transition: background 150ms; border-radius: var(--radius); margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
-    .expense-row:active { background: var(--gray-50); }
+    @media (hover: hover) { h1[data-action="rename-group"]:hover .fa-pen { color: var(--gray-700) !important; } }
+    @media (hover: hover) { .add-member-icon:hover { background: var(--gray-200) !important; color: var(--gray-700) !important; } }
+
+    .expense-row { transition: background 150ms, transform 100ms; border-radius: var(--radius); margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
+    @media (hover: hover) { .expense-row:hover { background: var(--gray-100); } }
+    .expense-row:active { background: var(--gray-100); transform: scale(0.97); }
 
     .expense-sep { height: 2px; border-radius: 999px; background: var(--gray-100); transition: opacity 150ms; }
     .expense-row:active + .expense-sep { opacity: 0; }
@@ -213,7 +226,7 @@ export function shell(data) {
       color: var(--gray-700);
     }
 
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       border: 2px solid var(--gray-200);
       border-radius: var(--radius);
@@ -225,10 +238,12 @@ export function shell(data) {
       -webkit-appearance: none;
     }
 
-    input:focus, textarea:focus {
+    input:focus, textarea:focus, select:focus {
       outline: none;
       border-color: var(--green-500);
     }
+
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; padding-right: 2rem; }
 
     textarea { resize: vertical; min-height: 80px; }
 
@@ -259,10 +274,11 @@ export function shell(data) {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.5rem 0;
+      padding: 0.75rem 0.5rem;
+      margin: 0 -0.5rem;
     }
 
-    .member-row + .member-row { border-top: 2px solid var(--gray-100); }
+    .member-row + .member-row { border-top: 2px solid var(--gray-100); margin-top: -1px; }
 
     .member-avatar {
       width: 42px;
@@ -303,19 +319,17 @@ export function shell(data) {
       padding: 0.75rem 1rem;
       border-radius: var(--radius);
       margin-bottom: 1rem;
-      font-size: 0.875rem;
+      font-size: 1rem;
     }
 
     .alert-success {
       background: var(--green-50);
       color: var(--green-700);
-      border: 2px solid var(--green-100);
     }
 
     .alert-error {
       background: #fef2f2;
       color: #dc2626;
-      border: 2px solid #fca5a5;
     }
 
     .back-link {
@@ -325,9 +339,11 @@ export function shell(data) {
       text-decoration: none;
       font-size: 0.875rem;
       cursor: pointer;
+      transition: color 150ms, transform 100ms;
     }
 
     @media (hover: hover) { .back-link:hover { color: var(--gray-700); } }
+    .back-link:active { transform: scale(0.9); }
 
     .balance-row + .balance-row { border-top: 2px solid var(--gray-100); }
 
@@ -421,10 +437,10 @@ export function shell(data) {
 </head>
 <body>
   <nav>
-    <span class="brand" data-link="/">Split</span>
+    <span class="brand">Split</span>
     <span class="user-info" data-link="/profile">
       ${data.user.avatar_url
-        ? `<img src="${esc(data.user.avatar_url)}" alt="">`
+        ? `<img data-avatar-url="${esc(data.user.avatar_url)}" style="width:32px;height:32px;border-radius:50%" alt="">`
         : `<div style="width:32px;height:32px;border-radius:50%;background:var(--gray-200)"></div>`}
     </span>
   </nav>
@@ -440,6 +456,37 @@ export function shell(data) {
     }
   });
 
+  // Cache avatars to avoid Google rate limits
+  var avatarCache = {};
+  (function(){
+    // Load all cached avatars from sessionStorage
+    for(var i=0;i<sessionStorage.length;i++){
+      var k = sessionStorage.key(i);
+      if(k.indexOf('avc_')===0) avatarCache[k.slice(4)] = sessionStorage.getItem(k);
+    }
+    // Set nav avatar
+    var navImg = document.querySelector('.user-info img[data-avatar-url]');
+    if(navImg){
+      var url = navImg.getAttribute('data-avatar-url');
+      if(avatarCache[url]) navImg.src = avatarCache[url];
+      else cacheAvatar(url, function(data){ navImg.src = data; });
+    }
+  })();
+  function cacheAvatar(url, cb){
+    if(!url || avatarCache[url]) return;
+    avatarCache[url] = url; // mark in-flight
+    fetch(url).then(function(r){ return r.blob(); }).then(function(blob){
+      var reader = new FileReader();
+      reader.onloadend = function(){
+        avatarCache[url] = reader.result;
+        try{ sessionStorage.setItem('avc_'+url, reader.result); }catch(e){}
+        if(cb) cb(reader.result);
+      };
+      reader.readAsDataURL(blob);
+    }).catch(function(){});
+  }
+  function getCachedAvatar(url){ return avatarCache[url] || url; }
+
   (function(){
     // --- Data store ---
     var D = ${JSON.stringify(data)};
@@ -453,7 +500,8 @@ export function shell(data) {
       if(!avatars||!avatars.length) return '';
       var h = '<div class="avatar-stack">';
       avatars.forEach(function(url){
-        h += url ? '<img src="'+esc(url)+'" alt="">' : '<div class="avatar-placeholder"></div>';
+        if(url){ cacheAvatar(url); h += '<img src="'+esc(getCachedAvatar(url))+'" alt="">'; }
+        else h += '<div class="avatar-placeholder"></div>';
       });
       h += '</div>';
       return h;
@@ -561,19 +609,6 @@ export function shell(data) {
       var h = '';
       if(alert) h += '<div class="alert alert-success">'+esc(alert)+'</div>';
 
-      if(D.pendingInvites.length){
-        h += '<div class="section"><h2>Pending invites</h2><div class="card">';
-        D.pendingInvites.forEach(function(inv){
-          h += '<div class="invite-row"><div>'
-            + '<div style="font-size:0.875rem;font-weight:500">'+esc(inv.group_name)+'</div>'
-            + '<div style="font-size:0.8125rem;color:var(--gray-500)">from '+esc(inv.invited_by_name)+'</div>'
-            + '</div><div class="invite-actions">'
-            + '<button class="btn btn-sm" data-action="accept-invite" data-id="'+inv.id+'">Accept</button>'
-            + '<button class="btn btn-sm btn-danger" data-action="decline-invite" data-id="'+inv.id+'">Decline</button>'
-            + '</div></div>';
-        });
-        h += '</div></div>';
-      }
 
       h += '<div class="section">';
       if(D.groups.length){
@@ -586,19 +621,20 @@ export function shell(data) {
       } else {
         h += '<div class="empty">No groups yet. Create one to get started!</div>';
       }
-      h += '<button class="btn" style="margin-top:0.5rem" data-link="/groups/new">New group</button></div>';
+      h += '<div style="height:5rem"></div></div>';
+      h += '<div class="sticky-bottom"><button class="btn" data-link="/groups/new">New group</button></div>';
       return h;
     }
 
     function groupCreateView(){
-      return '<h1>Create a group</h1>'
+      return '<h1>New group</h1>'
         + '<form id="create-group-form">'
-        + '<div class="form-group"><label>Title</label>'
-        + '<input type="search" id="grp-title" autocomplete="off" role="presentation" placeholder="e.g. Apartment, Trip to Paris"></div>'
-        + '<div class="form-group"><label>Invite (optional)</label>'
-        + '<textarea id="grp-inv" autocomplete="off" placeholder="One per line"></textarea>'
-        + '<div class="form-hint">Enter the Google account addresses of people you want to invite.</div></div>'
-        + '<button type="submit" class="btn">Create group</button></form>';
+        + '<div class="form-group"><label>Name</label>'
+        + '<input type="search" id="grp-title" autocomplete="off" role="presentation" placeholder="Trip to Paris, apartment, groceries"></div>'
+        + '<div class="form-group"><label>Invite</label>'
+        + '<textarea id="grp-inv" autocomplete="off" placeholder="Email addresses, one per line"></textarea></div>'
+        + '</form>'
+        + '<div class="sticky-bottom"><button type="submit" form="create-group-form" class="btn">Create group</button></div>';
     }
 
     function groupDetailView(detail, alert){
@@ -608,7 +644,7 @@ export function shell(data) {
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
       if(isOwner){
-        h += '<h1 style="margin-bottom:0.5rem;cursor:pointer" data-action="rename-group" data-group-id="'+g.id+'">'+esc(g.name)+' <i class="fa-solid fa-pen" style="font-size:0.75rem;color:var(--gray-400);vertical-align:middle"></i></h1>';
+        h += '<h1 style="margin-bottom:0.5rem;cursor:pointer" data-action="rename-group" data-group-id="'+g.id+'">'+esc(g.name)+' <i class="fa-solid fa-pen" style="font-size:0.75rem;color:var(--gray-400);vertical-align:middle;transition:color 150ms"></i></h1>';
       } else {
         h += '<h1 style="margin-bottom:0.5rem">'+esc(g.name)+'</h1>';
       }
@@ -616,25 +652,25 @@ export function shell(data) {
       // Avatar row with settled pill
       var settlements = calcSettlements(members, detail.expenses);
       h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">';
-      h += '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer;display:flex;align-items:center">'
-        + avatarStack(members.map(function(m){return m.avatar_url}))
-        + '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.5rem">+</div>'
+      h += '<div style="display:flex;align-items:center">'
+        + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return m.avatar_url})) + '</div>'
+        + '<div class="add-member-icon" data-link="/groups/'+g.id+'/add-member" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.5rem;transition:background 150ms,color 150ms;cursor:pointer">+</div>'
         + '</div>';
       if(!settlements.length && detail.expenses && detail.expenses.length){
-        h += '<span style="display:inline-flex;align-items:center;font-size:0.8125rem;color:var(--green-700);font-weight:500;padding:0.375rem 0.75rem;background:var(--green-100);border-radius:999px"><i class="fa-solid fa-check" style="margin-right:0.25rem"></i>Settled</span>';
+        h += '<span style="display:inline-flex;align-items:center;font-size:0.8125rem;color:var(--green-700);font-weight:500;padding:0.375rem 0.75rem;background:var(--green-100);border-radius:999px"><i class="fa-solid fa-check" style="margin-right:0.4rem"></i>Settled</span>';
       }
       h += '</div>';
 
       // --- Balances ---
       if(settlements.length){
-        h += '<div class="card" style="margin-bottom:1.25rem">';
+        h += '<div class="card" style="margin-top:1.5rem;margin-bottom:1.25rem">';
         settlements.forEach(function(s){
           var isYou = s.from==D.user.id;
-          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.375rem 0">'
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.125rem 0">'
             + '<span style="font-size:0.875rem">'
-            + '<span style="font-weight:500">'+(isYou?'You':esc(s.fromName))+'</span>'
-            + ' owes '
-            + '<span style="font-weight:500">'+(s.to==D.user.id?'you':esc(s.toName))+'</span>'
+            + '<span style="font-weight:500">'+(isYou?'You':esc(s.fromName.split(' ')[0]))+'</span>'
+            + (isYou?' owe ':' owes ')
+            + '<span style="font-weight:500">'+(s.to==D.user.id?'you':esc(s.toName.split(' ')[0]))+'</span>'
             + '</span>'
             + '<span style="font-family:var(--mono);font-size:0.875rem;font-weight:600;color:'+(isYou?'#dc2626':'var(--green-600)')+'">$'+s.amt.toFixed(2)+'</span>'
             + '</div>';
@@ -666,13 +702,24 @@ export function shell(data) {
     }
 
     function addExpenseView(gid){
-      return '<h1>Add item</h1>'
+      var members = groupCache[gid] ? groupCache[gid].members : [];
+      var h = '<h1>Add item</h1>'
         + '<form id="add-expense-form" data-group-id="'+gid+'">'
-        + '<div class="form-group"><label>What was it for?</label>'
-        + '<input type="text" id="exp-desc" placeholder="e.g. Pizza, Uber, Groceries"></div>'
+        + '<div class="form-group"><label>Name</label>'
+        + '<input type="text" id="exp-desc" placeholder="Pizza, groceries, ride home, etc" data-1p-ignore autocomplete="off"></div>'
         + '<div class="form-group"><label>Amount</label>'
-        + '<input type="number" id="exp-cost" inputmode="decimal" step="0.01" placeholder="0.00"></div>'
-        + '<button type="submit" class="btn">Add item</button></form>';
+        + '<input type="number" id="exp-cost" inputmode="decimal" step="0.01" placeholder="0.00"></div>';
+      if(members.length){
+        h += '<div class="form-group"><label>Paid by</label>'
+          + '<select id="exp-paid-by">';
+        members.forEach(function(m){
+          h += '<option value="'+m.id+'"'+(m.id === D.user.id ? ' selected' : '')+'>'+esc(m.id === D.user.id ? 'You' : m.name)+'</option>';
+        });
+        h += '</select></div>';
+      }
+      h += '</form>'
+        + '<div class="sticky-bottom"><button type="submit" form="add-expense-form" class="btn">Add item</button></div>';
+      return h;
     }
 
     function itemDetailView(gid, ex, isOwner){
@@ -688,7 +735,7 @@ export function shell(data) {
       h += '<div class="info-row"><span class="info-label">Category</span><span class="info-value">'+catLabel(ex.category)+'</span></div>';
       h += '</div>';
       if(canDelete){
-        h += '<button class="btn btn-danger" data-action="delete-item" data-id="'+ex.id+'" data-group-id="'+gid+'" style="width:100%">Delete item</button>';
+        h += '<div class="sticky-bottom"><button class="btn btn-danger" data-action="delete-item" data-id="'+ex.id+'" data-group-id="'+gid+'">Delete item</button></div>';
       }
       return h;
     }
@@ -699,58 +746,55 @@ export function shell(data) {
 
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
-      h += '<h1>Members</h1>';
+      h += '<h1>People</h1>';
       members.forEach(function(m){
         h += '<div class="member-row">'
-          + (m.avatar_url ? '<img src="'+esc(m.avatar_url)+'" class="member-avatar" alt="">' : '<div class="member-avatar"></div>')
+          + (m.avatar_url ? '<img src="'+esc(getCachedAvatar(m.avatar_url))+'" class="member-avatar" alt="">' : '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc(m.email.charAt(0).toUpperCase())+'</div>')
           + '<div class="member-info"><div class="member-name">'+esc(m.name)+'</div>'
-          + '<div class="member-email">'+esc(m.email)+'</div></div>';
+          + '<div class="member-email">'+esc(m.email)+(m.role==='owner'?' &middot; Group creator':'')+'</div></div>';
         if(isOwner && m.role !== 'owner'){
-          h += '<button class="btn btn-sm btn-danger" data-action="remove-member" data-group-id="'+g.id+'" data-user-id="'+m.id+'">Remove</button>';
-        } else {
-          h += '<span class="badge'+(m.role==='owner'?'':' badge-gray')+'">'+esc(m.role)+'</span>';
+          h += '<button class="btn btn-xs btn-danger" data-action="remove-member" data-group-id="'+g.id+'" data-user-id="'+m.id+'">Remove</button>';
         }
         h += '</div>';
       });
 
-      if(invites.length){
-        h += '<div style="margin-top:1.5rem"><h2>Pending invites</h2>';
-        invites.forEach(function(i){
-          h += '<div class="invite-row"><span style="font-size:0.875rem">'+esc(i.email)+'</span>';
-          if(isOwner){
-            h += '<button class="btn btn-sm btn-danger" data-action="cancel-invite" data-group-id="'+g.id+'" data-invite-id="'+i.id+'">Cancel</button>';
-          } else {
-            h += '<span class="badge badge-gray">pending</span>';
-          }
-          h += '</div>';
-        });
+      invites.forEach(function(i){
+        h += '<div class="member-row">'
+          + '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc(i.email.charAt(0).toUpperCase())+'</div>'
+          + '<div class="member-info"><div class="member-name">'+esc(i.email)+'</div>'
+          + '<div class="member-email">Pending</div></div>';
+        if(isOwner){
+          h += '<button class="btn btn-xs btn-danger" data-action="cancel-invite" data-group-id="'+g.id+'" data-invite-id="'+i.id+'">Cancel</button>';
+        }
         h += '</div>';
-      }
+      });
 
       if(isOwner){
         h += '<div style="height:5rem"></div>';
-        h += '<div class="sticky-bottom"><button class="btn" data-link="/groups/'+g.id+'/add-member">Invite member</button></div>';
+        h += '<div class="sticky-bottom"><button class="btn" data-link="/groups/'+g.id+'/add-member">Add person</button></div>';
       }
 
       return h;
     }
 
     function addMemberView(gid){
-      return '<h1>Invite member</h1>'
+      return '<h1>Add person</h1>'
         + '<form id="invite-form" data-group-id="'+gid+'">'
         + '<div class="form-group"><label>Email address</label>'
         + '<input type="email" id="invite-email" placeholder="person@example.com"></div>'
-        + '<button type="submit" class="btn">Send invite</button></form>';
+        + '</form>'
+        + '<div class="sticky-bottom"><button type="submit" form="invite-form" class="btn">Send invite</button></div>';
     }
 
     function profileView(){
       var u = D.user;
+      var avatarSrc = u.avatar_url ? getCachedAvatar(u.avatar_url) : null;
       return '<div style="text-align:center;padding-top:1.5rem">'
-        + (u.avatar_url ? '<img src="'+esc(u.avatar_url)+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:1rem" alt="">'
+        + (avatarSrc ? '<img src="'+esc(avatarSrc)+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:1rem" alt="">'
           : '<div style="width:72px;height:72px;border-radius:50%;background:var(--gray-200);margin:0 auto 1rem"></div>')
         + '<div style="font-size:1.25rem;font-weight:600">'+esc(u.name)+'</div>'
         + '<div style="font-size:0.9375rem;color:var(--gray-500);margin-bottom:2rem">'+esc(u.email)+'</div>'
-        + '<a href="/logout" class="btn btn-danger">Log out</a></div>';
+        + '<a href="/logout" class="btn btn-danger" onclick="sessionStorage.clear()">Log out</a></div>';
     }
 
     // --- Router ---
@@ -758,25 +802,28 @@ export function shell(data) {
     var groupCache = {};
     var lastNav = 0;
     var routeVer = 0;
+    var prevPath = '';
 
     var brandEl = document.querySelector('nav .brand');
     var avatarEl = document.querySelector('nav .user-info');
     function updateNav(path){
       if(path === '/' || path === ''){
         brandEl.innerHTML = 'Split';
-        brandEl.setAttribute('data-link','/');
+        brandEl.removeAttribute('data-link');
         brandEl.style.fontSize = '1.5rem';
         brandEl.style.color = '';
+        brandEl.style.cursor = '';
         avatarEl.style.display = '';
       } else {
         avatarEl.style.display = 'none';
         brandEl.innerHTML = '&larr;';
         brandEl.style.fontSize = '1.5rem';
         brandEl.style.color = 'var(--gray-500)';
+        brandEl.style.cursor = 'pointer';
         // Set back target based on route depth
         if(path.match(/^\\/groups\\/\\d+\\/add-member/)){
           var gid = path.match(/^\\/groups\\/(\\d+)/)[1];
-          brandEl.setAttribute('data-link','/groups/'+gid+'/members');
+          brandEl.setAttribute('data-link', prevPath && prevPath.indexOf('/groups/'+gid) === 0 ? prevPath : '/groups/'+gid);
         } else if(path.match(/^\\/groups\\/\\d+\\/(items|add-expense|members)/)){
           var gid = path.match(/^\\/groups\\/(\\d+)/)[1];
           brandEl.setAttribute('data-link','/groups/'+gid);
@@ -793,7 +840,7 @@ export function shell(data) {
       var m;
 
       if(path === '/' || path === ''){
-        document.title = 'Dashboard - Split';
+        document.title = 'Split';
         app.innerHTML = dashboardView(opts.alert);
         // Prefetch Font Awesome so it's ready when user opens a group
         if(!document.querySelector('link[data-fa-prefetch]')){
@@ -806,14 +853,14 @@ export function shell(data) {
         }
       }
       else if(path === '/groups/new'){
-        document.title = 'Create Group - Split';
+        document.title = 'Split \u2013 New group';
         app.innerHTML = groupCreateView();
         var nameInput = document.getElementById('grp-title');
         if(nameInput) nameInput.focus();
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/add-expense$/))){
         var gid = m[1];
-        document.title = 'Add Item - Split';
+        document.title = 'Split \u2013 Add item';
         app.innerHTML = addExpenseView(gid);
         var expInput = document.getElementById('exp-desc');
         if(expInput) expInput.focus();
@@ -823,7 +870,7 @@ export function shell(data) {
         if(groupCache[gid]){
           var ex = (groupCache[gid].expenses||[]).find(function(e){return e.id===eid});
           if(ex){
-            document.title = esc(ex.name) + ' - Split';
+            document.title = 'Split \u2013 ' + esc(ex.name);
             app.innerHTML = itemDetailView(gid, ex, groupCache[gid].isOwner);
           } else { nav('/groups/'+gid); }
         } else {
@@ -834,14 +881,14 @@ export function shell(data) {
           groupCache[gid] = d;
           var ex = (d.expenses||[]).find(function(e){return e.id===eid});
           if(ex){
-            document.title = esc(ex.name) + ' - Split';
+            document.title = 'Split \u2013 ' + esc(ex.name);
             app.innerHTML = itemDetailView(gid, ex, d.isOwner);
           } else { nav('/groups/'+gid); }
         }
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/add-member$/))){
         var gid = m[1];
-        document.title = 'Invite Member - Split';
+        document.title = 'Split \u2013 Add person';
         app.innerHTML = addMemberView(gid);
         var emailInput = document.getElementById('invite-email');
         if(emailInput) emailInput.focus();
@@ -849,11 +896,11 @@ export function shell(data) {
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/members$/))){
         var gid = m[1];
         if(groupCache[gid]){
-          document.title = 'Members - ' + groupCache[gid].group.name;
+          document.title = 'Split \u2013 ' + groupCache[gid].group.name;
           app.innerHTML = groupMembersView(groupCache[gid], opts.alert);
         } else {
           var gInfo = D.groups.find(function(g){return g.id==gid});
-          document.title = 'Members - ' + (gInfo?gInfo.name:'Group');
+          document.title = 'Split \u2013 ' + (gInfo?gInfo.name:'Group');
           app.innerHTML = '<div class="spinner"></div>';
         }
         try{
@@ -863,7 +910,7 @@ export function shell(data) {
           var detail = await r.json();
           if(myVer !== routeVer) return;
           groupCache[gid] = detail;
-          document.title = 'Members - ' + detail.group.name;
+          document.title = 'Split \u2013 ' + detail.group.name;
           app.innerHTML = groupMembersView(detail, opts.alert);
         }catch(e){ if(myVer === routeVer && !groupCache[gid]) nav('/groups/'+gid); }
       }
@@ -871,11 +918,11 @@ export function shell(data) {
         var gid = m[1];
         // Show cached or placeholder instantly
         if(groupCache[gid]){
-          document.title = groupCache[gid].group.name + ' - Split';
+          document.title = 'Split \u2013 ' + groupCache[gid].group.name;
           app.innerHTML = groupDetailView(groupCache[gid], opts.alert);
         } else {
           var gInfo = D.groups.find(function(g){return g.id==gid});
-          document.title = (gInfo?gInfo.name:'Group') + ' - Split';
+          document.title = 'Split \u2013 ' + (gInfo?gInfo.name:'Group');
           app.innerHTML = '<h1>'+(gInfo?esc(gInfo.name):'')+'</h1><div class="spinner"></div>';
         }
         try{
@@ -885,12 +932,12 @@ export function shell(data) {
           var detail = await r.json();
           if(myVer !== routeVer) return;
           groupCache[gid] = detail;
-          document.title = detail.group.name + ' - Split';
+          document.title = 'Split \u2013 ' + detail.group.name;
           app.innerHTML = groupDetailView(detail, opts.alert);
         }catch(e){ if(myVer === routeVer && !groupCache[gid]) nav('/'); }
       }
       else if(path === '/profile'){
-        document.title = 'Profile - Split';
+        document.title = 'Split \u2013 Profile';
         app.innerHTML = profileView();
       }
       else {
@@ -902,6 +949,7 @@ export function shell(data) {
       var now = Date.now();
       if(now - lastNav < 300 && path === location.pathname) return;
       lastNav = now;
+      prevPath = location.pathname;
       history.pushState({},'',path);
       route(path, opts);
       window.scrollTo(0,0);
@@ -948,25 +996,6 @@ export function shell(data) {
         return;
       }
 
-      // Accept invite
-      var acceptBtn = e.target.closest('[data-action="accept-invite"]');
-      if(acceptBtn){
-        e.preventDefault();
-        var id = acceptBtn.getAttribute('data-id');
-        acceptBtn.disabled = true;
-        fetch('/api/invites/'+id+'/accept',{method:'POST'})
-          .then(function(r){ return r.json() })
-          .then(function(d){
-            if(d.ok){
-              D.pendingInvites = D.pendingInvites.filter(function(i){return i.id!=id});
-              return refreshData().then(function(){
-                if(d.groupId) nav('/groups/'+d.groupId, {alert:{text:'Invite accepted!',type:'success'}});
-                else nav('/', {alert:'Invite accepted!'});
-              });
-            }
-          }).catch(function(){acceptBtn.disabled=false});
-        return;
-      }
 
       // Delete item from detail page
       var delItemBtn = e.target.closest('[data-action="delete-item"]');
@@ -1007,7 +1036,7 @@ export function shell(data) {
             .then(function(d){
               if(d.ok){
                 delete groupCache[rgId];
-                refreshData().then(function(){ nav('/groups/'+rgId, {alert:{text:'Group renamed.',type:'success'}}); });
+                refreshData().then(function(){ nav('/groups/'+rgId); });
               }
             });
         }
@@ -1018,7 +1047,7 @@ export function shell(data) {
       var rmBtn = e.target.closest('[data-action="remove-member"]');
       if(rmBtn){
         e.preventDefault();
-        if(!confirm('Remove this member from the group?'))return;
+        if(!confirm('Remove this person from the group?'))return;
         var rmGid = rmBtn.getAttribute('data-group-id');
         var rmUid = rmBtn.getAttribute('data-user-id');
         rmBtn.disabled = true;
@@ -1027,7 +1056,7 @@ export function shell(data) {
           .then(function(d){
             if(d.ok){
               delete groupCache[rmGid];
-              nav('/groups/'+rmGid+'/members', {alert:{text:'Member removed.',type:'success'}});
+              nav('/groups/'+rmGid+'/members', {alert:{text:'Person removed.',type:'success'}});
             } else { rmBtn.disabled=false; }
           }).catch(function(){rmBtn.disabled=false});
         return;
@@ -1051,22 +1080,6 @@ export function shell(data) {
         return;
       }
 
-      // Decline invite
-      var declineBtn = e.target.closest('[data-action="decline-invite"]');
-      if(declineBtn){
-        e.preventDefault();
-        var id2 = declineBtn.getAttribute('data-id');
-        declineBtn.disabled = true;
-        fetch('/api/invites/'+id2+'/decline',{method:'POST'})
-          .then(function(r){ return r.json() })
-          .then(function(d){
-            if(d.ok){
-              D.pendingInvites = D.pendingInvites.filter(function(i){return i.id!=id2});
-              nav('/',{alert:'Invite declined.'});
-            }
-          }).catch(function(){declineBtn.disabled=false});
-        return;
-      }
     });
 
     // Form submissions (add expense, create group, invite member)
@@ -1081,7 +1094,7 @@ export function shell(data) {
         var expAmount = costEl.value.trim();
         if(!expName||!expAmount) return;
         var cat = detectCat(expName);
-        var btn = e.target.querySelector('button[type="submit"]');
+        var btn = document.querySelector('button[form="add-expense-form"]');
         var btnText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:3px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
@@ -1090,7 +1103,7 @@ export function shell(data) {
         fetch('/api/groups/'+gid3+'/expenses',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({name:expName,amount:expAmount,category:cat})
+          body:JSON.stringify({name:expName,amount:expAmount,category:cat,paid_by:document.getElementById('exp-paid-by')?document.getElementById('exp-paid-by').value:undefined})
         }).then(function(r){return r.json()})
           .then(function(d){
             if(d.ok){
@@ -1115,8 +1128,8 @@ export function shell(data) {
         var invEl = document.getElementById('grp-inv');
         var name = titleEl.value.trim();
         if(!name) return;
-        var emails = invEl.value.trim();
-        var btn = e.target.querySelector('button[type="submit"]');
+        var emails = invEl.value.trim().split(/[\\s,]+/).filter(function(e){return e}).join('\\n');
+        var btn = document.querySelector('button[form="create-group-form"]');
         var btnText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:3px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
@@ -1147,7 +1160,7 @@ export function shell(data) {
         var emailEl = document.getElementById('invite-email');
         var email = emailEl.value.trim().toLowerCase();
         if(!email) return;
-        var btn = e.target.querySelector('button[type="submit"]');
+        var btn = document.querySelector('button[form="invite-form"]');
         var btnText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:3px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
@@ -1160,9 +1173,9 @@ export function shell(data) {
           .then(function(d){
             if(d.ok){
               delete groupCache[gid2];
-              nav('/groups/'+gid2+'/members', {alert:{text:'Invite sent!',type:'success'}});
+              nav('/groups/'+gid2+'/members');
             } else if(d.error === 'Already a member'){
-              nav('/groups/'+gid2+'/members', {alert:{text:'That person is already a member.',type:'error'}});
+              nav('/groups/'+gid2+'/members', {alert:{text:'That person is already in this group.',type:'error'}});
             } else if(d.error === 'Already invited'){
               nav('/groups/'+gid2+'/members', {alert:{text:'That email has already been invited.',type:'error'}});
             } else {
