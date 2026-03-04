@@ -40,6 +40,10 @@ const demoUsers = [
   { google_id: 'demo_carla',   email: 'carla.diaz@demo.split',     name: 'Carla Diaz',     avatar_url: 'https://i.pravatar.cc/150?u=carla' },
   { google_id: 'demo_dan',     email: 'dan.kim@demo.split',        name: 'Dan Kim',        avatar_url: 'https://i.pravatar.cc/150?u=dan' },
   { google_id: 'demo_emma',    email: 'emma.wilson@demo.split',    name: 'Emma Wilson',    avatar_url: 'https://i.pravatar.cc/150?u=emma' },
+  { google_id: 'demo_frank',   email: 'frank.lee@demo.split',      name: 'Frank Lee',      avatar_url: 'https://i.pravatar.cc/150?u=frank' },
+  { google_id: 'demo_grace',   email: 'grace.nguyen@demo.split',   name: 'Grace Nguyen',   avatar_url: 'https://i.pravatar.cc/150?u=grace' },
+  { google_id: 'demo_hiro',    email: 'hiro.tanaka@demo.split',    name: 'Hiro Tanaka',    avatar_url: 'https://i.pravatar.cc/150?u=hiro' },
+  { google_id: 'demo_isla',    email: 'isla.brown@demo.split',     name: 'Isla Brown',     avatar_url: 'https://i.pravatar.cc/150?u=isla' },
 ];
 
 const insertUser = db.prepare(`
@@ -92,43 +96,47 @@ function createDemoGroup(name, ownerKey, memberKeys, expenses, realUserRole) {
 // --- Seed demo groups ---
 console.log('Seeding demo groups...');
 
-createDemoGroup('Apartment 4B', 'demo_alice', ['demo_bob', 'demo_carla'], [
-  { name: 'March rent',         amount: 2400,  category: 'housing',   paidBy: 'me',         daysAgo: 2 },
-  { name: 'Electric bill',      amount: 142.50, category: 'utilities', paidBy: 'demo_bob',   daysAgo: 5 },
-  { name: 'Internet',           amount: 59.99, category: 'utilities', paidBy: 'me',          daysAgo: 5 },
-  { name: 'Groceries (Trader Joe\'s)', amount: 87.32, category: 'food', paidBy: 'demo_carla', daysAgo: 3 },
-  { name: 'Dish soap & sponges', amount: 12.49, category: 'general',  paidBy: 'demo_alice',  daysAgo: 7 },
-  { name: 'February rent',      amount: 2400,  category: 'housing',   paidBy: 'me',          daysAgo: 32 },
-  { name: 'Gas bill',           amount: 78.20, category: 'utilities', paidBy: 'demo_bob',    daysAgo: 35 },
-  { name: 'Groceries (Costco)', amount: 156.80, category: 'food',     paidBy: 'demo_alice',  daysAgo: 10 },
-], 'owner');
-
-createDemoGroup('Ski Trip', 'demo_bob', ['demo_alice', 'demo_emma'], [
-  { name: 'Cabin rental (3 nights)',  amount: 720,   category: 'housing',       paidBy: 'demo_bob',   daysAgo: 14 },
-  { name: 'Lift tickets (3x)',        amount: 450,   category: 'entertainment', paidBy: 'demo_emma',  daysAgo: 14 },
+// 2 people: me + Frank
+createDemoGroup('Ski Trip', 'demo_frank', [], [
+  { name: 'Cabin rental (3 nights)',  amount: 720,   category: 'housing',       paidBy: 'demo_frank', daysAgo: 14 },
+  { name: 'Lift tickets (2x)',        amount: 300,   category: 'entertainment', paidBy: 'me',         daysAgo: 14 },
   { name: 'Gas (drive up)',           amount: 65.40, category: 'transport',     paidBy: 'me',         daysAgo: 14 },
-  { name: 'Groceries for cabin',      amount: 93.15, category: 'food',          paidBy: 'demo_bob',   daysAgo: 13 },
+  { name: 'Groceries for cabin',      amount: 93.15, category: 'food',          paidBy: 'demo_frank', daysAgo: 13 },
   { name: 'Ski rentals',              amount: 180,   category: 'entertainment', paidBy: 'me',         daysAgo: 13 },
-  { name: 'Dinner at Lodge',          amount: 127.50, category: 'food',         paidBy: 'demo_emma',  daysAgo: 12 },
+  { name: 'Dinner at Lodge',          amount: 127.50, category: 'food',         paidBy: 'demo_frank', daysAgo: 12 },
   { name: 'Gas (drive back)',         amount: 58.90, category: 'transport',     paidBy: 'me',         daysAgo: 11 },
 ], 'member');
 
-createDemoGroup('Office Lunch Club', 'demo_carla', ['demo_dan', 'demo_emma'], [
-  { name: 'Sushi place',        amount: 62.00,  category: 'food', paidBy: 'demo_carla', daysAgo: 1 },
-  { name: 'Thai takeout',       amount: 48.50,  category: 'food', paidBy: 'demo_dan',   daysAgo: 3 },
-  { name: 'Pizza Friday',       amount: 38.00,  category: 'food', paidBy: 'me',         daysAgo: 5 },
-  { name: 'Burrito bowls',      amount: 52.80,  category: 'food', paidBy: 'demo_emma',  daysAgo: 8 },
-  { name: 'Pho place',          amount: 44.00,  category: 'food', paidBy: 'demo_carla', daysAgo: 10 },
-  { name: 'Sandwich shop',      amount: 36.75,  category: 'food', paidBy: 'me',         daysAgo: 12 },
+// 3 people: me, Grace, Hiro
+createDemoGroup('Office Lunch Club', 'demo_grace', ['demo_hiro'], [
+  { name: 'Sushi place',        amount: 62.00,  category: 'food', paidBy: 'demo_grace', daysAgo: 1 },
+  { name: 'Thai takeout',       amount: 48.50,  category: 'food', paidBy: 'me',         daysAgo: 3 },
+  { name: 'Pizza Friday',       amount: 38.00,  category: 'food', paidBy: 'demo_hiro',  daysAgo: 5 },
+  { name: 'Burrito bowls',      amount: 52.80,  category: 'food', paidBy: 'demo_grace', daysAgo: 8 },
+  { name: 'Pho place',          amount: 44.00,  category: 'food', paidBy: 'me',         daysAgo: 10 },
+  { name: 'Sandwich shop',      amount: 36.75,  category: 'food', paidBy: 'demo_hiro',  daysAgo: 12 },
 ], 'member');
 
-createDemoGroup('Weekend in Vegas', 'demo_emma', ['demo_alice', 'demo_carla'], [
+// 4 people: me, Alice, Bob, Isla
+createDemoGroup('Weekend in Vegas', 'demo_alice', ['demo_bob', 'demo_isla'], [
   { name: 'Hotel (2 nights)',    amount: 389,    category: 'housing',       paidBy: 'me',         daysAgo: 21 },
   { name: 'Flights',             amount: 624,    category: 'transport',     paidBy: 'demo_alice', daysAgo: 45 },
-  { name: 'Show tickets',        amount: 270,    category: 'entertainment', paidBy: 'demo_carla', daysAgo: 21 },
+  { name: 'Show tickets',        amount: 270,    category: 'entertainment', paidBy: 'demo_isla',  daysAgo: 21 },
   { name: 'Dinner at steakhouse', amount: 185.40, category: 'food',         paidBy: 'me',         daysAgo: 20 },
-  { name: 'Uber rides',          amount: 47.80,  category: 'transport',     paidBy: 'demo_alice', daysAgo: 20 },
-  { name: 'Brunch',              amount: 78.60,  category: 'food',          paidBy: 'demo_carla', daysAgo: 19 },
+  { name: 'Uber rides',          amount: 47.80,  category: 'transport',     paidBy: 'demo_bob',   daysAgo: 20 },
+  { name: 'Brunch',              amount: 78.60,  category: 'food',          paidBy: 'demo_isla',  daysAgo: 19 },
+], 'owner');
+
+// 6 people: me, Carla, Dan, Emma, Frank, Grace (Frank repeats from Ski Trip, Grace from Lunch Club)
+createDemoGroup('Apartment 4B', 'demo_carla', ['demo_dan', 'demo_emma', 'demo_frank', 'demo_grace'], [
+  { name: 'March rent',         amount: 2400,  category: 'housing',   paidBy: 'me',          daysAgo: 2 },
+  { name: 'Electric bill',      amount: 142.50, category: 'utilities', paidBy: 'demo_dan',    daysAgo: 5 },
+  { name: 'Internet',           amount: 59.99, category: 'utilities', paidBy: 'me',           daysAgo: 5 },
+  { name: 'Groceries (Trader Joe\'s)', amount: 87.32, category: 'food', paidBy: 'demo_emma',  daysAgo: 3 },
+  { name: 'Dish soap & sponges', amount: 12.49, category: 'general',  paidBy: 'demo_frank',   daysAgo: 7 },
+  { name: 'February rent',      amount: 2400,  category: 'housing',   paidBy: 'me',           daysAgo: 32 },
+  { name: 'Gas bill',           amount: 78.20, category: 'utilities', paidBy: 'demo_grace',   daysAgo: 35 },
+  { name: 'Groceries (Costco)', amount: 156.80, category: 'food',     paidBy: 'demo_carla',   daysAgo: 10 },
 ], 'owner');
 
 console.log('Done!');
