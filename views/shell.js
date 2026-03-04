@@ -356,7 +356,7 @@ export function shell(data) {
 
     .avatar-stack { display: flex; gap: 0.625rem; }
     .avatar-stack img, .avatar-stack .avatar-placeholder {
-      width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
+      width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: var(--gray-200);
     }
     .avatar-placeholder { background: var(--gray-200); flex-shrink: 0; }
 
