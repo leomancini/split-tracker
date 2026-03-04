@@ -125,6 +125,12 @@ export function shell(data) {
       padding: 1rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
     }
 
+    @media (max-width: 600px) {
+      nav { padding: 1rem 1.5rem; }
+      .container { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .sticky-bottom { padding-left: 1.5rem; padding-right: 1.5rem; }
+    }
+
     h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
     h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; }
 
@@ -136,8 +142,9 @@ export function shell(data) {
       background: var(--green-500);
       color: white;
       border: none;
-      border-radius: 999px;
-      padding: 1rem 1.5rem;
+      border-radius: 32px;
+      height: 56px;
+      padding: 0 1.5rem;
       font-size: 1.125rem;
       font-weight: 600;
       font-family: inherit;
@@ -150,18 +157,19 @@ export function shell(data) {
       touch-action: manipulation;
     }
 
+    @media (max-width: 600px) { .btn { height: 64px; font-size: 1.25rem; } }
     @media (hover: hover) { .btn:hover { background: var(--green-600); } }
     .btn:active { transform: scale(0.93); transition: transform 150ms; }
 
-    .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; width: auto; }
-    .btn-xs { padding: 0.5rem 0.875rem; font-size: 0.8125rem; width: auto; }
+    .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; width: auto; height: auto; }
+    .btn-xs { padding: 0.5rem 0.875rem; font-size: 0.8125rem; width: auto; height: auto; }
 
     .sticky-bottom {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      padding: 0 1rem 1.5rem;
+      padding: 0 24px 24px;
       background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 35%);
       padding-top: 2.5rem;
       z-index: 10;
@@ -631,7 +639,7 @@ export function shell(data) {
         + '<form id="create-group-form">'
         + '<div class="form-group"><label>Name</label>'
         + '<input type="search" id="grp-title" autocomplete="off" role="presentation" placeholder="Trip to Paris, apartment, groceries"></div>'
-        + '<div class="form-group"><label>Invite</label>'
+        + '<div class="form-group"><label>People</label>'
         + '<textarea id="grp-inv" autocomplete="off" placeholder="Email addresses, one per line"></textarea></div>'
         + '</form>'
         + '<div class="sticky-bottom"><button type="submit" form="create-group-form" class="btn">Create group</button></div>';
