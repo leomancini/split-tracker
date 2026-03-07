@@ -8,10 +8,10 @@ const db = new Database('./data/split-tracker.db');
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-// Ensure is_demo column exists
-try {
-  db.exec('ALTER TABLE groups ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0');
-} catch (e) { /* already exists */ }
+// Ensure columns exist
+try { db.exec('ALTER TABLE groups ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0'); } catch (e) { /* already exists */ }
+try { db.exec('ALTER TABLE users ADD COLUMN venmo_handle TEXT'); } catch (e) { /* already exists */ }
+try { db.exec('ALTER TABLE users ADD COLUMN cashapp_handle TEXT'); } catch (e) { /* already exists */ }
 
 // Mark existing "Trip to Barcelona" as demo
 db.prepare("UPDATE groups SET is_demo = 1 WHERE name = 'Trip to Barcelona'").run();
@@ -35,25 +35,27 @@ console.log(`Using real user: ${realUser.name} (${realUser.email})`);
 
 // --- Create demo users ---
 const demoUsers = [
-  { google_id: 'demo_alice',   email: 'alice.martin@demo.split',   name: 'Alice Martin',   avatar_url: 'https://i.pravatar.cc/150?u=alice' },
-  { google_id: 'demo_bob',     email: 'bob.johnson@demo.split',    name: 'Bob Johnson',    avatar_url: 'https://i.pravatar.cc/150?u=bob' },
-  { google_id: 'demo_carla',   email: 'carla.diaz@demo.split',     name: 'Carla Diaz',     avatar_url: 'https://i.pravatar.cc/150?u=carla' },
-  { google_id: 'demo_dan',     email: 'dan.kim@demo.split',        name: 'Dan Kim',        avatar_url: 'https://i.pravatar.cc/150?u=dan' },
-  { google_id: 'demo_emma',    email: 'emma.wilson@demo.split',    name: 'Emma Wilson',    avatar_url: 'https://i.pravatar.cc/150?u=emma' },
-  { google_id: 'demo_frank',   email: 'frank.lee@demo.split',      name: 'Frank Lee',      avatar_url: 'https://i.pravatar.cc/150?u=frank' },
-  { google_id: 'demo_grace',   email: 'grace.nguyen@demo.split',   name: 'Grace Nguyen',   avatar_url: 'https://i.pravatar.cc/150?u=grace' },
-  { google_id: 'demo_hiro',    email: 'hiro.tanaka@demo.split',    name: 'Hiro Tanaka',    avatar_url: 'https://i.pravatar.cc/150?u=hiro' },
-  { google_id: 'demo_isla',    email: 'isla.brown@demo.split',     name: 'Isla Brown',     avatar_url: 'https://i.pravatar.cc/150?u=isla' },
+  { google_id: 'demo_alice',   email: 'alice.martin@demo.split',   name: 'Alice Martin',   avatar_url: 'https://i.pravatar.cc/150?u=alice', venmo_handle: 'alice-martin',    cashapp_handle: null },
+  { google_id: 'demo_bob',     email: 'bob.johnson@demo.split',    name: 'Bob Johnson',    avatar_url: 'https://i.pravatar.cc/150?u=bob',   venmo_handle: null,              cashapp_handle: '$bobjohnson' },
+  { google_id: 'demo_carla',   email: 'carla.diaz@demo.split',     name: 'Carla Diaz',     avatar_url: 'https://i.pravatar.cc/150?u=carla', venmo_handle: 'carla-diaz',      cashapp_handle: '$carladiaz' },
+  { google_id: 'demo_dan',     email: 'dan.kim@demo.split',        name: 'Dan Kim',        avatar_url: 'https://i.pravatar.cc/150?u=dan',   venmo_handle: 'dankim',          cashapp_handle: null },
+  { google_id: 'demo_emma',    email: 'emma.wilson@demo.split',    name: 'Emma Wilson',    avatar_url: 'https://i.pravatar.cc/150?u=emma',  venmo_handle: null,              cashapp_handle: '$emmawilson' },
+  { google_id: 'demo_frank',   email: 'frank.lee@demo.split',      name: 'Frank Lee',      avatar_url: 'https://i.pravatar.cc/150?u=frank', venmo_handle: 'frank-lee',       cashapp_handle: '$franklee' },
+  { google_id: 'demo_grace',   email: 'grace.nguyen@demo.split',   name: 'Grace Nguyen',   avatar_url: 'https://i.pravatar.cc/150?u=grace', venmo_handle: 'gracenguyen',     cashapp_handle: null },
+  { google_id: 'demo_hiro',    email: 'hiro.tanaka@demo.split',    name: 'Hiro Tanaka',    avatar_url: 'https://i.pravatar.cc/150?u=hiro',  venmo_handle: null,              cashapp_handle: '$hirotanaka' },
+  { google_id: 'demo_isla',    email: 'isla.brown@demo.split',     name: 'Isla Brown',     avatar_url: 'https://i.pravatar.cc/150?u=isla',  venmo_handle: 'isla-brown',      cashapp_handle: '$islabrown' },
 ];
 
 const insertUser = db.prepare(`
   INSERT OR IGNORE INTO users (google_id, email, name, avatar_url) VALUES (?, ?, ?, ?)
 `);
+const updateHandles = db.prepare('UPDATE users SET venmo_handle = ?, cashapp_handle = ? WHERE google_id = ?');
 const selectUser = db.prepare('SELECT id FROM users WHERE google_id = ?');
 
 const userIds = {};
 for (const u of demoUsers) {
   insertUser.run(u.google_id, u.email, u.name, u.avatar_url);
+  updateHandles.run(u.venmo_handle, u.cashapp_handle, u.google_id);
   userIds[u.google_id] = selectUser.get(u.google_id).id;
 }
 

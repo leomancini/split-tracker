@@ -61,6 +61,16 @@ try {
 } catch (e) {
   // Column already exists
 }
+try {
+  db.exec('ALTER TABLE users ADD COLUMN venmo_handle TEXT');
+} catch (e) {
+  // Column already exists
+}
+try {
+  db.exec('ALTER TABLE users ADD COLUMN cashapp_handle TEXT');
+} catch (e) {
+  // Column already exists
+}
 
 // --- Helpers ---
 
@@ -90,6 +100,10 @@ export function findOrCreateUser({ googleId, email, name, avatarUrl }) {
 
 export function getUserById(id) {
   return db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+}
+
+export function updatePaymentHandles(userId, venmo, cashapp) {
+  db.prepare('UPDATE users SET venmo_handle = ?, cashapp_handle = ? WHERE id = ?').run(venmo || null, cashapp || null, userId);
 }
 
 // --- Group helpers ---
@@ -141,7 +155,7 @@ export function renameGroup(groupId, name) {
 
 export function getGroupMembers(groupId) {
   return db.prepare(`
-    SELECT u.id, u.name, u.email, u.avatar_url, gm.role, gm.joined_at
+    SELECT u.id, u.name, u.email, u.avatar_url, u.venmo_handle, u.cashapp_handle, gm.role, gm.joined_at
     FROM group_members gm
     JOIN users u ON u.id = gm.user_id
     WHERE gm.group_id = ?

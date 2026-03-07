@@ -165,6 +165,23 @@ export function shell(data) {
 
     .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; width: auto; height: auto; }
     .btn-xs { padding: 0.5rem 0.875rem; font-size: 0.8125rem; width: auto; height: auto; }
+    .pay-btn { transition: transform 150ms; -webkit-user-select: none; user-select: none; }
+    .pay-btn:active { transform: scale(0.9); }
+
+    .pay-modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4); z-index: 100;
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; transition: opacity 200ms;
+    }
+    .pay-modal-overlay.visible { opacity: 1; }
+    .pay-modal {
+      background: #fff; border-radius: 56px 56px 0 0; padding: 1.5rem;
+      width: 100%; max-width: 600px;
+      transform: translateY(100%); transition: transform 300ms cubic-bezier(0.16,1,0.3,1);
+    }
+    .pay-modal-overlay.visible .pay-modal { transform: translateY(0); }
+    .pay-modal-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; text-align: center; }
 
     .sticky-bottom {
       position: fixed;
@@ -587,9 +604,9 @@ export function shell(data) {
           else bal[m.id] -= share;
         });
       });
-      // Build name map
-      var names = {};
-      members.forEach(function(m){names[m.id]=m.name;});
+      // Build name/venmo map
+      var names = {}, venmos = {}, cashapps = {};
+      members.forEach(function(m){names[m.id]=m.name; venmos[m.id]=m.venmo_handle; cashapps[m.id]=m.cashapp_handle;});
       // Greedy settle: debtors pay creditors
       var debtors=[], creditors=[];
       for(var id in bal){
@@ -605,7 +622,9 @@ export function shell(data) {
         var pay=Math.min(debtors[di].amt,creditors[ci].amt);
         if(pay>0.01){
           settlements.push({from:debtors[di].id,to:creditors[ci].id,amt:pay,
-            fromName:names[debtors[di].id],toName:names[creditors[ci].id]});
+            fromName:names[debtors[di].id],toName:names[creditors[ci].id],
+            toVenmo:venmos[creditors[ci].id],toCashapp:cashapps[creditors[ci].id],
+            fromVenmo:venmos[debtors[di].id],fromCashapp:cashapps[debtors[di].id]});
         }
         debtors[di].amt-=pay;
         creditors[ci].amt-=pay;
@@ -675,21 +694,48 @@ export function shell(data) {
 
       // --- Balances ---
       if(mySettlements.length){
-        h += '<div class="card" style="margin-top:calc(1.5rem + 4px);margin-bottom:calc(1.25rem - 4px)">';
+        var firstSettlement = true;
         settlements.forEach(function(s){
           var isYou = s.from==D.user.id;
           var involvesYou = s.from==D.user.id || s.to==D.user.id;
           if(!involvesYou) return;
-          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.125rem 0">'
-            + '<span style="font-size:0.875rem">'
+          var venmoUrl = '', cashappUrl = '';
+          var note = g.name;
+          if(isYou){
+            if(s.toVenmo) venmoUrl = 'https://venmo.com/'+encodeURIComponent(s.toVenmo)+'?txn=pay&note='+encodeURIComponent(note).replace(/%20/g,'%C2%A0')+'&amount='+encodeURIComponent(s.amt.toFixed(2));
+            if(s.toCashapp){
+              var tag = s.toCashapp.replace(/^\$/, '');
+              cashappUrl = 'https://cash.app/$'+encodeURIComponent(tag)+'/'+encodeURIComponent(s.amt.toFixed(2));
+            }
+          } else if(s.to==D.user.id){
+            if(s.fromVenmo) venmoUrl = 'https://venmo.com/'+encodeURIComponent(s.fromVenmo)+'?txn=charge&note='+encodeURIComponent(note).replace(/%20/g,'%C2%A0')+'&amount='+encodeURIComponent(s.amt.toFixed(2));
+            if(s.fromCashapp){
+              var tag = s.fromCashapp.replace(/^\$/, '');
+              cashappUrl = 'https://cash.app/$'+encodeURIComponent(tag)+'/'+encodeURIComponent(s.amt.toFixed(2));
+            }
+          }
+          var hasPayOption = venmoUrl || cashappUrl;
+          var isRequest = !isYou && s.to==D.user.id;
+          var payBtnStyle = 'font-size:1rem;font-weight:600;text-decoration:none;padding:0.375rem 1rem;border-radius:999px';
+          if(firstSettlement){
+            h += '<div style="margin-top:1.5rem">';
+            h += '<div style="height:2px;background:var(--gray-200);border-radius:2px;margin-bottom:0.5rem"></div>';
+          }
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:44px">'
+            + '<span style="font-size:1rem">'
             + '<span style="font-weight:500">'+(isYou?'You':esc(s.fromName.split(' ')[0]))+'</span>'
             + (isYou?' owe ':' owes ')
             + '<span style="font-weight:500">'+(s.to==D.user.id?'you':esc(s.toName.split(' ')[0]))+'</span>'
+            + ' <span style="font-family:var(--mono);font-weight:600;color:'+(isYou?'#dc2626':'var(--green-600)')+'">'+fmtAmt(s.amt)+'</span>'
             + '</span>'
-            + '<span style="font-family:var(--mono);font-size:0.875rem;font-weight:600;color:'+(isYou?'#dc2626':'var(--green-600)')+'">$'+s.amt.toFixed(2)+'</span>'
+            + (hasPayOption ? '<span class="pay-btn" style="'+payBtnStyle+';color:#fff;background:var(--green-500);cursor:pointer" data-action="pay-modal"'
+              + (venmoUrl ? ' data-venmo-url="'+esc(venmoUrl)+'"' : '') + (cashappUrl ? ' data-cashapp-url="'+esc(cashappUrl)+'"' : '')
+              + (isRequest ? ' data-request="1"' : '') + '>'+(isRequest ? 'Request' : 'Pay')+'</span>' : '')
             + '</div>';
+          firstSettlement = false;
         });
-        h += '</div>';
+        h += '<div style="height:2px;background:var(--gray-200);border-radius:2px;margin-top:0.5rem"></div>';
+        h += '</div><div style="margin-bottom:calc(1.25rem - 8px)"></div>';
       }
 
       var expenses = detail.expenses || [];
@@ -810,6 +856,10 @@ export function shell(data) {
           : '<div style="width:72px;height:72px;border-radius:50%;background:var(--gray-200);margin:0 auto 1rem"></div>')
         + '<div style="font-size:1.25rem;font-weight:600">'+esc(u.name)+'</div>'
         + '<div style="font-size:0.9375rem;color:var(--gray-500)">'+esc(u.email)+'</div>'
+        + '<div class="form-group" style="margin-top:3rem;text-align:left;width:100%"><label>Venmo</label>'
+        + '<input type="text" id="venmo-handle" value="'+esc(u.venmo_handle||'')+'" placeholder="@username" autocomplete="off"></div>'
+        + '<div class="form-group" style="text-align:left;width:100%"><label>Cash App</label>'
+        + '<input type="text" id="cashapp-handle" value="'+esc(u.cashapp_handle||'')+'" placeholder="$cashtag" autocomplete="off"></div>'
         + '</div>'
         + '<div style="height:5rem"></div>'
         + '<div class="sticky-bottom">'
@@ -1007,8 +1057,38 @@ export function shell(data) {
       }
     });
 
+    // --- Pay modal ---
+    function showPayModal(venmoUrl, cashappUrl, isRequest){
+      var overlay = document.createElement('div');
+      overlay.className = 'pay-modal-overlay';
+      var html = '<div class="pay-modal">';
+      var label = isRequest ? 'Request with' : 'Pay with';
+      if(venmoUrl) html += '<a href="'+venmoUrl+'" target="_blank" rel="noopener" class="btn" style="background:#008CFF;margin-bottom:24px;text-decoration:none;color:#fff">'+label+' Venmo</a>';
+      if(cashappUrl) html += '<a href="'+cashappUrl+'" target="_blank" rel="noopener" class="btn" style="background:var(--green-500);margin-bottom:24px;text-decoration:none;color:#fff">'+label+' Cash App</a>';
+      html += '<button class="btn" style="background:var(--gray-100);color:var(--gray-600);margin-top:0.5rem" data-modal-cancel>Cancel</button></div>';
+      overlay.innerHTML = html;
+      document.body.appendChild(overlay);
+      requestAnimationFrame(function(){ overlay.classList.add('visible'); });
+      function close(){ overlay.classList.remove('visible'); setTimeout(function(){ overlay.remove(); }, 200); }
+      overlay.querySelector('[data-modal-cancel]').addEventListener('click', close);
+      overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
+      overlay.querySelectorAll('.btn').forEach(function(btn){ btn.addEventListener('click', function(){ setTimeout(close, 100); }); });
+    }
+
     // --- Event delegation ---
     document.addEventListener('click', function(e){
+      // Pay modal trigger
+      var payEl = e.target.closest('[data-action="pay-modal"]');
+      if(payEl){
+        e.preventDefault();
+        e.stopPropagation();
+        var vUrl = payEl.getAttribute('data-venmo-url');
+        var cUrl = payEl.getAttribute('data-cashapp-url');
+        var isReq = payEl.hasAttribute('data-request');
+        showPayModal(vUrl, cUrl, isReq);
+        return;
+      }
+
       // data-link navigation
       var el = e.target.closest('[data-link]');
       if(el){
@@ -1220,6 +1300,18 @@ export function shell(data) {
           }).catch(function(){btn.disabled=false;btn.innerHTML=btnText;emailEl.disabled=false;});
         return;
       }
+    });
+
+    // Save payment handles on blur
+    document.addEventListener('focusout', function(e){
+      if(e.target.id !== 'venmo-handle' && e.target.id !== 'cashapp-handle') return;
+      var venmoEl = document.getElementById('venmo-handle');
+      var cashappEl = document.getElementById('cashapp-handle');
+      var venmo = venmoEl ? venmoEl.value.trim() : '';
+      var cashapp = cashappEl ? cashappEl.value.trim() : '';
+      fetch('/api/profile/payment',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({venmo_handle:venmo,cashapp_handle:cashapp})})
+        .then(function(r){return r.json()})
+        .then(function(d){ if(d.ok){ D.user.venmo_handle = venmo || null; D.user.cashapp_handle = cashapp || null; }});
     });
 
     // Back/forward

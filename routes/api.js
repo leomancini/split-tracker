@@ -19,6 +19,7 @@ import {
   createExpense,
   getExpenseById,
   deleteExpense,
+  updatePaymentHandles,
 } from '../db.js';
 import { sendInviteEmail } from '../mail.js';
 
@@ -34,6 +35,16 @@ export function registerApiRoutes(app, ensureAuth) {
   app.post('/api/demo-mode', ensureAuth, (req, res) => {
     req.session.demoMode = !req.session.demoMode;
     res.json({ ok: true, demoMode: req.session.demoMode });
+  });
+
+  // Update payment handles
+  app.put('/api/profile/payment', ensureAuth, (req, res) => {
+    const venmo = (req.body.venmo_handle || '').trim();
+    const cashapp = (req.body.cashapp_handle || '').trim();
+    updatePaymentHandles(req.user.id, venmo, cashapp);
+    req.user.venmo_handle = venmo || null;
+    req.user.cashapp_handle = cashapp || null;
+    res.json({ ok: true });
   });
 
   // Get all data for the current user in one payload
