@@ -712,13 +712,13 @@ export function shell(data) {
           var otherName = isYou ? esc(s.toName.split(' ')[0]) : esc(s.fromName.split(' ')[0]);
           var actionLabel = isRequest ? 'Request' : 'Pay';
           h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:44px">'
-            + '<span class="settlement-text" style="font-size:1rem">'
+            + '<span class="settlement-text" style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
             + '<span style="font-weight:500">'+(isYou?'You':esc(s.fromName.split(' ')[0]))+'</span>'
             + (isYou?' owe ':' owes ')
             + '<span style="font-weight:500">'+(s.to==D.user.id?'you':esc(s.toName.split(' ')[0]))+'</span>'
             + ' <span style="font-family:var(--mono);font-weight:600;color:'+(isYou?'#dc2626':'var(--green-600)')+'">'+fmtAmt(s.amt)+'</span>'
             + '</span>'
-            + '<div class="settlement-btns" style="display:flex;align-items:center;gap:0.5rem">'
+            + '<div class="settlement-btns" style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;margin-left:0.5rem">'
             + (hasPayOption ? '<span class="pay-btn" style="'+payBtnStyle+';color:#fff;background:var(--green-500);cursor:pointer" data-action="expand-pay"'
               + (venmoUrl ? ' data-venmo-url="'+esc(venmoUrl)+'"' : '')
               + (cashappUrl ? ' data-cashapp-url="'+esc(cashappUrl)+'"' : '')
@@ -1073,7 +1073,7 @@ export function shell(data) {
         var btns = '';
         if(vUrl) btns += '<a href="'+vUrl+'" target="_blank" rel="noopener" class="pay-btn'+(D.demoMode ? ' demo-pay' : '')+'" style="'+btnStyle+';background:#008CFF">Venmo</a>';
         if(cUrl) btns += '<a href="'+cUrl+'" target="_blank" rel="noopener" class="pay-btn'+(D.demoMode ? ' demo-pay' : '')+'" style="'+btnStyle+';background:var(--green-500)">Cash App</a>';
-        btns += '<span class="pay-btn" style="font-weight:600;text-decoration:none;border-radius:999px;background:var(--gray-100);color:var(--gray-500);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.375rem;font-weight:400;width:36px;height:36px;flex-shrink:0;line-height:1" data-action="collapse-pay"><span style="margin-top:-4px">&times;</span></span>';
+        btns += '<span class="pay-btn" style="font-weight:600;text-decoration:none;border-radius:999px;background:var(--gray-100);color:var(--gray-500);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.375rem;font-weight:400;width:36px;height:36px;flex-shrink:0;line-height:1" data-action="collapse-pay"><svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/></svg></span>';
         btnsEl.innerHTML = btns;
         btnsEl.querySelector('[data-action="collapse-pay"]').addEventListener('click', function(){
           textEl.innerHTML = origText;
