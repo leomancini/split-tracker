@@ -714,14 +714,14 @@ export function shell(data) {
           }
           var hasPayOption = venmoUrl || cashappUrl;
           var isRequest = !isYou && s.to==D.user.id;
-          var payBtnStyle = 'font-size:1rem;font-weight:600;text-decoration:none;padding:0.375rem 1rem;border-radius:999px';
+          var payBtnStyle = 'font-size:1rem;font-weight:600;text-decoration:none;padding:0.25rem 1rem;border-radius:999px';
           if(firstSettlement){
             h += '<div style="margin-top:1.5rem">';
             h += '<div style="height:2px;background:var(--gray-200);border-radius:2px;margin-bottom:0.5rem"></div>';
           }
           var otherName = isYou ? esc(s.toName.split(' ')[0]) : esc(s.fromName.split(' ')[0]);
           var actionLabel = isRequest ? 'Request' : 'Pay';
-          h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:calc(44px + 1rem)">'
+          h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;min-height:36px">'
             + '<span class="settlement-text" style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
             + '<span style="font-weight:500">'+(isYou?'You':esc(s.fromName.split(' ')[0]))+'</span>'
             + (isYou?' owe ':' owes ')
@@ -744,7 +744,7 @@ export function shell(data) {
           firstSettlement = false;
         });
         otherSettlements.forEach(function(s){
-          h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:calc(44px + 1rem);color:var(--gray-400)">'
+          h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;min-height:36px;color:var(--gray-400)">'
             + '<span class="settlement-text" style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
             + '<span style="font-weight:500">'+esc(s.fromName.split(' ')[0])+'</span>'
             + ' owes '
