@@ -816,7 +816,7 @@ export function shell(data) {
         var payee = ex.settled_with === D.user.id ? 'You' : ex.settled_with_name;
         detailName = payer + ' paid ' + payee;
       }
-      var h = '<div class="item-detail-icon">'+catIcon(ex.category)+'</div>';
+      var h = '<div class="item-detail-icon"'+(ex.settled_with ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>';
       h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';
       h += '<div class="item-detail-name">'+esc(detailName)+'</div>';
       h += '<div style="margin-bottom:1.5rem">';
