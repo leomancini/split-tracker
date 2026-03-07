@@ -690,6 +690,7 @@ export function shell(data) {
       // --- Balances ---
       if(mySettlements.length){
         var firstSettlement = true;
+        var otherSettlements = settlements.filter(function(s){ return s.from!=D.user.id && s.to!=D.user.id; });
         settlements.forEach(function(s){
           var isYou = s.from==D.user.id;
           var involvesYou = s.from==D.user.id || s.to==D.user.id;
@@ -739,6 +740,14 @@ export function shell(data) {
             + '</div>'
             + '</div>';
           firstSettlement = false;
+        });
+        otherSettlements.forEach(function(s){
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:44px;color:var(--gray-400)">'
+            + '<span style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
+            + esc(s.fromName.split(' ')[0]) + ' owes ' + esc(s.toName.split(' ')[0])
+            + '</span>'
+            + '<span style="font-family:var(--mono);font-weight:600">'+fmtAmt(s.amt)+'</span>'
+            + '</div>';
         });
         h += '<div style="height:2px;background:var(--gray-200);border-radius:2px;margin-top:0.5rem"></div>';
         h += '</div><div style="margin-bottom:calc(1.25rem - 8px)"></div>';
