@@ -825,6 +825,8 @@ export function shell(data) {
         h += '<div class="info-row"><span class="info-label">Category</span><span class="info-value">'+catLabel(ex.category)+'</span></div>';
       }
       if(ex.settled_with){
+        var method = ex.name.indexOf('Venmo') !== -1 ? 'Venmo' : ex.name.indexOf('Cash App') !== -1 ? 'Cash App' : '';
+        if(method) h += '<div class="info-row"><span class="info-label">Method</span><span class="info-value">'+method+'</span></div>';
         h += '<div class="info-row"><span class="info-label">Paid</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
         h += '<div class="info-row"><span class="info-label">Received</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
       } else {
