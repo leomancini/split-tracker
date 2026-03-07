@@ -805,11 +805,14 @@ export function shell(data) {
     function profileView(){
       var u = D.user;
       var avatarSrc = u.avatar_url ? getCachedAvatar(u.avatar_url) : null;
-      return '<div style="text-align:center;padding-top:1.5rem">'
+      return '<div style="display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;min-height:calc(100vh - 200px);margin-top:-8rem">'
         + (avatarSrc ? '<img src="'+esc(avatarSrc)+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:1rem;background:var(--gray-200)" alt="">'
           : '<div style="width:72px;height:72px;border-radius:50%;background:var(--gray-200);margin:0 auto 1rem"></div>')
         + '<div style="font-size:1.25rem;font-weight:600">'+esc(u.name)+'</div>'
-        + '<div style="font-size:0.9375rem;color:var(--gray-500);margin-bottom:2rem">'+esc(u.email)+'</div>'
+        + '<div style="font-size:0.9375rem;color:var(--gray-500)">'+esc(u.email)+'</div>'
+        + '</div>'
+        + '<div style="height:5rem"></div>'
+        + '<div class="sticky-bottom">'
         + '<button class="btn" id="demo-toggle" style="margin-bottom:0.75rem;background:var(--gray-100);color:var(--gray-700)">'
         + (D.demoMode ? 'Disable demo mode' : 'Enable demo mode') + '</button>'
         + '<a href="/logout" class="btn btn-danger" onclick="sessionStorage.clear()">Log out</a></div>';
@@ -1024,7 +1027,7 @@ export function shell(data) {
           .then(function(d){
             if(d.ok){
               D.demoMode = d.demoMode;
-              refreshData().then(function(){ nav('/profile'); });
+              refreshData().then(function(){ nav('/'); });
             }
           }).catch(function(){ e.target.disabled = false; });
         return;
