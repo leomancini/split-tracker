@@ -1206,7 +1206,7 @@ export function shell(data) {
           .then(function(d){
             if(d.ok){
               delete groupCache[expGid];
-              nav('/groups/'+expGid, {alert:{text:'Item deleted',type:'success'}});
+              nav('/groups/'+expGid);
             } else {
               delItemBtn.disabled=false;delItemBtn.innerHTML=btnText;
             }
