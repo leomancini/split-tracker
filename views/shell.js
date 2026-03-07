@@ -570,7 +570,7 @@ export function shell(data) {
       utilities:     {icon:'fa-bolt',           kw:['electric','electricity','water','internet','wifi','phone','mobile','bill','utility','utilities','rent','mortgage','insurance']},
       health:        {icon:'fa-heart-pulse',    kw:['doctor','hospital','pharmacy','medicine','gym','fitness','health','dental','medical','prescription','vitamin']},
       education:     {icon:'fa-graduation-cap', kw:['book','books','course','school','tuition','class','study','education','library','textbook']},
-      settlement:    {icon:'fa-handshake',       kw:[]},
+      settlement:    {icon:'fa-dollar-sign',     kw:[]},
       general:       {icon:'fa-receipt',        kw:[]}
     };
     function detectCat(name){
@@ -749,9 +749,9 @@ export function shell(data) {
         expenses.forEach(function(ex, idx){
           var isSettlement = ex.category === 'settlement';
           h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
-            + '<div class="expense-icon"'+(isSettlement ? ' style="color:var(--green-600)"' : '')+'>'+catIcon(ex.category)+'</div>'
-            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--green-700)' : '')+'">'+esc(ex.name)+'</span>'
-            + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--green-600)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
+            + '<div class="expense-icon"'+(isSettlement ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>'
+            + '<span class="expense-name" style="flex:1;min-width:0">'+esc(ex.name)+'</span>'
+            + '<span class="expense-amount">'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
         });
       } else {
