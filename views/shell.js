@@ -714,7 +714,7 @@ export function shell(data) {
           }
           var hasPayOption = venmoUrl || cashappUrl;
           var isRequest = !isYou && s.to==D.user.id;
-          var payBtnStyle = 'font-size:1rem;font-weight:600;text-decoration:none;padding:0.25rem 1rem;border-radius:999px';
+          var payBtnStyle = 'font-size:1rem;font-weight:600;text-decoration:none;padding:0.375rem 1rem;border-radius:999px';
           if(firstSettlement){
             h += '<div style="margin-top:1.5rem">';
             h += '<div style="height:2px;background:var(--gray-200);border-radius:2px;margin-bottom:0.5rem"></div>';
