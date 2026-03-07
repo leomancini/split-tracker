@@ -527,7 +527,6 @@ export function shell(data) {
       var n = parseFloat(v);
       if(n % 1 === 0) return '$'+n.toFixed(0);
       var s = n.toFixed(2);
-      if(s[s.length-1]==='0') s = s.slice(0,-1);
       return '$'+s;
     }
 
