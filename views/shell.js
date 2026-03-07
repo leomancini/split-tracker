@@ -172,9 +172,7 @@ export function shell(data) {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.4); z-index: 100;
       display: flex; align-items: flex-end; justify-content: center;
-      opacity: 0; transition: opacity 200ms;
     }
-    .pay-modal-overlay.visible { opacity: 1; }
     .pay-modal {
       background: #fff; border-radius: 56px 56px 0 0; padding: 1.5rem;
       width: 100%; max-width: 600px;
@@ -1069,7 +1067,7 @@ export function shell(data) {
       overlay.innerHTML = html;
       document.body.appendChild(overlay);
       requestAnimationFrame(function(){ overlay.classList.add('visible'); });
-      function close(){ overlay.classList.remove('visible'); setTimeout(function(){ overlay.remove(); }, 200); }
+      function close(){ overlay.classList.remove('visible'); setTimeout(function(){ overlay.remove(); }, 300); }
       overlay.querySelector('[data-modal-cancel]').addEventListener('click', close);
       overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
       overlay.querySelectorAll('[data-pay-btn]').forEach(function(btn){
