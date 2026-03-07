@@ -1067,7 +1067,7 @@ export function shell(data) {
       overlay.innerHTML = html;
       document.body.appendChild(overlay);
       requestAnimationFrame(function(){ overlay.classList.add('visible'); });
-      function close(){ overlay.classList.remove('visible'); setTimeout(function(){ overlay.remove(); }, 300); }
+      function close(){ overlay.style.background = 'transparent'; overlay.classList.remove('visible'); setTimeout(function(){ overlay.remove(); }, 300); }
       overlay.querySelector('[data-modal-cancel]').addEventListener('click', close);
       overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
       overlay.querySelectorAll('[data-pay-btn]').forEach(function(btn){
