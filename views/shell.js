@@ -675,7 +675,7 @@ export function shell(data) {
 
       // --- Balances ---
       if(mySettlements.length){
-        h += '<div class="card" style="margin-top:1.5rem;margin-bottom:1.25rem">';
+        h += '<div class="card" style="margin-top:calc(1.5rem + 4px);margin-bottom:calc(1.25rem - 4px)">';
         settlements.forEach(function(s){
           var isYou = s.from==D.user.id;
           var involvesYou = s.from==D.user.id || s.to==D.user.id;
@@ -760,6 +760,7 @@ export function shell(data) {
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
 
       h += '<h1>People</h1>';
+      h += '<div style="margin-top:-12px">';
       members.forEach(function(m){
         h += '<div class="member-row">'
           + (m.avatar_url ? '<img src="'+esc(getCachedAvatar(m.avatar_url))+'" class="member-avatar" alt="">' : '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc(m.email.charAt(0).toUpperCase())+'</div>')
@@ -781,6 +782,8 @@ export function shell(data) {
         }
         h += '</div>';
       });
+
+      h += '</div>';
 
       if(isOwner){
         h += '<div style="height:5rem"></div>';
