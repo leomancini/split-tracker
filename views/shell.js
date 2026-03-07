@@ -721,7 +721,7 @@ export function shell(data) {
           }
           var otherName = isYou ? esc(s.toName.split(' ')[0]) : esc(s.fromName.split(' ')[0]);
           var actionLabel = isRequest ? 'Request' : 'Pay';
-          h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;min-height:36px">'
+          h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:36px">'
             + '<span class="settlement-text" style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
             + '<span style="font-weight:500">'+(isYou?'You':esc(s.fromName.split(' ')[0]))+'</span>'
             + (isYou?' owe ':' owes ')
@@ -744,7 +744,7 @@ export function shell(data) {
           firstSettlement = false;
         });
         otherSettlements.forEach(function(s){
-          h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;min-height:36px;color:var(--gray-400)">'
+          h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:36px;color:var(--gray-400)">'
             + '<span class="settlement-text" style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
             + '<span style="font-weight:500">'+esc(s.fromName.split(' ')[0])+'</span>'
             + ' owes '
