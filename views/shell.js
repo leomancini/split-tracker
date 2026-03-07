@@ -810,9 +810,15 @@ export function shell(data) {
       var gInfo = groupCache[gid] ? groupCache[gid].group : D.groups.find(function(g){return g.id==gid});
       var gName = gInfo ? gInfo.name : 'Group';
       var canDelete = ex.paid_by === D.user.id || isOwner;
+      var detailName = ex.name;
+      if(ex.settled_with){
+        var payer = ex.paid_by === D.user.id ? 'You' : ex.paid_by_name;
+        var payee = ex.settled_with === D.user.id ? 'You' : ex.settled_with_name;
+        detailName = payer + ' paid ' + payee;
+      }
       var h = '<div class="item-detail-icon">'+catIcon(ex.category)+'</div>';
       h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';
-      h += '<div class="item-detail-name">'+esc(ex.name)+'</div>';
+      h += '<div class="item-detail-name">'+esc(detailName)+'</div>';
       h += '<div style="margin-bottom:1.5rem">';
       if(ex.settled_with){
         h += '<div class="info-row"><span class="info-label">From</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
