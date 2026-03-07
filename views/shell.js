@@ -770,7 +770,7 @@ export function shell(data) {
           }
           h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
             + '<div class="expense-icon"'+(isSettlement ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>'
-            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-400)' : '')+'">'+(isSettlement ? settlementHtml : esc(ex.name))+'</span>'
+            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-400);font-weight:400' : '')+'">'+(isSettlement ? settlementHtml : esc(ex.name))+'</span>'
             + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--gray-400)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
         });
