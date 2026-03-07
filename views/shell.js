@@ -1161,6 +1161,7 @@ export function shell(data) {
           .then(function(d){
             if(d.ok){
               delete groupCache[sGroup];
+              nav('/groups/'+sGroup);
             }
           });
         // Don't prevent default — let the link open
