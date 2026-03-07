@@ -525,7 +525,10 @@ export function shell(data) {
 
     function fmtAmt(v){
       var n = parseFloat(v);
-      return n % 1 === 0 ? '$'+n.toFixed(0) : '$'+n.toFixed(2);
+      if(n % 1 === 0) return '$'+n.toFixed(0);
+      var s = n.toFixed(2);
+      if(s[s.length-1]==='0') s = s.slice(0,-1);
+      return '$'+s;
     }
 
     function timeAgo(dateStr){
@@ -570,7 +573,7 @@ export function shell(data) {
       utilities:     {icon:'fa-bolt',           kw:['electric','electricity','water','internet','wifi','phone','mobile','bill','utility','utilities','rent','mortgage','insurance']},
       health:        {icon:'fa-heart-pulse',    kw:['doctor','hospital','pharmacy','medicine','gym','fitness','health','dental','medical','prescription','vitamin']},
       education:     {icon:'fa-graduation-cap', kw:['book','books','course','school','tuition','class','study','education','library','textbook']},
-      settlement:    {icon:'fa-handshake',       kw:[]},
+      settlement:    {icon:'fa-dollar-sign',     kw:[]},
       general:       {icon:'fa-receipt',        kw:[]}
     };
     function detectCat(name){
@@ -690,6 +693,7 @@ export function shell(data) {
       // --- Balances ---
       if(mySettlements.length){
         var firstSettlement = true;
+        var otherSettlements = settlements.filter(function(s){ return s.from!=D.user.id && s.to!=D.user.id; });
         settlements.forEach(function(s){
           var isYou = s.from==D.user.id;
           var involvesYou = s.from==D.user.id || s.to==D.user.id;
@@ -740,6 +744,14 @@ export function shell(data) {
             + '</div>';
           firstSettlement = false;
         });
+        otherSettlements.forEach(function(s){
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:44px;color:var(--gray-400)">'
+            + '<span style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
+            + esc(s.fromName.split(' ')[0]) + ' owes ' + esc(s.toName.split(' ')[0])
+            + '</span>'
+            + '<span style="font-family:var(--mono);font-weight:600">'+fmtAmt(s.amt)+'</span>'
+            + '</div>';
+        });
         h += '<div style="height:2px;background:var(--gray-200);border-radius:2px;margin-top:0.5rem"></div>';
         h += '</div><div style="margin-bottom:calc(1.25rem - 8px)"></div>';
       }
@@ -748,10 +760,16 @@ export function shell(data) {
       if(expenses.length){
         expenses.forEach(function(ex, idx){
           var isSettlement = ex.category === 'settlement';
+          var settlementLabel = '';
+          if(isSettlement){
+            var payer = ex.paid_by === D.user.id ? 'You' : ex.paid_by_name;
+            var payee = ex.settled_with === D.user.id ? 'You' : ex.settled_with_name;
+            settlementLabel = payer + ' paid ' + payee;
+          }
           h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
-            + '<div class="expense-icon"'+(isSettlement ? ' style="color:var(--green-600)"' : '')+'>'+catIcon(ex.category)+'</div>'
-            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--green-700)' : '')+'">'+esc(ex.name)+'</span>'
-            + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--green-600)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
+            + '<div class="expense-icon"'+(isSettlement ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>'
+            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-400)' : '')+'">'+esc(isSettlement ? settlementLabel : ex.name)+'</span>'
+            + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--gray-400)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
         });
       } else {
