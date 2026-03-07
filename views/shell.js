@@ -827,7 +827,10 @@ export function shell(data) {
         h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
       }
       h += '<div class="info-row"><span class="info-label">Added</span><span class="info-value">'+fmtDate(ex.created_at)+'</span></div>';
-      h += '<div class="info-row"><span class="info-label">Category</span><span class="info-value">'+catLabel(ex.category)+'</span></div>';
+      h += '<div class="info-row"><span class="info-label">Type</span><span class="info-value">'+(ex.settled_with ? 'Payment' : 'Expense')+'</span></div>';
+      if(!ex.settled_with){
+        h += '<div class="info-row"><span class="info-label">Category</span><span class="info-value">'+catLabel(ex.category)+'</span></div>';
+      }
       h += '</div>';
       if(canDelete){
         h += '<div class="sticky-bottom"><button class="btn btn-danger" data-action="delete-item" data-id="'+ex.id+'" data-group-id="'+gid+'">Delete item</button></div>';
