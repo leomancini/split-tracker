@@ -745,11 +745,13 @@ export function shell(data) {
           firstSettlement = false;
         });
         otherSettlements.forEach(function(s){
-          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:44px;color:var(--gray-400)">'
-            + '<span style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
-            + '<span style="font-weight:500">'+esc(s.fromName.split(' ')[0])+'</span>' + ' owes ' + '<span style="font-weight:500">'+esc(s.toName.split(' ')[0])+'</span>'
+          h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:44px;color:var(--gray-400)">'
+            + '<span class="settlement-text" style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
+            + '<span style="font-weight:500">'+esc(s.fromName.split(' ')[0])+'</span>'
+            + ' owes '
+            + '<span style="font-weight:500">'+esc(s.toName.split(' ')[0])+'</span>'
+            + ' <span style="font-family:var(--mono);font-weight:600">'+fmtAmt(s.amt)+'</span>'
             + '</span>'
-            + '<span style="font-family:var(--mono);font-weight:600">'+fmtAmt(s.amt)+'</span>'
             + '</div>';
         });
         h += '<div style="height:2px;background:var(--gray-200);border-radius:2px;margin-top:0.5rem"></div>';
