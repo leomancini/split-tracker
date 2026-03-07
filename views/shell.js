@@ -821,8 +821,8 @@ export function shell(data) {
       h += '<div class="item-detail-name">'+esc(detailName)+'</div>';
       h += '<div style="margin-bottom:1.5rem">';
       if(ex.settled_with){
-        h += '<div class="info-row"><span class="info-label">From</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
-        h += '<div class="info-row"><span class="info-label">To</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
+        h += '<div class="info-row"><span class="info-label">Paid</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
+        h += '<div class="info-row"><span class="info-label">Received</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
       } else {
         h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
       }
