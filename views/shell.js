@@ -525,7 +525,10 @@ export function shell(data) {
 
     function fmtAmt(v){
       var n = parseFloat(v);
-      return n % 1 === 0 ? '$'+n.toFixed(0) : '$'+n.toFixed(2);
+      if(n % 1 === 0) return '$'+n.toFixed(0);
+      var s = n.toFixed(2);
+      if(s[s.length-1]==='0') s = s.slice(0,-1);
+      return '$'+s;
     }
 
     function timeAgo(dateStr){
