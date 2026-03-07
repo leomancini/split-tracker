@@ -39,8 +39,8 @@ export function registerApiRoutes(app, ensureAuth) {
 
   // Update payment handles
   app.put('/api/profile/payment', ensureAuth, (req, res) => {
-    const venmo = (req.body.venmo_handle || '').trim();
-    const cashapp = (req.body.cashapp_handle || '').trim();
+    const venmo = (req.body.venmo_handle || '').trim().replace(/^@/, '');
+    const cashapp = (req.body.cashapp_handle || '').trim().replace(/^\$/, '');
     updatePaymentHandles(req.user.id, venmo, cashapp);
     req.user.venmo_handle = venmo || null;
     req.user.cashapp_handle = cashapp || null;

@@ -36,14 +36,14 @@ console.log(`Using real user: ${realUser.name} (${realUser.email})`);
 // --- Create demo users ---
 const demoUsers = [
   { google_id: 'demo_alice',   email: 'alice.martin@demo.split',   name: 'Alice Martin',   avatar_url: 'https://i.pravatar.cc/150?u=alice', venmo_handle: 'alice-martin',    cashapp_handle: null },
-  { google_id: 'demo_bob',     email: 'bob.johnson@demo.split',    name: 'Bob Johnson',    avatar_url: 'https://i.pravatar.cc/150?u=bob',   venmo_handle: null,              cashapp_handle: '$bobjohnson' },
-  { google_id: 'demo_carla',   email: 'carla.diaz@demo.split',     name: 'Carla Diaz',     avatar_url: 'https://i.pravatar.cc/150?u=carla', venmo_handle: 'carla-diaz',      cashapp_handle: '$carladiaz' },
+  { google_id: 'demo_bob',     email: 'bob.johnson@demo.split',    name: 'Bob Johnson',    avatar_url: 'https://i.pravatar.cc/150?u=bob',   venmo_handle: null,              cashapp_handle: 'bobjohnson' },
+  { google_id: 'demo_carla',   email: 'carla.diaz@demo.split',     name: 'Carla Diaz',     avatar_url: 'https://i.pravatar.cc/150?u=carla', venmo_handle: 'carla-diaz',      cashapp_handle: 'carladiaz' },
   { google_id: 'demo_dan',     email: 'dan.kim@demo.split',        name: 'Dan Kim',        avatar_url: 'https://i.pravatar.cc/150?u=dan',   venmo_handle: 'dankim',          cashapp_handle: null },
-  { google_id: 'demo_emma',    email: 'emma.wilson@demo.split',    name: 'Emma Wilson',    avatar_url: 'https://i.pravatar.cc/150?u=emma',  venmo_handle: null,              cashapp_handle: '$emmawilson' },
-  { google_id: 'demo_frank',   email: 'frank.lee@demo.split',      name: 'Frank Lee',      avatar_url: 'https://i.pravatar.cc/150?u=frank', venmo_handle: 'frank-lee',       cashapp_handle: '$franklee' },
+  { google_id: 'demo_emma',    email: 'emma.wilson@demo.split',    name: 'Emma Wilson',    avatar_url: 'https://i.pravatar.cc/150?u=emma',  venmo_handle: null,              cashapp_handle: 'emmawilson' },
+  { google_id: 'demo_frank',   email: 'frank.lee@demo.split',      name: 'Frank Lee',      avatar_url: 'https://i.pravatar.cc/150?u=frank', venmo_handle: 'frank-lee',       cashapp_handle: 'franklee' },
   { google_id: 'demo_grace',   email: 'grace.nguyen@demo.split',   name: 'Grace Nguyen',   avatar_url: 'https://i.pravatar.cc/150?u=grace', venmo_handle: 'gracenguyen',     cashapp_handle: null },
-  { google_id: 'demo_hiro',    email: 'hiro.tanaka@demo.split',    name: 'Hiro Tanaka',    avatar_url: 'https://i.pravatar.cc/150?u=hiro',  venmo_handle: null,              cashapp_handle: '$hirotanaka' },
-  { google_id: 'demo_isla',    email: 'isla.brown@demo.split',     name: 'Isla Brown',     avatar_url: 'https://i.pravatar.cc/150?u=isla',  venmo_handle: 'isla-brown',      cashapp_handle: '$islabrown' },
+  { google_id: 'demo_hiro',    email: 'hiro.tanaka@demo.split',    name: 'Hiro Tanaka',    avatar_url: 'https://i.pravatar.cc/150?u=hiro',  venmo_handle: null,              cashapp_handle: 'hirotanaka' },
+  { google_id: 'demo_isla',    email: 'isla.brown@demo.split',     name: 'Isla Brown',     avatar_url: 'https://i.pravatar.cc/150?u=isla',  venmo_handle: 'isla-brown',      cashapp_handle: 'islabrown' },
 ];
 
 const insertUser = db.prepare(`
