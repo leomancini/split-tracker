@@ -85,7 +85,7 @@ export function shell(data) {
 
     nav {
       background: white;
-      padding: calc(1.25rem + 8px) 1.5rem 0.75rem;
+      padding: 0.75rem 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -127,7 +127,7 @@ export function shell(data) {
     }
 
     @media (max-width: 600px) {
-      nav { padding: calc(1.5rem + 8px) 1.5rem 1rem; }
+      nav { padding: 1rem 1.5rem; }
     }
 
     h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
