@@ -745,11 +745,13 @@ export function shell(data) {
           firstSettlement = false;
         });
         otherSettlements.forEach(function(s){
-          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:44px;color:var(--gray-400)">'
-            + '<span style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
-            + esc(s.fromName.split(' ')[0]) + ' owes ' + esc(s.toName.split(' ')[0])
+          h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:44px;color:var(--gray-400)">'
+            + '<span class="settlement-text" style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
+            + '<span style="font-weight:500">'+esc(s.fromName.split(' ')[0])+'</span>'
+            + ' owes '
+            + '<span style="font-weight:500">'+esc(s.toName.split(' ')[0])+'</span>'
+            + ' <span style="font-family:var(--mono);font-weight:600">'+fmtAmt(s.amt)+'</span>'
             + '</span>'
-            + '<span style="font-family:var(--mono);font-weight:600">'+fmtAmt(s.amt)+'</span>'
             + '</div>';
         });
         h += '<div style="height:2px;background:var(--gray-200);border-radius:2px;margin-top:0.5rem"></div>';
@@ -760,15 +762,15 @@ export function shell(data) {
       if(expenses.length){
         expenses.forEach(function(ex, idx){
           var isSettlement = ex.category === 'settlement';
-          var settlementLabel = '';
+          var settlementHtml = '';
           if(isSettlement){
             var payer = ex.paid_by === D.user.id ? 'You' : ex.paid_by_name;
             var payee = ex.settled_with === D.user.id ? 'You' : ex.settled_with_name;
-            settlementLabel = payer + ' paid ' + payee;
+            settlementHtml = '<span style="font-weight:500">'+esc(payer)+'</span> paid <span style="font-weight:500">'+esc(payee)+'</span>';
           }
           h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
             + '<div class="expense-icon"'+(isSettlement ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>'
-            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-400)' : '')+'">'+esc(isSettlement ? settlementLabel : ex.name)+'</span>'
+            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-400)' : '')+'">'+(isSettlement ? settlementHtml : esc(ex.name))+'</span>'
             + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--gray-400)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
         });
@@ -810,18 +812,31 @@ export function shell(data) {
       var gInfo = groupCache[gid] ? groupCache[gid].group : D.groups.find(function(g){return g.id==gid});
       var gName = gInfo ? gInfo.name : 'Group';
       var canDelete = ex.paid_by === D.user.id || isOwner;
-      var h = '<div class="item-detail-icon">'+catIcon(ex.category)+'</div>';
-      h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';
-      h += '<div class="item-detail-name">'+esc(ex.name)+'</div>';
-      h += '<div style="margin-bottom:1.5rem">';
+      var detailNameHtml;
       if(ex.settled_with){
-        h += '<div class="info-row"><span class="info-label">From</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
-        h += '<div class="info-row"><span class="info-label">To</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
+        var payer = ex.paid_by === D.user.id ? 'You' : ex.paid_by_name;
+        var payee = ex.settled_with === D.user.id ? 'You' : ex.settled_with_name;
+        detailNameHtml = '<span style="font-weight:600">'+esc(payer)+'</span> paid <span style="font-weight:600">'+esc(payee)+'</span>';
+      } else {
+        detailNameHtml = esc(ex.name);
+      }
+      var h = '<div class="item-detail-icon"'+(ex.settled_with ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>';
+      h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';
+      h += '<div class="item-detail-name">'+detailNameHtml+'</div>';
+      h += '<div style="margin-bottom:1.5rem">';
+      h += '<div class="info-row"><span class="info-label">Type</span><span class="info-value">'+(ex.settled_with ? 'Payment' : 'Expense')+'</span></div>';
+      if(!ex.settled_with){
+        h += '<div class="info-row"><span class="info-label">Category</span><span class="info-value">'+catLabel(ex.category)+'</span></div>';
+      }
+      if(ex.settled_with){
+        var method = ex.name.indexOf('Venmo') !== -1 ? 'Venmo' : ex.name.indexOf('Cash App') !== -1 ? 'Cash App' : '';
+        if(method) h += '<div class="info-row"><span class="info-label">Method</span><span class="info-value">'+method+'</span></div>';
+        h += '<div class="info-row"><span class="info-label">Paid</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
+        h += '<div class="info-row"><span class="info-label">Received</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
       } else {
         h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
       }
       h += '<div class="info-row"><span class="info-label">Added</span><span class="info-value">'+fmtDate(ex.created_at)+'</span></div>';
-      h += '<div class="info-row"><span class="info-label">Category</span><span class="info-value">'+catLabel(ex.category)+'</span></div>';
       h += '</div>';
       if(canDelete){
         h += '<div class="sticky-bottom"><button class="btn btn-danger" data-action="delete-item" data-id="'+ex.id+'" data-group-id="'+gid+'">Delete item</button></div>';
