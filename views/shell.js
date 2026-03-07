@@ -557,7 +557,7 @@ export function shell(data) {
     }
 
     function catLabel(cat){
-      var labels = {food:'Food',transport:'Transport',entertainment:'Entertainment',shopping:'Shopping',utilities:'Utilities',health:'Health',education:'Education',general:'General'};
+      var labels = {food:'Food',transport:'Transport',entertainment:'Entertainment',shopping:'Shopping',utilities:'Utilities',health:'Health',education:'Education',settlement:'Settlement',general:'General'};
       return labels[cat] || 'General';
     }
 
@@ -570,6 +570,7 @@ export function shell(data) {
       utilities:     {icon:'fa-bolt',           kw:['electric','electricity','water','internet','wifi','phone','mobile','bill','utility','utilities','rent','mortgage','insurance']},
       health:        {icon:'fa-heart-pulse',    kw:['doctor','hospital','pharmacy','medicine','gym','fitness','health','dental','medical','prescription','vitamin']},
       education:     {icon:'fa-graduation-cap', kw:['book','books','course','school','tuition','class','study','education','library','textbook']},
+      settlement:    {icon:'fa-handshake',       kw:[]},
       general:       {icon:'fa-receipt',        kw:[]}
     };
     function detectCat(name){
@@ -586,11 +587,17 @@ export function shell(data) {
       var bal = {}; // userId -> net balance (positive = owed money, negative = owes)
       members.forEach(function(m){bal[m.id]=0;});
       expenses.forEach(function(ex){
-        var share = ex.amount / n;
-        members.forEach(function(m){
-          if(m.id === ex.paid_by) bal[m.id] += ex.amount - share;
-          else bal[m.id] -= share;
-        });
+        if(ex.settled_with){
+          // Settlement: direct payment between two people
+          bal[ex.paid_by] += ex.amount;
+          bal[ex.settled_with] -= ex.amount;
+        } else {
+          var share = ex.amount / n;
+          members.forEach(function(m){
+            if(m.id === ex.paid_by) bal[m.id] += ex.amount - share;
+            else bal[m.id] -= share;
+          });
+        }
       });
       // Build name/venmo map
       var names = {}, venmos = {}, cashapps = {};
@@ -724,6 +731,10 @@ export function shell(data) {
               + (cashappUrl ? ' data-cashapp-url="'+esc(cashappUrl)+'"' : '')
               + ' data-other-name="'+otherName+'"'
               + ' data-action-label="'+actionLabel+'"'
+              + ' data-settle-from="'+s.from+'"'
+              + ' data-settle-to="'+s.to+'"'
+              + ' data-settle-amt="'+s.amt.toFixed(2)+'"'
+              + ' data-settle-group="'+g.id+'"'
               + '>'+actionLabel+'</span>' : '')
             + '</div>'
             + '</div>';
@@ -736,10 +747,11 @@ export function shell(data) {
       var expenses = detail.expenses || [];
       if(expenses.length){
         expenses.forEach(function(ex, idx){
+          var isSettlement = ex.category === 'settlement';
           h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
-            + '<div class="expense-icon">'+catIcon(ex.category)+'</div>'
-            + '<span class="expense-name" style="flex:1;min-width:0">'+esc(ex.name)+'</span>'
-            + '<span class="expense-amount">'+fmtAmt(ex.amount)+'</span>'
+            + '<div class="expense-icon"'+(isSettlement ? ' style="color:var(--green-600)"' : '')+'>'+catIcon(ex.category)+'</div>'
+            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--green-700)' : '')+'">'+esc(ex.name)+'</span>'
+            + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--green-600)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
         });
       } else {
@@ -784,7 +796,12 @@ export function shell(data) {
       h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';
       h += '<div class="item-detail-name">'+esc(ex.name)+'</div>';
       h += '<div style="margin-bottom:1.5rem">';
-      h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
+      if(ex.settled_with){
+        h += '<div class="info-row"><span class="info-label">From</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
+        h += '<div class="info-row"><span class="info-label">To</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
+      } else {
+        h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
+      }
       h += '<div class="info-row"><span class="info-label">Added</span><span class="info-value">'+fmtDate(ex.created_at)+'</span></div>';
       h += '<div class="info-row"><span class="info-label">Category</span><span class="info-value">'+catLabel(ex.category)+'</span></div>';
       h += '</div>';
@@ -1067,12 +1084,17 @@ export function shell(data) {
         var cUrl = expandBtn.getAttribute('data-cashapp-url');
         var btnStyle = expandBtn.style.cssText;
         var isReq = label === 'Request';
+        var settleFrom = expandBtn.getAttribute('data-settle-from');
+        var settleTo = expandBtn.getAttribute('data-settle-to');
+        var settleAmt = expandBtn.getAttribute('data-settle-amt');
+        var settleGroup = expandBtn.getAttribute('data-settle-group');
         var origText = textEl.innerHTML;
         var origBtns = btnsEl.innerHTML;
         textEl.innerHTML = (isReq ? 'Request from ' : 'Pay ') + '<span style="font-weight:500">'+name+'</span>';
+        var settleAttrs = ' data-action="settle-pay" data-settle-from="'+settleFrom+'" data-settle-to="'+settleTo+'" data-settle-amt="'+settleAmt+'" data-settle-group="'+settleGroup+'" data-other-name="'+name+'"';
         var btns = '';
-        if(vUrl) btns += '<a href="'+vUrl+'" target="_blank" rel="noopener" class="pay-btn'+(D.demoMode ? ' demo-pay' : '')+'" style="'+btnStyle+';background:#008CFF">Venmo</a>';
-        if(cUrl) btns += '<a href="'+cUrl+'" target="_blank" rel="noopener" class="pay-btn'+(D.demoMode ? ' demo-pay' : '')+'" style="'+btnStyle+';background:var(--green-500)">Cash App</a>';
+        if(vUrl) btns += '<a href="'+vUrl+'" target="_blank" rel="noopener" class="pay-btn'+(D.demoMode ? ' demo-pay' : '')+'" style="'+btnStyle+';background:#008CFF"'+settleAttrs+' data-method="Venmo">Venmo</a>';
+        if(cUrl) btns += '<a href="'+cUrl+'" target="_blank" rel="noopener" class="pay-btn'+(D.demoMode ? ' demo-pay' : '')+'" style="'+btnStyle+';background:var(--green-500)"'+settleAttrs+' data-method="Cash App">Cash App</a>';
         btns += '<span class="pay-btn" style="font-weight:600;text-decoration:none;border-radius:999px;background:var(--gray-100);color:var(--gray-500);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.375rem;font-weight:400;width:36px;height:36px;flex-shrink:0;line-height:1" data-action="collapse-pay"><svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/></svg></span>';
         btnsEl.innerHTML = btns;
         btnsEl.querySelector('[data-action="collapse-pay"]').addEventListener('click', function(){
@@ -1085,6 +1107,33 @@ export function shell(data) {
       // Demo pay button
       var demoBtn = e.target.closest('.demo-pay');
       if(demoBtn){ e.preventDefault(); alert('This is a demo — no real payment will be made.'); return; }
+
+      // Settle pay button (Venmo/Cash App)
+      var settleBtn = e.target.closest('[data-action="settle-pay"]');
+      if(settleBtn){
+        var sFrom = settleBtn.getAttribute('data-settle-from');
+        var sTo = settleBtn.getAttribute('data-settle-to');
+        var sAmt = settleBtn.getAttribute('data-settle-amt');
+        var sGroup = settleBtn.getAttribute('data-settle-group');
+        var sName = settleBtn.getAttribute('data-other-name');
+        var sMethod = settleBtn.getAttribute('data-method');
+        var isFromYou = parseInt(sFrom) === D.user.id;
+        var expName = isFromYou
+          ? sMethod + ' payment to ' + sName
+          : sMethod + ' request from ' + sName;
+        fetch('/api/groups/'+sGroup+'/expenses',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({name:expName,amount:sAmt,category:'settlement',paid_by:parseInt(sFrom),settled_with:parseInt(sTo)})
+        }).then(function(r){return r.json()})
+          .then(function(d){
+            if(d.ok){
+              delete groupCache[sGroup];
+            }
+          });
+        // Don't prevent default — let the link open
+        return;
+      }
 
       // data-link navigation
       var el = e.target.closest('[data-link]');
