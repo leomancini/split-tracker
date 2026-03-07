@@ -770,7 +770,7 @@ export function shell(data) {
           }
           h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
             + '<div class="expense-icon"'+(isSettlement ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>'
-            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-400)' : '')+'">'+(isSettlement ? settlementHtml : esc(ex.name))+'</span>'
+            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-400);font-weight:400' : '')+'">'+(isSettlement ? settlementHtml : esc(ex.name))+'</span>'
             + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--gray-400)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
         });
@@ -831,12 +831,12 @@ export function shell(data) {
       if(ex.settled_with){
         var method = ex.name.indexOf('Venmo') !== -1 ? 'Venmo' : ex.name.indexOf('Cash App') !== -1 ? 'Cash App' : '';
         if(method) h += '<div class="info-row"><span class="info-label">Method</span><span class="info-value">'+method+'</span></div>';
-        h += '<div class="info-row"><span class="info-label">Paid</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
-        h += '<div class="info-row"><span class="info-label">Received</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
+        h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
+        h += '<div class="info-row"><span class="info-label">Received by</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
       } else {
         h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
       }
-      h += '<div class="info-row"><span class="info-label">Added</span><span class="info-value">'+fmtDate(ex.created_at)+'</span></div>';
+      h += '<div class="info-row"><span class="info-label">Date</span><span class="info-value">'+fmtDate(ex.created_at)+'</span></div>';
       h += '</div>';
       if(canDelete){
         h += '<div class="sticky-bottom"><button class="btn btn-danger" data-action="delete-item" data-id="'+ex.id+'" data-group-id="'+gid+'">Delete item</button></div>';
