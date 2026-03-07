@@ -697,7 +697,7 @@ export function shell(data) {
           var involvesYou = s.from==D.user.id || s.to==D.user.id;
           if(!involvesYou) return;
           var venmoUrl = '', cashappUrl = '';
-          var note = g.name;
+          var note = 'Balance on Split for ' + g.name;
           if(isYou){
             if(s.toVenmo) venmoUrl = 'https://venmo.com/'+encodeURIComponent(s.toVenmo)+'?txn=pay&note='+encodeURIComponent(note).replace(/%20/g,'%C2%A0')+'&amount='+encodeURIComponent(s.amt.toFixed(2));
             if(s.toCashapp){
