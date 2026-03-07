@@ -1067,11 +1067,9 @@ export function shell(data) {
       if(cashappUrl) html += '<a '+(D.demoMode ? '' : 'href="'+cashappUrl+'" target="_blank" rel="noopener" ')+'class="btn" style="background:var(--green-500);margin-bottom:24px;text-decoration:none;color:#fff" data-pay-btn>'+label+' Cash App</a>';
       html += '<button class="btn" style="background:var(--gray-100);color:var(--gray-600);margin-top:0.5rem" data-modal-cancel>Cancel</button></div>';
       overlay.innerHTML = html;
-      var themeMeta = document.querySelector('meta[name="theme-color"]');
-      if(themeMeta) themeMeta.content = '#999999';
       document.body.appendChild(overlay);
       requestAnimationFrame(function(){ overlay.classList.add('visible'); });
-      function close(){ overlay.classList.remove('visible'); setTimeout(function(){ overlay.remove(); if(themeMeta) themeMeta.content = '#ffffff'; }, 200); }
+      function close(){ overlay.classList.remove('visible'); setTimeout(function(){ overlay.remove(); }, 200); }
       overlay.querySelector('[data-modal-cancel]').addEventListener('click', close);
       overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
       overlay.querySelectorAll('[data-pay-btn]').forEach(function(btn){
