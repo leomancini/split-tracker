@@ -811,7 +811,7 @@ export function shell(data) {
       var h = '<div class="item-detail-icon"'+(ex.settled_with ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>';
       h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';
       h += '<div class="item-detail-name">'+detailNameHtml+'</div>';
-      h += '<div style="margin-top:2.5rem;margin-bottom:1.5rem">';
+      h += '<div style="margin-top:5rem;margin-bottom:1.5rem">';
       h += '<div class="info-row"><span class="info-label">Date</span><span class="info-value">'+fmtDate(ex.created_at)+'</span></div>';
       h += '<div class="info-row"><span class="info-label">Type</span><span class="info-value">'+(ex.settled_with ? 'Payment' : 'Expense')+'</span></div>';
       if(!ex.settled_with){
