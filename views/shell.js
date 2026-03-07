@@ -748,10 +748,16 @@ export function shell(data) {
       if(expenses.length){
         expenses.forEach(function(ex, idx){
           var isSettlement = ex.category === 'settlement';
+          var settlementLabel = '';
+          if(isSettlement){
+            var payer = ex.paid_by === D.user.id ? 'You' : ex.paid_by_name;
+            var payee = ex.settled_with === D.user.id ? 'You' : ex.settled_with_name;
+            settlementLabel = payer + ' paid ' + payee;
+          }
           h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
             + '<div class="expense-icon"'+(isSettlement ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>'
-            + '<span class="expense-name" style="flex:1;min-width:0">'+esc(ex.name)+'</span>'
-            + '<span class="expense-amount">'+fmtAmt(ex.amount)+'</span>'
+            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-400)' : '')+'">'+esc(isSettlement ? settlementLabel : ex.name)+'</span>'
+            + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--gray-400)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
         });
       } else {
