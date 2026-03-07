@@ -173,6 +173,10 @@ export function shell(data) {
       background: rgba(0,0,0,0.4); z-index: 100;
       display: flex; align-items: flex-end; justify-content: center;
     }
+    .pay-modal-overlay::before {
+      content: ''; position: fixed; top: 0; left: 0; right: 0;
+      height: env(safe-area-inset-top, 0px); background: #fff; z-index: 1;
+    }
     .pay-modal {
       background: #fff; border-radius: 56px 56px 0 0; padding: 1.5rem;
       width: 100%; max-width: 600px;
