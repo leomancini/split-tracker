@@ -1063,8 +1063,8 @@ export function shell(data) {
       overlay.className = 'pay-modal-overlay';
       var html = '<div class="pay-modal">';
       var label = isRequest ? 'Request with' : 'Pay with';
-      if(venmoUrl) html += '<a href="'+venmoUrl+'" target="_blank" rel="noopener" class="btn" style="background:#008CFF;margin-bottom:24px;text-decoration:none;color:#fff">'+label+' Venmo</a>';
-      if(cashappUrl) html += '<a href="'+cashappUrl+'" target="_blank" rel="noopener" class="btn" style="background:var(--green-500);margin-bottom:24px;text-decoration:none;color:#fff">'+label+' Cash App</a>';
+      if(venmoUrl) html += '<a '+(D.demoMode ? '' : 'href="'+venmoUrl+'" target="_blank" rel="noopener" ')+'class="btn" style="background:#008CFF;margin-bottom:24px;text-decoration:none;color:#fff" data-pay-btn>'+label+' Venmo</a>';
+      if(cashappUrl) html += '<a '+(D.demoMode ? '' : 'href="'+cashappUrl+'" target="_blank" rel="noopener" ')+'class="btn" style="background:var(--green-500);margin-bottom:24px;text-decoration:none;color:#fff" data-pay-btn>'+label+' Cash App</a>';
       html += '<button class="btn" style="background:var(--gray-100);color:var(--gray-600);margin-top:0.5rem" data-modal-cancel>Cancel</button></div>';
       overlay.innerHTML = html;
       document.body.appendChild(overlay);
@@ -1072,7 +1072,12 @@ export function shell(data) {
       function close(){ overlay.classList.remove('visible'); setTimeout(function(){ overlay.remove(); }, 200); }
       overlay.querySelector('[data-modal-cancel]').addEventListener('click', close);
       overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
-      overlay.querySelectorAll('.btn').forEach(function(btn){ btn.addEventListener('click', function(){ setTimeout(close, 100); }); });
+      overlay.querySelectorAll('[data-pay-btn]').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+          if(D.demoMode){ e.preventDefault(); close(); alert('This is a demo — no real payment will be made.'); return; }
+          setTimeout(close, 100);
+        });
+      });
     }
 
     // --- Event delegation ---
