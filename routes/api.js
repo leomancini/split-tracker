@@ -130,12 +130,14 @@ export function registerApiRoutes(app, ensureAuth) {
     const amount = parseFloat(req.body.amount);
     const category = req.body.category?.trim() || 'general';
     const paidBy = req.body.paid_by ? parseInt(req.body.paid_by) : req.user.id;
+    const settledWith = req.body.settled_with ? parseInt(req.body.settled_with) : null;
 
     if (!name) return res.status(400).json({ error: 'Name is required' });
     if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: 'Valid amount is required' });
     if (paidBy !== req.user.id && !isGroupMember(groupId, paidBy)) return res.status(400).json({ error: 'Invalid member' });
+    if (settledWith && !isGroupMember(groupId, settledWith)) return res.status(400).json({ error: 'Invalid member' });
 
-    const id = createExpense(groupId, paidBy, name, amount, category);
+    const id = createExpense(groupId, paidBy, name, amount, category, settledWith);
     res.json({ ok: true, id });
   });
 

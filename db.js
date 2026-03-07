@@ -71,6 +71,11 @@ try {
 } catch (e) {
   // Column already exists
 }
+try {
+  db.exec('ALTER TABLE expenses ADD COLUMN settled_with INTEGER REFERENCES users(id)');
+} catch (e) {
+  // Column already exists
+}
 
 // --- Helpers ---
 
@@ -250,18 +255,20 @@ export function cancelInvite(inviteId) {
 
 export function getGroupExpenses(groupId) {
   return db.prepare(`
-    SELECT e.*, u.name as paid_by_name, u.avatar_url as paid_by_avatar
+    SELECT e.*, u.name as paid_by_name, u.avatar_url as paid_by_avatar,
+      sw.name as settled_with_name
     FROM expenses e
     JOIN users u ON u.id = e.paid_by
+    LEFT JOIN users sw ON sw.id = e.settled_with
     WHERE e.group_id = ?
     ORDER BY e.created_at DESC
   `).all(groupId);
 }
 
-export function createExpense(groupId, paidBy, name, amount, category) {
+export function createExpense(groupId, paidBy, name, amount, category, settledWith = null) {
   const result = db.prepare(
-    'INSERT INTO expenses (group_id, paid_by, name, amount, category) VALUES (?, ?, ?, ?, ?)'
-  ).run(groupId, paidBy, name, amount, category);
+    'INSERT INTO expenses (group_id, paid_by, name, amount, category, settled_with) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(groupId, paidBy, name, amount, category, settledWith);
   return result.lastInsertRowid;
 }
 
