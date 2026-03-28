@@ -227,7 +227,13 @@ export function shell(data) {
 
     .expense-row { transition: background 150ms, transform 100ms; border-radius: var(--radius); margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
     @media (hover: hover) { .expense-row:hover { background: var(--green-50); } }
+    @media (hover: hover) { .expense-row:hover .expense-name, .expense-row:hover .expense-amount { color: #064e1e; } }
     .expense-row:active { background: var(--green-50); transform: scale(0.97); }
+    .expense-row:active .expense-name, .expense-row:active .expense-amount { color: #064e1e; }
+    @media (hover: hover) { .expense-row.settlement:hover { background: var(--gray-100); color: var(--gray-700); } }
+    @media (hover: hover) { .expense-row.settlement:hover .expense-name, .expense-row.settlement:hover .expense-amount { color: var(--gray-700) !important; } }
+    .expense-row.settlement:active { background: var(--gray-100); transform: scale(0.97); }
+    .expense-row.settlement:active .expense-name, .expense-row.settlement:active .expense-amount { color: var(--gray-700) !important; }
 
 
     label {
@@ -378,8 +384,10 @@ export function shell(data) {
       flex-shrink: 0;
       transition: background 150ms, color 150ms;
     }
-    @media (hover: hover) { .expense-row:hover .expense-icon { background: var(--green-200); color: var(--green-700); } }
-    .expense-row:active .expense-icon { background: var(--green-200); color: var(--green-700); }
+    @media (hover: hover) { .expense-row:hover .expense-icon { background: #cef3da; color: var(--green-700); } }
+    .expense-row:active .expense-icon { background: #cef3da; color: var(--green-700); }
+    @media (hover: hover) { .expense-row.settlement:hover .expense-icon { background: var(--gray-200) !important; color: var(--gray-700) !important; } }
+    .expense-row.settlement:active .expense-icon { background: var(--gray-200) !important; color: var(--gray-700) !important; }
 
     .expense-name {
       font-size: 1rem;
@@ -756,10 +764,10 @@ export function shell(data) {
             var payee = ex.settled_with === D.user.id ? 'You' : ex.settled_with_name;
             settlementHtml = '<span style="font-weight:500">'+esc(payer)+'</span> paid <span style="font-weight:500">'+esc(payee)+'</span>';
           }
-          h += '<div class="expense-row" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
+          h += '<div class="expense-row'+(isSettlement ? ' settlement' : '')+'" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
             + '<div class="expense-icon"'+(isSettlement ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>'
-            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-400);font-weight:400' : '')+'">'+(isSettlement ? settlementHtml : esc(ex.name))+'</span>'
-            + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--gray-400)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
+            + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-500);font-weight:400' : '')+'">'+(isSettlement ? settlementHtml : esc(ex.name))+'</span>'
+            + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--gray-500)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
         });
       } else {

@@ -84,11 +84,12 @@ function createDemoGroup(name, ownerKey, memberKeys, expenses, realUserRole) {
 
   for (const exp of expenses) {
     const paidById = exp.paidBy === 'me' ? realUser.id : userIds[exp.paidBy];
+    const settledWithId = exp.settledWith ? (exp.settledWith === 'me' ? realUser.id : userIds[exp.settledWith]) : null;
     const daysAgo = exp.daysAgo || Math.floor(Math.random() * 30);
     db.prepare(`
-      INSERT INTO expenses (group_id, paid_by, name, amount, category, created_at)
-      VALUES (?, ?, ?, ?, ?, datetime('now', ?))
-    `).run(groupId, paidById, exp.name, exp.amount, exp.category, `-${daysAgo} days`);
+      INSERT INTO expenses (group_id, paid_by, name, amount, category, settled_with, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now', ?))
+    `).run(groupId, paidById, exp.name, exp.amount, exp.category, settledWithId, `-${daysAgo} days`);
   }
 
   const totalMembers = memberKeys.length + 2; // demo members + demo owner/member + real user
@@ -128,6 +129,8 @@ createDemoGroup('Weekend in Lisbon', 'demo_alice', ['demo_bob', 'demo_isla'], [
   { name: 'Dinner in Alfama',    amount: 165.40, category: 'food',          paidBy: 'me',         daysAgo: 20 },
   { name: 'Tram & metro passes', amount: 52.00,  category: 'transport',     paidBy: 'demo_bob',   daysAgo: 20 },
   { name: 'Pastéis de Belém',    amount: 18.60,  category: 'food',          paidBy: 'demo_isla',  daysAgo: 19 },
+  { name: 'Settlement',          amount: 145.00, category: 'settlement',    paidBy: 'demo_alice', settledWith: 'me', daysAgo: 5 },
+  { name: 'Settlement',          amount: 52.00,  category: 'settlement',    paidBy: 'demo_bob',   settledWith: 'me', daysAgo: 4 },
 ], 'owner');
 
 // 6 people: me, Carla, Dan, Emma, Frank, Grace (Frank repeats from Tokyo, Grace from Apt 4B)
@@ -138,6 +141,7 @@ createDemoGroup('Office Lunch Club', 'demo_carla', ['demo_dan', 'demo_emma', 'de
   { name: 'Poke bowls',         amount: 52.80,  category: 'food', paidBy: 'demo_emma',  daysAgo: 8 },
   { name: 'Falafel wraps',      amount: 44.00,  category: 'food', paidBy: 'demo_frank', daysAgo: 10 },
   { name: 'Bánh mì run',        amount: 36.75,  category: 'food', paidBy: 'demo_grace', daysAgo: 12 },
+  { name: 'Settlement',          amount: 8.50,   category: 'settlement', paidBy: 'me', settledWith: 'demo_carla', daysAgo: 1 },
 ], 'member');
 
 console.log('Done!');
