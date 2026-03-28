@@ -73,6 +73,7 @@ export function shell(data) {
 
     input, textarea, select { -webkit-user-select: text; user-select: text; }
     ::selection { background: var(--green-100); }
+    .settlement ::selection { background: var(--gray-200); }
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -365,7 +366,7 @@ export function shell(data) {
 
     .balance-row + .balance-row { border-top: 2px solid var(--gray-100); }
 
-    .avatar-stack { display: flex; gap: 0.625rem; }
+    .avatar-stack { display: flex; gap: 0.625rem; user-select: none; -webkit-user-select: none; }
     .avatar-stack img, .avatar-stack .avatar-placeholder {
       width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: var(--gray-200);
     }
@@ -464,7 +465,7 @@ export function shell(data) {
     <span class="brand">Split</span>
     <span class="user-info" data-link="/profile">
       ${data.user.avatar_url
-        ? `<img data-avatar-url="${esc(data.user.avatar_url)}" style="width:32px;height:32px;border-radius:50%" alt="">`
+        ? `<img data-avatar-url="${esc(data.user.avatar_url)}" style="width:32px;height:32px;border-radius:50%;user-select:none;-webkit-user-select:none" alt="">`
         : `<div style="width:32px;height:32px;border-radius:50%;background:var(--gray-200)"></div>`}
     </span>
   </nav>
@@ -689,7 +690,7 @@ export function shell(data) {
       h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;margin-bottom:1rem">';
       h += '<div style="display:flex;align-items:center">'
         + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return m.avatar_url})) + '</div>'
-        + '<div class="add-member-icon" data-link="/groups/'+g.id+'/add-member" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.5rem;transition:background 150ms,color 150ms;cursor:pointer">+</div>'
+        + '<div class="add-member-icon" data-link="/groups/'+g.id+'/add-member" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.625rem;transition:background 150ms,color 150ms;cursor:pointer;user-select:none;-webkit-user-select:none">+</div>'
         + '</div>';
       var mySettlements = settlements.filter(function(s){ return s.from==D.user.id || s.to==D.user.id; });
       if(!mySettlements.length && detail.expenses && detail.expenses.length){
