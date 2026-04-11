@@ -76,6 +76,16 @@ try {
 } catch (e) {
   // Column already exists
 }
+try {
+  db.exec("ALTER TABLE expenses ADD COLUMN split_type TEXT NOT NULL DEFAULT 'equal'");
+} catch (e) {
+  // Column already exists
+}
+try {
+  db.exec('ALTER TABLE expenses ADD COLUMN split_participants TEXT');
+} catch (e) {
+  // Column already exists
+}
 
 // --- Helpers ---
 
@@ -265,10 +275,10 @@ export function getGroupExpenses(groupId) {
   `).all(groupId);
 }
 
-export function createExpense(groupId, paidBy, name, amount, category, settledWith = null) {
+export function createExpense(groupId, paidBy, name, amount, category, settledWith = null, splitType = 'equal', splitParticipants = null) {
   const result = db.prepare(
-    'INSERT INTO expenses (group_id, paid_by, name, amount, category, settled_with) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(groupId, paidBy, name, amount, category, settledWith);
+    'INSERT INTO expenses (group_id, paid_by, name, amount, category, settled_with, split_type, split_participants) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants);
   return result.lastInsertRowid;
 }
 

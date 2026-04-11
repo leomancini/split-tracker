@@ -595,6 +595,7 @@ export function shell(data) {
     function calcSettlements(members, expenses){
       if(!expenses||!expenses.length||!members.length) return [];
       var n = members.length;
+      var allIds = members.map(function(m){return m.id;});
       var bal = {}; // userId -> net balance (positive = owed money, negative = owes)
       members.forEach(function(m){bal[m.id]=0;});
       expenses.forEach(function(ex){
@@ -602,12 +603,33 @@ export function shell(data) {
           // Settlement: direct payment between two people
           bal[ex.paid_by] += ex.amount;
           bal[ex.settled_with] -= ex.amount;
+        } else if(ex.split_type === 'full'){
+          // Full amount owed by specific participants to the payer
+          var owes = ex.split_participants ? JSON.parse(ex.split_participants) : [];
+          if(owes.length){
+            bal[ex.paid_by] += ex.amount;
+            var perPerson = ex.amount / owes.length;
+            owes.forEach(function(pid){
+              if(bal[pid] !== undefined) bal[pid] -= perPerson;
+            });
+          }
         } else {
-          var share = ex.amount / n;
-          members.forEach(function(m){
-            if(m.id === ex.paid_by) bal[m.id] += ex.amount - share;
-            else bal[m.id] -= share;
-          });
+          // Equal split among participants (default: all members)
+          var participants = ex.split_participants ? JSON.parse(ex.split_participants) : allIds;
+          var pn = participants.length || n;
+          var share = ex.amount / pn;
+          var payerInList = participants.indexOf(ex.paid_by) !== -1;
+          if(payerInList){
+            participants.forEach(function(pid){
+              if(pid === ex.paid_by) bal[pid] += ex.amount - share;
+              else if(bal[pid] !== undefined) bal[pid] -= share;
+            });
+          } else {
+            bal[ex.paid_by] += ex.amount;
+            participants.forEach(function(pid){
+              if(bal[pid] !== undefined) bal[pid] -= share;
+            });
+          }
         }
       });
       // Build name/venmo map
@@ -786,6 +808,7 @@ export function shell(data) {
 
     function addExpenseView(gid){
       var members = groupCache[gid] ? groupCache[gid].members : [];
+      var others = members.filter(function(m){ return m.id !== D.user.id; });
       var h = '<h1>Add item</h1>'
         + '<form id="add-expense-form" data-group-id="'+gid+'">'
         + '<div class="form-group"><label>Name</label>'
@@ -799,6 +822,33 @@ export function shell(data) {
           h += '<option value="'+m.id+'"'+(m.id === D.user.id ? ' selected' : '')+'>'+esc(m.id === D.user.id ? 'You' : m.name)+'</option>';
         });
         h += '</select></div>';
+      }
+      // Split type selector
+      if(members.length >= 2){
+        h += '<div class="form-group"><label>Split</label>'
+          + '<select id="exp-split-type">'
+          + '<option value="equal">Split equally</option>';
+        if(members.length === 2 && others.length === 1){
+          h += '<option value="you_owe">You owe '+esc(others[0].name)+'</option>';
+          h += '<option value="they_owe">'+esc(others[0].name)+' owes you</option>';
+        } else {
+          h += '<option value="you_owe">You owe full amount</option>';
+          h += '<option value="they_owe">They owe full amount</option>';
+        }
+        h += '</select></div>';
+        // Participant picker (shown/hidden by JS)
+        if(members.length > 2){
+          h += '<div id="exp-participants-wrap" class="form-group">'
+            + '<label id="exp-participants-label">Split between</label>'
+            + '<div id="exp-participants" style="border:2px solid var(--gray-200);border-radius:var(--radius);overflow:hidden">';
+          members.forEach(function(m){
+            h += '<label style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--gray-100);margin:0">'
+              + '<input type="checkbox" class="exp-participant-cb" value="'+m.id+'" checked style="width:18px;height:18px;accent-color:var(--green-500);flex-shrink:0">'
+              + '<span style="font-size:0.9375rem">'+esc(m.id === D.user.id ? 'You' : m.name)+'</span>'
+              + '</label>';
+          });
+          h += '</div></div>';
+        }
       }
       h += '</form>'
         + '<div class="sticky-bottom"><button type="submit" form="add-expense-form" class="btn">Add item</button></div>';
@@ -833,6 +883,27 @@ export function shell(data) {
         h += '<div class="info-row"><span class="info-label">Received by</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
       } else {
         h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
+        // Show split info
+        var detailMembers = groupCache[gid] ? groupCache[gid].members : [];
+        if(ex.split_type === 'full'){
+          var owes = ex.split_participants ? JSON.parse(ex.split_participants) : [];
+          var oweNames = owes.map(function(pid){
+            if(pid === D.user.id) return 'You';
+            var m = detailMembers.find(function(mm){return mm.id===pid;});
+            return m ? m.name : 'Unknown';
+          });
+          h += '<div class="info-row"><span class="info-label">Split</span><span class="info-value">'+esc(oweNames.join(', '))+' owes full amount</span></div>';
+        } else if(ex.split_participants){
+          var parts = JSON.parse(ex.split_participants);
+          if(parts.length < detailMembers.length){
+            var partNames = parts.map(function(pid){
+              if(pid === D.user.id) return 'You';
+              var m = detailMembers.find(function(mm){return mm.id===pid;});
+              return m ? m.name : 'Unknown';
+            });
+            h += '<div class="info-row"><span class="info-label">Split between</span><span class="info-value">'+esc(partNames.join(', '))+'</span></div>';
+          }
+        }
       }
       h += '</div>';
       if(canDelete){
@@ -977,6 +1048,59 @@ export function shell(data) {
         app.innerHTML = addExpenseView(gid);
         var expInput = document.getElementById('exp-desc');
         if(expInput) expInput.focus();
+        // Wire up split type change handler
+        var splitSel = document.getElementById('exp-split-type');
+        if(splitSel){
+          var cachedMembers = groupCache[gid] ? groupCache[gid].members : [];
+          var memberCount = cachedMembers.length;
+          splitSel.addEventListener('change', function(){
+            var v = splitSel.value;
+            var paidByEl = document.getElementById('exp-paid-by');
+            var partWrap = document.getElementById('exp-participants-wrap');
+            var partLabel = document.getElementById('exp-participants-label');
+            // For 2-person groups: auto-switch paid_by
+            if(memberCount === 2 && paidByEl){
+              var otherVal = null;
+              for(var i=0;i<paidByEl.options.length;i++){
+                if(parseInt(paidByEl.options[i].value) !== D.user.id){ otherVal = paidByEl.options[i].value; break; }
+              }
+              if(v === 'you_owe' && otherVal) paidByEl.value = otherVal;
+              else if(v === 'they_owe') paidByEl.value = String(D.user.id);
+              else if(v === 'equal') paidByEl.value = String(D.user.id);
+            }
+            // For 3+ person groups: show/hide participant picker
+            if(partWrap){
+              if(v === 'equal'){
+                partWrap.style.display = '';
+                partLabel.textContent = 'Split between';
+                // Show all checkboxes, check all
+                var cbs = partWrap.querySelectorAll('.exp-participant-cb');
+                cbs.forEach(function(cb){ cb.parentElement.style.display = ''; cb.checked = true; });
+              } else if(v === 'they_owe'){
+                partWrap.style.display = '';
+                partLabel.textContent = 'Who owes';
+                // Hide "You" checkbox, show & check others
+                var cbs = partWrap.querySelectorAll('.exp-participant-cb');
+                cbs.forEach(function(cb){
+                  if(parseInt(cb.value) === D.user.id){ cb.parentElement.style.display = 'none'; cb.checked = false; }
+                  else { cb.parentElement.style.display = ''; cb.checked = true; }
+                });
+                // Auto-set paid_by to you
+                if(paidByEl) paidByEl.value = String(D.user.id);
+              } else if(v === 'you_owe'){
+                partWrap.style.display = 'none';
+                // Auto-switch paid_by to someone else if it's you
+                if(paidByEl && parseInt(paidByEl.value) === D.user.id){
+                  for(var i=0;i<paidByEl.options.length;i++){
+                    if(parseInt(paidByEl.options[i].value) !== D.user.id){ paidByEl.value = paidByEl.options[i].value; break; }
+                  }
+                }
+              }
+            } else {
+              // 2-person group - no participant wrap needed
+            }
+          });
+        }
       }
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/items\\/(\\d+)$/))){
         var gid = m[1], eid = parseInt(m[2]);
@@ -1287,6 +1411,43 @@ export function shell(data) {
         var expAmount = costEl.value.trim();
         if(!expName||!expAmount) return;
         var cat = detectCat(expName);
+        // Gather split type and participants
+        var splitTypeEl = document.getElementById('exp-split-type');
+        var splitTypeVal = splitTypeEl ? splitTypeEl.value : 'equal';
+        var splitType = 'equal';
+        var splitParticipants = null;
+        var cachedMem = groupCache[gid3] ? groupCache[gid3].members : [];
+        var paidByEl = document.getElementById('exp-paid-by');
+        if(splitTypeVal === 'you_owe'){
+          splitType = 'full';
+          splitParticipants = [D.user.id];
+        } else if(splitTypeVal === 'they_owe'){
+          splitType = 'full';
+          if(cachedMem.length === 2){
+            // 2-person group: the other person owes
+            var otherM = cachedMem.find(function(m){return m.id !== D.user.id;});
+            splitParticipants = otherM ? [otherM.id] : null;
+          } else {
+            // 3+ person group: get checked participants
+            var cbs = document.querySelectorAll('.exp-participant-cb:checked');
+            var ids = [];
+            cbs.forEach(function(cb){ if(parseInt(cb.value) !== D.user.id) ids.push(parseInt(cb.value)); });
+            splitParticipants = ids.length ? ids : null;
+          }
+        } else {
+          // equal split
+          splitType = 'equal';
+          if(cachedMem.length > 2){
+            var cbs = document.querySelectorAll('.exp-participant-cb:checked');
+            var ids = [];
+            cbs.forEach(function(cb){ ids.push(parseInt(cb.value)); });
+            // Only send participants if not all are selected
+            if(ids.length < cachedMem.length) splitParticipants = ids;
+          }
+        }
+        var bodyData = {name:expName,amount:expAmount,category:cat,paid_by:paidByEl?paidByEl.value:undefined};
+        if(splitType !== 'equal') bodyData.split_type = splitType;
+        if(splitParticipants) bodyData.split_participants = splitParticipants;
         var btn = document.querySelector('button[form="add-expense-form"]');
         var btnText = btn.innerHTML;
         btn.disabled = true;
@@ -1296,7 +1457,7 @@ export function shell(data) {
         fetch('/api/groups/'+gid3+'/expenses',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({name:expName,amount:expAmount,category:cat,paid_by:document.getElementById('exp-paid-by')?document.getElementById('exp-paid-by').value:undefined})
+          body:JSON.stringify(bodyData)
         }).then(function(r){return r.json()})
           .then(function(d){
             if(d.ok){
