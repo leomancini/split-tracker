@@ -257,6 +257,40 @@ export function shell(data) {
       -webkit-appearance: none;
     }
 
+    input[type="checkbox"].exp-participant-cb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      border: 2px solid var(--gray-300, #d1d5db);
+      border-radius: 50%;
+      background: white;
+      padding: 0;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+    }
+    input[type="checkbox"].exp-participant-cb:checked {
+      background: var(--green-500);
+      border-color: var(--green-500);
+    }
+    input[type="checkbox"].exp-participant-cb:checked::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 7px;
+      width: 5px;
+      height: 9px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    input[type="checkbox"].exp-participant-cb:focus {
+      outline: none;
+      border-color: var(--green-500);
+    }
+
     input:focus, textarea:focus, select:focus {
       outline: none;
       border-color: var(--green-500);
@@ -841,10 +875,11 @@ export function shell(data) {
           h += '<div id="exp-participants-wrap" class="form-group">'
             + '<label id="exp-participants-label">Split between</label>'
             + '<div id="exp-participants" style="border:2px solid var(--gray-200);border-radius:var(--radius);overflow:hidden">';
-          members.forEach(function(m){
-            h += '<label style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--gray-100);margin:0">'
-              + '<input type="checkbox" class="exp-participant-cb" value="'+m.id+'" checked style="width:18px;height:18px;accent-color:var(--green-500);flex-shrink:0">'
-              + '<span style="font-size:0.9375rem">'+esc(m.id === D.user.id ? 'You' : m.name)+'</span>'
+          members.forEach(function(m, idx){
+            var isLast = idx === members.length - 1;
+            h += '<label style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0.75rem;cursor:pointer;margin:0'+(isLast ? '' : ';border-bottom:1px solid var(--gray-100)')+'">'
+              + '<input type="checkbox" class="exp-participant-cb" value="'+m.id+'" checked>'
+              + '<span style="font-size:0.9375rem;line-height:22px">'+esc(m.id === D.user.id ? 'You' : m.name)+'</span>'
               + '</label>';
           });
           h += '</div></div>';
