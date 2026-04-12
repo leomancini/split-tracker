@@ -21,7 +21,7 @@ export function sendInviteEmail({ to, inviterName, groupName }) {
   mg.messages.create(DOMAIN, {
     from: FROM,
     to,
-    subject: `${inviterName} invited you to ${groupName} on Split`,
+    subject: `${inviterName} invited you to a group`,
     text: [
       `${inviterName} invited you to the group ${groupName} on Split.`,
       '',
@@ -29,7 +29,7 @@ export function sendInviteEmail({ to, inviterName, groupName }) {
       appUrl,
     ].join('\n'),
     html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 0;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 8px 0 32px;">
         <p style="margin: 0 0 24px; font-size: 18px; line-height: 1.5;"><strong>${inviterName}</strong> invited you to the group <strong>${groupName}</strong> on Split.</p>
         <a href="${appUrl}" style="display: block; padding: 14px 28px; background: #22c55e; color: #fff; text-decoration: none; border-radius: 999px; font-size: 16px; font-weight: 600; text-align: center;">
           Join group
