@@ -21,7 +21,7 @@ export function sendInviteEmail({ to, inviterName, groupName }) {
   mg.messages.create(DOMAIN, {
     from: FROM,
     to,
-    subject: `${inviterName} invited you to a group`,
+    subject: `${inviterName} invited you to split expenses`,
     text: [
       `${inviterName} invited you to the group ${groupName} on Split.`,
       '',
@@ -35,7 +35,7 @@ export function sendInviteEmail({ to, inviterName, groupName }) {
           Join group
         </a>
         <p style="margin-top: 32px; color: #888; font-size: 13px;">
-          If you don't have an account yet, you'll be able to sign up and the invite will be waiting for you.
+          If you don't have an account yet, you'll be automatically added to the group when you sign up.
         </p>
       </div>
     `,
