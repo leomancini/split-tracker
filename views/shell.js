@@ -267,9 +267,12 @@ export function shell(data) {
       border-radius: 50%;
       background: white;
       padding: 0;
+      margin: 0;
       cursor: pointer;
-      position: relative;
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     input[type="checkbox"].exp-participant-cb:checked {
       background: var(--green-500);
@@ -277,18 +280,21 @@ export function shell(data) {
     }
     input[type="checkbox"].exp-participant-cb:checked::after {
       content: '';
-      position: absolute;
-      top: 4px;
-      left: 7px;
+      display: block;
       width: 5px;
       height: 9px;
       border: solid white;
       border-width: 0 2px 2px 0;
       transform: rotate(45deg);
+      margin-top: -3px;
+      margin-left: 0.5px;
     }
     input[type="checkbox"].exp-participant-cb:focus {
       outline: none;
-      border-color: var(--green-500);
+    }
+    input[type="checkbox"].exp-participant-cb:active {
+      transform: none;
+      opacity: 1;
     }
 
     input:focus, textarea:focus, select:focus {
@@ -877,9 +883,9 @@ export function shell(data) {
             + '<div id="exp-participants" style="border:2px solid var(--gray-200);border-radius:var(--radius);overflow:hidden">';
           members.forEach(function(m, idx){
             var isLast = idx === members.length - 1;
-            h += '<label style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0.75rem;cursor:pointer;margin:0'+(isLast ? '' : ';border-bottom:1px solid var(--gray-100)')+'">'
+            h += '<label style="display:flex;align-items:center;gap:0.625rem;padding:0.75rem;cursor:pointer;margin:0'+(isLast ? '' : ';border-bottom:1px solid var(--gray-100)')+'">'
               + '<input type="checkbox" class="exp-participant-cb" value="'+m.id+'" checked>'
-              + '<span style="font-size:0.9375rem;line-height:22px">'+esc(m.id === D.user.id ? 'You' : m.name)+'</span>'
+              + '<span style="font-size:0.9375rem;color:var(--gray-900)">'+esc(m.id === D.user.id ? 'You' : m.name)+'</span>'
               + '</label>';
           });
           h += '</div></div>';
@@ -971,18 +977,14 @@ export function shell(data) {
           + '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc(i.email.charAt(0).toUpperCase())+'</div>'
           + '<div class="member-info"><div class="member-name">'+esc(i.email)+'</div>'
           + '<div class="member-email">Pending</div></div>';
-        if(isOwner){
-          h += '<button class="btn btn-xs btn-danger" data-action="cancel-invite" data-group-id="'+g.id+'" data-invite-id="'+i.id+'">Cancel</button>';
-        }
+        h += '<button class="btn btn-xs btn-danger" data-action="cancel-invite" data-group-id="'+g.id+'" data-invite-id="'+i.id+'">Cancel</button>';
         h += '</div>';
       });
 
       h += '</div>';
 
-      if(isOwner){
-        h += '<div style="height:5rem"></div>';
-        h += '<div class="sticky-bottom"><button class="btn" data-link="/groups/'+g.id+'/add-member">Add person</button></div>';
-      }
+      h += '<div style="height:5rem"></div>';
+      h += '<div class="sticky-bottom"><button class="btn" data-link="/groups/'+g.id+'/add-member">Add person</button></div>';
 
       return h;
     }
@@ -1080,6 +1082,12 @@ export function shell(data) {
       else if((m = path.match(/^\\/groups\\/(\\d+)\\/add-expense$/))){
         var gid = m[1];
         document.title = 'Split \u2013 Add item';
+        if(!groupCache[gid]){
+          app.innerHTML = '<div style="display:flex;justify-content:center;padding:3rem 0"><div class="spinner"></div></div>';
+          var r = await fetch('/api/groups/'+gid);
+          if(myVer !== routeVer) return;
+          groupCache[gid] = await r.json();
+        }
         app.innerHTML = addExpenseView(gid);
         var expInput = document.getElementById('exp-desc');
         if(expInput) expInput.focus();
@@ -1110,7 +1118,7 @@ export function shell(data) {
                 partLabel.textContent = 'Split between';
                 // Show all checkboxes, check all
                 var cbs = partWrap.querySelectorAll('.exp-participant-cb');
-                cbs.forEach(function(cb){ cb.parentElement.style.display = ''; cb.checked = true; });
+                cbs.forEach(function(cb){ cb.parentElement.style.display = 'flex'; cb.checked = true; });
               } else if(v === 'they_owe'){
                 partWrap.style.display = '';
                 partLabel.textContent = 'Who owes';
@@ -1118,7 +1126,7 @@ export function shell(data) {
                 var cbs = partWrap.querySelectorAll('.exp-participant-cb');
                 cbs.forEach(function(cb){
                   if(parseInt(cb.value) === D.user.id){ cb.parentElement.style.display = 'none'; cb.checked = false; }
-                  else { cb.parentElement.style.display = ''; cb.checked = true; }
+                  else { cb.parentElement.style.display = 'flex'; cb.checked = true; }
                 });
                 // Auto-set paid_by to you
                 if(paidByEl) paidByEl.value = String(D.user.id);

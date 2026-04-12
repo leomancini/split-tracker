@@ -107,7 +107,7 @@ export function registerApiRoutes(app, ensureAuth) {
   // Invite to group
   app.post('/api/groups/:id/invite', ensureAuth, (req, res) => {
     const groupId = parseInt(req.params.id);
-    if (!isGroupOwner(groupId, req.user.id)) return res.status(403).json({ error: 'Only owner can invite' });
+    if (!isGroupMember(groupId, req.user.id)) return res.status(403).json({ error: 'Not a member' });
 
     const email = req.body.email?.trim().toLowerCase();
     if (!email || !email.includes('@')) return res.status(400).json({ error: 'Invalid email' });
@@ -176,7 +176,7 @@ export function registerApiRoutes(app, ensureAuth) {
   app.delete('/api/groups/:gid/invites/:iid', ensureAuth, (req, res) => {
     const groupId = parseInt(req.params.gid);
     const inviteId = parseInt(req.params.iid);
-    if (!isGroupOwner(groupId, req.user.id)) return res.status(403).json({ error: 'Only owner can cancel invites' });
+    if (!isGroupMember(groupId, req.user.id)) return res.status(403).json({ error: 'Not a member' });
 
     const invite = getInviteById(inviteId);
     if (!invite || invite.group_id !== groupId) return res.status(404).json({ error: 'Invite not found' });
