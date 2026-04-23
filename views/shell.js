@@ -162,6 +162,9 @@ export function shell(data) {
     @media (max-width: 600px) { .btn { height: 64px; font-size: 1.25rem; } }
     @media (hover: hover) { .btn:hover { background: var(--green-600); } }
     .btn:active { transform: scale(0.93); transition: transform 150ms; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:disabled:active { transform: none; }
+    @media (hover: hover) { .btn:disabled:hover { background: var(--green-500); } }
     #demo-toggle { transition: filter 150ms, transform 150ms; }
     @media (hover: hover) { #demo-toggle:hover { filter: brightness(0.95); } }
     #demo-toggle:active { transform: scale(0.93); filter: brightness(0.9); }
@@ -901,7 +904,7 @@ export function shell(data) {
         }
       }
       h += '</form>'
-        + '<div class="sticky-bottom"><button type="submit" form="add-expense-form" class="btn">Add item</button></div>';
+        + '<div class="sticky-bottom"><button type="submit" form="add-expense-form" class="btn" disabled>Add item</button></div>';
       return h;
     }
 
@@ -1134,6 +1137,16 @@ export function shell(data) {
         app.innerHTML = addExpenseView(gid);
         var expInput = document.getElementById('exp-desc');
         if(expInput) expInput.focus();
+        // Enable "Add item" only when name and amount are both valid
+        var nameEl = document.getElementById('exp-desc');
+        var amtEl = document.getElementById('exp-cost');
+        var addBtn = document.querySelector('button[form="add-expense-form"]');
+        function syncAddBtn(){
+          var ok = nameEl && amtEl && nameEl.value.trim() && parseFloat(amtEl.value) > 0;
+          if(addBtn) addBtn.disabled = !ok;
+        }
+        if(nameEl) nameEl.addEventListener('input', syncAddBtn);
+        if(amtEl) amtEl.addEventListener('input', syncAddBtn);
         // Wire up split type change handler
         var splitSel = document.getElementById('exp-split-type');
         if(splitSel){
