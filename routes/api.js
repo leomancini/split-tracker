@@ -141,12 +141,12 @@ export function registerApiRoutes(app, ensureAuth) {
     if (paidBy !== req.user.id && !isGroupMember(groupId, paidBy)) return res.status(400).json({ error: 'Invalid member' });
     if (settledWith && !isGroupMember(groupId, settledWith)) return res.status(400).json({ error: 'Invalid member' });
 
-    const id = createExpense(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants);
+    const isSettlement = !!settledWith || category === 'settlement';
+    const id = createExpense(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, isSettlement ? 'fa-dollar-sign' : null);
     res.json({ ok: true, id });
 
-    // Pick icon asynchronously after responding — don't block the request.
-    // Settlements use a fixed dollar-sign icon, so skip Haiku for those.
-    if (!settledWith) {
+    // Pick icon asynchronously for regular expenses. Settlements already have their fixed icon.
+    if (!isSettlement) {
       pickIcon({ name, category })
         .then(icon => { if (icon) updateExpenseIcon(id, icon); })
         .catch(err => console.error('pickIcon failed:', err.message));

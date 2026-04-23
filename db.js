@@ -292,7 +292,16 @@ export function updateExpenseIcon(id, icon) {
 }
 
 export function getExpensesMissingIcon() {
-  return db.prepare("SELECT id, name, category FROM expenses WHERE icon IS NULL OR icon = ''").all();
+  return db.prepare(
+    "SELECT id, name, category FROM expenses WHERE (icon IS NULL OR icon = '') AND settled_with IS NULL AND category != 'settlement'"
+  ).all();
+}
+
+export function setSettlementIcons() {
+  const result = db.prepare(
+    "UPDATE expenses SET icon = 'fa-dollar-sign' WHERE (settled_with IS NOT NULL OR category = 'settlement') AND (icon IS NULL OR icon != 'fa-dollar-sign')"
+  ).run();
+  return result.changes;
 }
 
 export function getExpenseById(id) {

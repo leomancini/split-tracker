@@ -1,10 +1,13 @@
 import 'dotenv/config';
-import { getExpensesMissingIcon, updateExpenseIcon } from './db.js';
+import { getExpensesMissingIcon, updateExpenseIcon, setSettlementIcons } from './db.js';
 import { pickIcon } from './icon-picker.js';
 
 const CONCURRENCY = 5;
 
 async function run() {
+  const settlementChanges = setSettlementIcons();
+  if (settlementChanges) console.log(`Set ${settlementChanges} settlement rows to fa-dollar-sign.`);
+
   const rows = getExpensesMissingIcon();
   console.log(`Backfilling icons for ${rows.length} expenses...`);
   if (!rows.length) return;

@@ -634,9 +634,9 @@ export function shell(data) {
     }
     function catIcon(c){return '<i class="fa-solid '+(CATS[c]||CATS.general).icon+'"></i>';}
     function expenseIcon(ex, size){
-      if(ex && ex.icon) return '<i class="fa-solid '+ex.icon+'"></i>';
-      // Settlements use the fixed settlement icon (no Haiku call, no spinner).
+      // Settlements always render as the dollar-sign icon, regardless of any stored value.
       if(ex && (ex.category === 'settlement' || ex.settled_with)) return '<i class="fa-solid '+CATS.settlement.icon+'"></i>';
+      if(ex && ex.icon) return '<i class="fa-solid '+ex.icon+'"></i>';
       // No icon yet — show a spinner while Haiku picks one.
       var s = size || 18;
       var bw = Math.max(2, Math.round(s/9));
