@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "better-sqlite3": "^12.6.2",
     "connect-sqlite3": "^0.9.16",
     "dotenv": "^17.3.1",

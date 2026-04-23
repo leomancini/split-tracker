@@ -630,6 +630,15 @@ export function shell(data) {
       return 'general';
     }
     function catIcon(c){return '<i class="fa-solid '+(CATS[c]||CATS.general).icon+'"></i>';}
+    function expenseIcon(ex, size){
+      if(ex && ex.icon) return '<i class="fa-solid '+ex.icon+'"></i>';
+      // Settlements use the fixed settlement icon (no Haiku call, no spinner).
+      if(ex && (ex.category === 'settlement' || ex.settled_with)) return '<i class="fa-solid '+CATS.settlement.icon+'"></i>';
+      // No icon yet — show a spinner while Haiku picks one.
+      var s = size || 18;
+      var bw = Math.max(2, Math.round(s/9));
+      return '<div class="spinner" style="width:'+s+'px;height:'+s+'px;border-width:'+bw+'px;margin:0;border-color:rgba(34,197,94,0.2);border-top-color:currentColor"></div>';
+    }
 
     // --- Balance calculation ---
     function calcSettlements(members, expenses){
@@ -828,7 +837,7 @@ export function shell(data) {
             settlementHtml = '<span style="font-weight:500">'+esc(payer)+'</span> paid <span style="font-weight:500">'+esc(payee)+'</span>';
           }
           h += '<div class="expense-row'+(isSettlement ? ' settlement' : '')+'" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
-            + '<div class="expense-icon"'+(isSettlement ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>'
+            + '<div class="expense-icon"'+(isSettlement ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+expenseIcon(ex)+'</div>'
             + '<span class="expense-name" style="flex:1;min-width:0'+(isSettlement ? ';color:var(--gray-500);font-weight:400' : '')+'">'+(isSettlement ? settlementHtml : esc(ex.name))+'</span>'
             + '<span class="expense-amount"'+(isSettlement ? ' style="color:var(--gray-500)"' : '')+'>'+fmtAmt(ex.amount)+'</span>'
             + '</div>';
@@ -908,7 +917,7 @@ export function shell(data) {
       } else {
         detailNameHtml = esc(ex.name);
       }
-      var h = '<div class="item-detail-icon"'+(ex.settled_with ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+catIcon(ex.category)+'</div>';
+      var h = '<div class="item-detail-icon"'+(ex.settled_with ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+expenseIcon(ex, 32)+'</div>';
       h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';
       h += '<div class="item-detail-name">'+detailNameHtml+'</div>';
       h += '<div style="margin-top:5rem;margin-bottom:1.5rem">';
@@ -1024,6 +1033,39 @@ export function shell(data) {
     var lastNav = 0;
     var routeVer = 0;
     var prevPath = '';
+    var iconPollTimer = null;
+
+    function expenseNeedsIcon(ex){
+      return !ex.icon && ex.category !== 'settlement' && !ex.settled_with;
+    }
+    function stopIconPoll(){ if(iconPollTimer){ clearTimeout(iconPollTimer); iconPollTimer = null; } }
+    function startIconPoll(gid, myVer, attempt){
+      stopIconPoll();
+      var detail = groupCache[gid];
+      if(!detail || myVer !== routeVer) return;
+      var pending = (detail.expenses||[]).some(expenseNeedsIcon);
+      if(!pending) return;
+      if(attempt > 20) return; // ~30s cap
+      iconPollTimer = setTimeout(function(){
+        if(myVer !== routeVer) return;
+        fetch('/api/groups/'+gid).then(function(r){return r.json()}).then(function(fresh){
+          if(myVer !== routeVer) return;
+          groupCache[gid] = fresh;
+          // Re-render whichever view the user is on that depends on this cache.
+          var path = location.pathname;
+          if(path === '/groups/'+gid){
+            app.innerHTML = groupDetailView(fresh);
+          } else {
+            var mItem = path.match(/^\\/groups\\/\\d+\\/items\\/(\\d+)$/);
+            if(mItem){
+              var ex = (fresh.expenses||[]).find(function(e){return e.id==mItem[1]});
+              if(ex) app.innerHTML = itemDetailView(gid, ex, fresh.isOwner);
+            }
+          }
+          startIconPoll(gid, myVer, (attempt||0)+1);
+        }).catch(function(){});
+      }, 1500);
+    }
 
     var brandEl = document.querySelector('nav .brand');
     var avatarEl = document.querySelector('nav .user-info');
@@ -1057,6 +1099,7 @@ export function shell(data) {
     async function route(path, opts){
       var myVer = ++routeVer;
       opts = opts || {};
+      stopIconPoll();
       updateNav(path);
       var m;
 
@@ -1152,6 +1195,7 @@ export function shell(data) {
           if(ex){
             document.title = 'Split \u2013 ' + esc(ex.name);
             app.innerHTML = itemDetailView(gid, ex, groupCache[gid].isOwner);
+            startIconPoll(gid, myVer, 0);
           } else { nav('/groups/'+gid); }
         } else {
           app.innerHTML = '<div style="display:flex;justify-content:center;padding:3rem 0"><div class="spinner"></div></div>';
@@ -1163,6 +1207,7 @@ export function shell(data) {
           if(ex){
             document.title = 'Split \u2013 ' + esc(ex.name);
             app.innerHTML = itemDetailView(gid, ex, d.isOwner);
+            startIconPoll(gid, myVer, 0);
           } else { nav('/groups/'+gid); }
         }
       }
@@ -1214,6 +1259,7 @@ export function shell(data) {
           groupCache[gid] = detail;
           document.title = 'Split \u2013 ' + detail.group.name;
           app.innerHTML = groupDetailView(detail, opts.alert);
+          startIconPoll(gid, myVer, 0);
         }catch(e){ if(myVer === routeVer && !groupCache[gid]) nav('/'); }
       }
       else if(path === '/profile'){

@@ -20,8 +20,10 @@ import {
   getExpenseById,
   deleteExpense,
   updatePaymentHandles,
+  updateExpenseIcon,
 } from '../db.js';
 import { sendInviteEmail } from '../mail.js';
+import { pickIcon } from '../icon-picker.js';
 
 export function registerApiRoutes(app, ensureAuth) {
   // Middleware: all /api routes require auth and return JSON
@@ -141,6 +143,14 @@ export function registerApiRoutes(app, ensureAuth) {
 
     const id = createExpense(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants);
     res.json({ ok: true, id });
+
+    // Pick icon asynchronously after responding — don't block the request.
+    // Settlements use a fixed dollar-sign icon, so skip Haiku for those.
+    if (!settledWith) {
+      pickIcon({ name, category })
+        .then(icon => { if (icon) updateExpenseIcon(id, icon); })
+        .catch(err => console.error('pickIcon failed:', err.message));
+    }
   });
 
   // Delete expense

@@ -86,6 +86,11 @@ try {
 } catch (e) {
   // Column already exists
 }
+try {
+  db.exec('ALTER TABLE expenses ADD COLUMN icon TEXT');
+} catch (e) {
+  // Column already exists
+}
 
 // --- Helpers ---
 
@@ -275,11 +280,19 @@ export function getGroupExpenses(groupId) {
   `).all(groupId);
 }
 
-export function createExpense(groupId, paidBy, name, amount, category, settledWith = null, splitType = 'equal', splitParticipants = null) {
+export function createExpense(groupId, paidBy, name, amount, category, settledWith = null, splitType = 'equal', splitParticipants = null, icon = null) {
   const result = db.prepare(
-    'INSERT INTO expenses (group_id, paid_by, name, amount, category, settled_with, split_type, split_participants) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants);
+    'INSERT INTO expenses (group_id, paid_by, name, amount, category, settled_with, split_type, split_participants, icon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, icon);
   return result.lastInsertRowid;
+}
+
+export function updateExpenseIcon(id, icon) {
+  db.prepare('UPDATE expenses SET icon = ? WHERE id = ?').run(icon, id);
+}
+
+export function getExpensesMissingIcon() {
+  return db.prepare("SELECT id, name, category FROM expenses WHERE icon IS NULL OR icon = ''").all();
 }
 
 export function getExpenseById(id) {
