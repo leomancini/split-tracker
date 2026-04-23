@@ -936,27 +936,28 @@ export function shell(data) {
         h += '<div class="info-row"><span class="info-label">Received by</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
       } else {
         h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
-        // Show split info
         var detailMembers = groupCache[gid] ? groupCache[gid].members : [];
+        var allIds = detailMembers.map(function(m){return m.id;});
+        function memberName(uid){
+          if(uid === D.user.id) return 'You';
+          var m = detailMembers.find(function(mm){return mm.id===uid;});
+          return m ? m.name : 'Unknown';
+        }
+        var splitText;
         if(ex.split_type === 'full'){
           var owes = ex.split_participants ? JSON.parse(ex.split_participants) : [];
-          var oweNames = owes.map(function(pid){
-            if(pid === D.user.id) return 'You';
-            var m = detailMembers.find(function(mm){return mm.id===pid;});
-            return m ? m.name : 'Unknown';
-          });
-          h += '<div class="info-row"><span class="info-label">Split</span><span class="info-value">'+esc(oweNames.join(', '))+' owes full amount</span></div>';
-        } else if(ex.split_participants){
-          var parts = JSON.parse(ex.split_participants);
-          if(parts.length < detailMembers.length){
-            var partNames = parts.map(function(pid){
-              if(pid === D.user.id) return 'You';
-              var m = detailMembers.find(function(mm){return mm.id===pid;});
-              return m ? m.name : 'Unknown';
-            });
-            h += '<div class="info-row"><span class="info-label">Split between</span><span class="info-value">'+esc(partNames.join(', '))+'</span></div>';
+          var names = owes.map(memberName);
+          var verb = owes.length === 1 && names[0] !== 'You' ? 'owes' : (names[0] === 'You' && owes.length === 1 ? 'owe' : 'owe');
+          splitText = names.join(', ') + ' ' + verb + ' full amount';
+        } else {
+          var parts = ex.split_participants ? JSON.parse(ex.split_participants) : allIds;
+          if(parts.length >= allIds.length){
+            splitText = 'Equally';
+          } else {
+            splitText = 'Equally between ' + parts.map(memberName).join(', ');
           }
         }
+        h += '<div class="info-row"><span class="info-label">Split</span><span class="info-value">'+esc(splitText)+'</span></div>';
       }
       h += '</div>';
       if(canDelete){
