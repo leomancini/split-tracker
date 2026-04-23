@@ -582,6 +582,23 @@ export function shell(data) {
       return '$'+s;
     }
 
+    // Build a map of userId → display name for a group. Uses first names unless
+    // two or more members share a first name — those keep full names.
+    function buildDisplayNames(members){
+      var counts = {};
+      (members||[]).forEach(function(m){
+        var first = ((m.name||'').trim().split(/\\s+/)[0] || m.name || '').toLowerCase();
+        counts[first] = (counts[first]||0) + 1;
+      });
+      var map = {};
+      (members||[]).forEach(function(m){
+        var raw = (m.name||'').trim();
+        var first = raw.split(/\\s+/)[0] || raw;
+        map[m.id] = counts[first.toLowerCase()] > 1 ? raw : first;
+      });
+      return map;
+    }
+
     function timeAgo(dateStr){
       if(!dateStr) return '';
       var d = new Date(dateStr+'Z');
@@ -749,6 +766,7 @@ export function shell(data) {
 
     function groupDetailView(detail, alert){
       var g = detail.group, members = detail.members, isOwner = detail.isOwner;
+      var dispNames = buildDisplayNames(members);
       var h = '';
 
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
@@ -801,13 +819,13 @@ export function shell(data) {
             h += '<div style="margin-top:1.5rem">';
             h += '<div style="height:2px;background:var(--gray-200);border-radius:2px;margin-bottom:0.5rem"></div>';
           }
-          var otherName = isYou ? esc(s.toName.split(' ')[0]) : esc(s.fromName.split(' ')[0]);
+          var otherName = isYou ? esc(dispNames[s.to]||s.toName) : esc(dispNames[s.from]||s.fromName);
           var actionLabel = isRequest ? 'Request' : 'Pay';
           h += '<div class="settlement-row" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;min-height:3.25rem">'
             + '<span class="settlement-text" style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'
-            + '<span style="font-weight:500">'+(isYou?'You':esc(s.fromName.split(' ')[0]))+'</span>'
+            + '<span style="font-weight:500">'+(isYou?'You':esc(dispNames[s.from]||s.fromName))+'</span>'
             + (isYou?' owe ':' owes ')
-            + '<span style="font-weight:500">'+(s.to==D.user.id?'you':esc(s.toName.split(' ')[0]))+'</span>'
+            + '<span style="font-weight:500">'+(s.to==D.user.id?'you':esc(dispNames[s.to]||s.toName))+'</span>'
             + ' <span style="font-family:var(--mono);font-weight:600;color:'+(isYou?'#dc2626':'var(--green-600)')+'">'+fmtAmt(s.amt)+'</span>'
             + '</span>'
             + '<div class="settlement-btns" style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;margin-left:0.5rem">'
@@ -835,8 +853,8 @@ export function shell(data) {
           var isSettlement = ex.category === 'settlement';
           var settlementHtml = '';
           if(isSettlement){
-            var payer = ex.paid_by === D.user.id ? 'You' : ex.paid_by_name;
-            var payee = ex.settled_with === D.user.id ? 'You' : ex.settled_with_name;
+            var payer = ex.paid_by === D.user.id ? 'You' : (dispNames[ex.paid_by] || ex.paid_by_name);
+            var payee = ex.settled_with === D.user.id ? 'You' : (dispNames[ex.settled_with] || ex.settled_with_name);
             settlementHtml = '<span style="font-weight:500">'+esc(payer)+'</span> paid <span style="font-weight:500">'+esc(payee)+'</span>';
           }
           h += '<div class="expense-row'+(isSettlement ? ' settlement' : '')+'" data-link="/groups/'+g.id+'/items/'+ex.id+'" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.5rem;cursor:pointer">'
@@ -860,6 +878,7 @@ export function shell(data) {
 
     function addExpenseView(gid){
       var members = groupCache[gid] ? groupCache[gid].members : [];
+      var dispNames = buildDisplayNames(members);
       var others = members.filter(function(m){ return m.id !== D.user.id; });
       var h = '<h1>Add item</h1>'
         + '<form id="add-expense-form" data-group-id="'+gid+'">'
@@ -871,7 +890,7 @@ export function shell(data) {
         h += '<div class="form-group"><label>Paid by</label>'
           + '<select id="exp-paid-by">';
         members.forEach(function(m){
-          h += '<option value="'+m.id+'"'+(m.id === D.user.id ? ' selected' : '')+'>'+esc(m.id === D.user.id ? 'You' : m.name)+'</option>';
+          h += '<option value="'+m.id+'"'+(m.id === D.user.id ? ' selected' : '')+'>'+esc(m.id === D.user.id ? 'You' : (dispNames[m.id]||m.name))+'</option>';
         });
         h += '</select></div>';
       }
@@ -881,8 +900,8 @@ export function shell(data) {
           + '<select id="exp-split-type">'
           + '<option value="equal">Split equally</option>';
         if(members.length === 2 && others.length === 1){
-          h += '<option value="you_owe">You owe '+esc(others[0].name)+'</option>';
-          h += '<option value="they_owe">'+esc(others[0].name)+' owes you</option>';
+          h += '<option value="you_owe">You owe '+esc(dispNames[others[0].id]||others[0].name)+'</option>';
+          h += '<option value="they_owe">'+esc(dispNames[others[0].id]||others[0].name)+' owes you</option>';
         } else {
           h += '<option value="you_owe">You owe full amount</option>';
           h += '<option value="they_owe">They owe full amount</option>';
@@ -897,7 +916,7 @@ export function shell(data) {
             var isLast = idx === members.length - 1;
             h += '<label style="display:flex;align-items:center;gap:0.625rem;padding:0.75rem;cursor:pointer;margin:0'+(isLast ? '' : ';border-bottom:1px solid var(--gray-100)')+'">'
               + '<input type="checkbox" class="exp-participant-cb" value="'+m.id+'" checked>'
-              + '<span style="font-size:0.9375rem;color:var(--gray-900)">'+esc(m.id === D.user.id ? 'You' : m.name)+'</span>'
+              + '<span style="font-size:0.9375rem;color:var(--gray-900)">'+esc(m.id === D.user.id ? 'You' : (dispNames[m.id]||m.name))+'</span>'
               + '</label>';
           });
           h += '</div></div>';
@@ -911,11 +930,13 @@ export function shell(data) {
     function itemDetailView(gid, ex, isOwner){
       var gInfo = groupCache[gid] ? groupCache[gid].group : D.groups.find(function(g){return g.id==gid});
       var gName = gInfo ? gInfo.name : 'Group';
+      var detailMembers = groupCache[gid] ? groupCache[gid].members : [];
+      var dispNames = buildDisplayNames(detailMembers);
       var canDelete = ex.paid_by === D.user.id || isOwner;
       var detailNameHtml;
       if(ex.settled_with){
-        var payer = ex.paid_by === D.user.id ? 'You' : ex.paid_by_name;
-        var payee = ex.settled_with === D.user.id ? 'You' : ex.settled_with_name;
+        var payer = ex.paid_by === D.user.id ? 'You' : (dispNames[ex.paid_by] || ex.paid_by_name);
+        var payee = ex.settled_with === D.user.id ? 'You' : (dispNames[ex.settled_with] || ex.settled_with_name);
         detailNameHtml = '<span style="font-weight:600">'+esc(payer)+'</span> paid <span style="font-weight:600">'+esc(payee)+'</span>';
       } else {
         detailNameHtml = esc(ex.name);
@@ -932,16 +953,14 @@ export function shell(data) {
       if(ex.settled_with){
         var method = ex.name.indexOf('Venmo') !== -1 ? 'Venmo' : ex.name.indexOf('Cash App') !== -1 ? 'Cash App' : '';
         if(method) h += '<div class="info-row"><span class="info-label">Method</span><span class="info-value">'+method+'</span></div>';
-        h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
-        h += '<div class="info-row"><span class="info-label">Received by</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : ex.settled_with_name)+'</span></div>';
+        h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : (dispNames[ex.paid_by] || ex.paid_by_name))+'</span></div>';
+        h += '<div class="info-row"><span class="info-label">Received by</span><span class="info-value">'+esc(ex.settled_with === D.user.id ? 'You' : (dispNames[ex.settled_with] || ex.settled_with_name))+'</span></div>';
       } else {
-        h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : ex.paid_by_name)+'</span></div>';
-        var detailMembers = groupCache[gid] ? groupCache[gid].members : [];
+        h += '<div class="info-row"><span class="info-label">Paid by</span><span class="info-value">'+esc(ex.paid_by === D.user.id ? 'You' : (dispNames[ex.paid_by] || ex.paid_by_name))+'</span></div>';
         var allIds = detailMembers.map(function(m){return m.id;});
         function memberName(uid){
           if(uid === D.user.id) return 'You';
-          var m = detailMembers.find(function(mm){return mm.id===uid;});
-          return m ? m.name : 'Unknown';
+          return dispNames[uid] || 'Unknown';
         }
         var splitText;
         if(ex.split_type === 'full'){
@@ -968,6 +987,7 @@ export function shell(data) {
 
     function groupMembersView(detail, alert){
       var g = detail.group, members = detail.members, invites = detail.invites, isOwner = detail.isOwner;
+      var dispNames = buildDisplayNames(members);
       var h = '';
 
       if(alert) h += '<div class="alert '+(alert.type==='error'?'alert-error':'alert-success')+'">'+esc(alert.text)+'</div>';
@@ -977,7 +997,7 @@ export function shell(data) {
       members.forEach(function(m){
         h += '<div class="member-row">'
           + (m.avatar_url ? '<img src="'+esc(getCachedAvatar(m.avatar_url))+'" class="member-avatar" alt="">' : '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc(m.email.charAt(0).toUpperCase())+'</div>')
-          + '<div class="member-info"><div class="member-name">'+esc(m.name)+'</div>'
+          + '<div class="member-info"><div class="member-name">'+esc(dispNames[m.id]||m.name)+'</div>'
           + '<div class="member-email">'+esc(m.email)+(m.role==='owner'?' &middot; Group creator':'')+'</div></div>';
         if(isOwner && m.role !== 'owner'){
           h += '<button class="btn btn-xs btn-danger" data-action="remove-member" data-group-id="'+g.id+'" data-user-id="'+m.id+'">Remove</button>';
