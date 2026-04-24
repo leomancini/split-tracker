@@ -24,6 +24,20 @@ export function isPushConfigured() {
   return configured;
 }
 
+export async function sendPushToSubscription(subscription, { title, body, url, tag }) {
+  if (!configured) return;
+  const payload = JSON.stringify({ title, body, url: url || '/', tag });
+  try {
+    await webPush.sendNotification(subscription, payload);
+  } catch (err) {
+    if (err.statusCode === 404 || err.statusCode === 410) {
+      deletePushSubscriptionByEndpoint(subscription.endpoint);
+    } else {
+      console.error('push send failed:', err.statusCode, err.body || err.message);
+    }
+  }
+}
+
 export async function sendExpenseNotification({ group, expense, payerName, settledWithName }) {
   if (!configured) return;
   if (group.is_demo) return;

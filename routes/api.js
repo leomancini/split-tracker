@@ -28,7 +28,7 @@ import {
 } from '../db.js';
 import { sendInviteEmail } from '../mail.js';
 import { pickIcon } from '../icon-picker.js';
-import { getVapidPublicKey, sendExpenseNotification } from '../push.js';
+import { getVapidPublicKey, sendExpenseNotification, sendPushToSubscription } from '../push.js';
 
 export function registerApiRoutes(app, ensureAuth) {
   // Middleware: all /api routes require auth and return JSON
@@ -71,6 +71,16 @@ export function registerApiRoutes(app, ensureAuth) {
     setPushEnabled(req.user.id, true);
     req.user.push_enabled = 1;
     res.json({ ok: true });
+
+    sendPushToSubscription(
+      { endpoint, keys: { p256dh, auth } },
+      {
+        title: 'Split',
+        body: 'Push notifications are on. You’ll get a ping when someone adds an expense.',
+        url: '/profile',
+        tag: 'push-enabled',
+      }
+    ).catch(err => console.error('confirmation push failed:', err.message));
   });
 
   // Push notification: unsubscribe current browser
