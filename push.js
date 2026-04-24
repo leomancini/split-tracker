@@ -46,12 +46,11 @@ export async function sendExpenseNotification({ group, expense, payerName, settl
   if (!subs.length) return;
 
   const amount = formatAmount(expense.amount);
-  let title, body;
+  const title = `New expense in ${group.name}`;
+  let body;
   if (expense.settled_with && settledWithName) {
-    title = group.name;
     body = `${payerName} paid ${settledWithName} ${amount}`;
   } else {
-    title = group.name;
     body = `${payerName} added ${expense.name} · ${amount}`;
   }
 
