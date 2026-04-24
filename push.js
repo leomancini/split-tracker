@@ -38,28 +38,27 @@ export async function sendPushToSubscription(subscription, { title, body, url, t
   }
 }
 
-export async function sendExpenseNotification({ group, expense, payerName, settledWithName }) {
+export async function sendExpenseNotification({ group, creatorId, expense, payerName, settledWithName }) {
   if (!configured) return;
   if (group.is_demo) return;
 
-  const subs = getPushSubscriptionsForGroupMembers(group.id, expense.paid_by);
+  const subs = getPushSubscriptionsForGroupMembers(group.id, creatorId);
   if (!subs.length) return;
 
   const amount = formatAmount(expense.amount);
   const isSettlement = !!(expense.settled_with && settledWithName);
   const title = `New ${isSettlement ? 'payment' : 'expense'} in ${group.name}`;
-  const body = isSettlement
-    ? `${payerName} paid ${settledWithName} ${amount}`
-    : `${payerName} added ${expense.name} · ${amount}`;
-
-  const payload = JSON.stringify({
-    title,
-    body,
-    url: `/groups/${group.id}/items/${expense.id}`,
-    tag: `expense-${expense.id}`,
-  });
+  const url = `/groups/${group.id}/items/${expense.id}`;
+  const tag = `expense-${expense.id}`;
 
   await Promise.all(subs.map(async sub => {
+    const payerDisp = sub.user_id === expense.paid_by ? 'You' : payerName;
+    const receiverDisp = sub.user_id === expense.settled_with ? 'you' : settledWithName;
+    const body = isSettlement
+      ? `${payerDisp} paid ${receiverDisp} ${amount}`
+      : `${payerDisp} added ${expense.name} · ${amount}`;
+
+    const payload = JSON.stringify({ title, body, url, tag });
     const subscription = {
       endpoint: sub.endpoint,
       keys: { p256dh: sub.p256dh, auth: sub.auth },

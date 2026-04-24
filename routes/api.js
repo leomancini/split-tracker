@@ -208,6 +208,7 @@ export function registerApiRoutes(app, ensureAuth) {
       const settledUser = settledWith ? getUserById(settledWith) : null;
       sendExpenseNotification({
         group,
+        creatorId: req.user.id,
         expense: { id, paid_by: paidBy, name, amount, settled_with: settledWith },
         payerName: payer?.name?.split(' ')[0] || payer?.name || 'Someone',
         settledWithName: settledUser ? (settledUser.name.split(' ')[0] || settledUser.name) : null,
