@@ -75,8 +75,8 @@ export function registerApiRoutes(app, ensureAuth) {
     sendPushToSubscription(
       { endpoint, keys: { p256dh, auth } },
       {
-        title: 'Test notification',
-        body: 'Push notifications are on. You’ll get a ping when someone adds an expense.',
+        title: 'Push notifications are on',
+        body: 'You’ll get a ping when someone adds an expense.',
         url: '/profile',
         tag: 'push-enabled',
       }
