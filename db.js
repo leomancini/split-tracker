@@ -91,6 +91,23 @@ try {
 } catch (e) {
   // Column already exists
 }
+try {
+  db.exec('ALTER TABLE users ADD COLUMN push_enabled INTEGER NOT NULL DEFAULT 0');
+} catch (e) {
+  // Column already exists
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
+`);
 
 // --- Helpers ---
 
@@ -124,6 +141,34 @@ export function getUserById(id) {
 
 export function updatePaymentHandles(userId, venmo, cashapp) {
   db.prepare('UPDATE users SET venmo_handle = ?, cashapp_handle = ? WHERE id = ?').run(venmo || null, cashapp || null, userId);
+}
+
+// --- Push notification helpers ---
+
+export function setPushEnabled(userId, enabled) {
+  db.prepare('UPDATE users SET push_enabled = ? WHERE id = ?').run(enabled ? 1 : 0, userId);
+}
+
+export function savePushSubscription(userId, endpoint, p256dh, auth) {
+  db.prepare(`
+    INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(endpoint) DO UPDATE SET user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth
+  `).run(userId, endpoint, p256dh, auth);
+}
+
+export function deletePushSubscriptionByEndpoint(endpoint) {
+  db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(endpoint);
+}
+
+export function getPushSubscriptionsForGroupMembers(groupId, excludeUserId) {
+  return db.prepare(`
+    SELECT ps.user_id, ps.endpoint, ps.p256dh, ps.auth
+    FROM push_subscriptions ps
+    JOIN group_members gm ON gm.user_id = ps.user_id
+    JOIN users u ON u.id = ps.user_id
+    WHERE gm.group_id = ? AND u.push_enabled = 1 AND ps.user_id != ?
+  `).all(groupId, excludeUserId);
 }
 
 // --- Group helpers ---

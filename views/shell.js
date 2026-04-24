@@ -169,6 +169,16 @@ export function shell(data) {
     @media (hover: hover) { #demo-toggle:hover { filter: brightness(0.95); } }
     #demo-toggle:active { transform: scale(0.93); filter: brightness(0.9); }
 
+    .toggle-switch { position: relative; display: inline-block; width: 51px; height: 31px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; margin: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--gray-200); border-radius: 31px; cursor: pointer; transition: background 200ms; }
+    .toggle-slider::before { content: ''; position: absolute; left: 2px; top: 2px; width: 27px; height: 27px; background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 200ms; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--green-500); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+    .toggle-switch input:disabled + .toggle-slider { opacity: 0.5; cursor: not-allowed; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .toggle-row label.toggle-label { margin: 0; font-weight: 500; color: var(--gray-900); }
+
     .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; width: auto; height: auto; }
     .btn-xs { padding: 0.5rem 0.875rem; font-size: 0.8125rem; width: auto; height: auto; }
     .pay-btn { transition: transform 150ms; -webkit-user-select: none; user-select: none; }
@@ -1034,6 +1044,8 @@ export function shell(data) {
     function profileView(){
       var u = D.user;
       var avatarSrc = u.avatar_url ? getCachedAvatar(u.avatar_url) : null;
+      var pushSupported = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+      var pushOn = !!u.push_enabled;
       return '<div style="display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;min-height:calc(100vh - 200px);margin-top:-8rem">'
         + (avatarSrc ? '<img src="'+esc(avatarSrc)+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:1rem;background:var(--gray-200)" alt="">'
           : '<div style="width:72px;height:72px;border-radius:50%;background:var(--gray-200);margin:0 auto 1rem"></div>')
@@ -1043,6 +1055,12 @@ export function shell(data) {
         + '<input type="text" id="venmo-handle" value="'+esc(u.venmo_handle||'')+'" placeholder="@username" autocomplete="off"></div>'
         + '<div class="form-group" style="text-align:left;width:100%"><label>Cash App</label>'
         + '<input type="text" id="cashapp-handle" value="'+esc(u.cashapp_handle||'')+'" placeholder="$cashtag" autocomplete="off"></div>'
+        + (pushSupported
+            ? '<div class="form-group toggle-row" style="text-align:left;width:100%;margin-top:0.5rem">'
+              + '<label class="toggle-label" for="push-toggle">Push notifications</label>'
+              + '<label class="toggle-switch"><input type="checkbox" id="push-toggle"'+(pushOn?' checked':'')+'><span class="toggle-slider"></span></label>'
+              + '</div>'
+            : '')
         + '</div>'
         + '<div style="height:5rem"></div>'
         + '<div class="sticky-bottom">'
@@ -1673,6 +1691,82 @@ export function shell(data) {
       fetch('/api/profile/payment',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({venmo_handle:venmo,cashapp_handle:cashapp})})
         .then(function(r){return r.json()})
         .then(function(d){ if(d.ok){ D.user.venmo_handle = venmo || null; D.user.cashapp_handle = cashapp || null; }});
+    });
+
+    // Push notifications toggle
+    function urlBase64ToUint8Array(base64){
+      var padding = '='.repeat((4 - base64.length % 4) % 4);
+      var base = (base64 + padding).replace(/-/g,'+').replace(/_/g,'/');
+      var raw = atob(base);
+      var out = new Uint8Array(raw.length);
+      for(var i=0;i<raw.length;i++) out[i] = raw.charCodeAt(i);
+      return out;
+    }
+    async function enablePush(){
+      if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+        alert('Push notifications are not supported in this browser.');
+        return false;
+      }
+      var perm = await Notification.requestPermission();
+      if(perm !== 'granted'){
+        alert('Push permission was denied.');
+        return false;
+      }
+      var reg = await navigator.serviceWorker.ready;
+      var keyRes = await fetch('/api/push/vapid-public-key');
+      if(!keyRes.ok){ alert('Push notifications are not configured on the server.'); return false; }
+      var keyData = await keyRes.json();
+      var existing = await reg.pushManager.getSubscription();
+      if(existing) await existing.unsubscribe();
+      var sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(keyData.key),
+      });
+      var r = await fetch('/api/push/subscribe',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(sub.toJSON()),
+      });
+      if(!r.ok) return false;
+      D.user.push_enabled = 1;
+      return true;
+    }
+    async function disablePush(){
+      try {
+        if('serviceWorker' in navigator){
+          var reg = await navigator.serviceWorker.ready;
+          var sub = await reg.pushManager.getSubscription();
+          if(sub){
+            await fetch('/api/push/unsubscribe',{
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ endpoint: sub.endpoint }),
+            });
+            await sub.unsubscribe();
+          }
+        }
+      } catch(e){}
+      var r = await fetch('/api/profile/push-enabled',{
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ enabled: false }),
+      });
+      if(!r.ok) return false;
+      D.user.push_enabled = 0;
+      return true;
+    }
+    document.addEventListener('change', function(e){
+      if(e.target.id !== 'push-toggle') return;
+      var cb = e.target;
+      var wanted = cb.checked;
+      cb.disabled = true;
+      (wanted ? enablePush() : disablePush())
+        .then(function(ok){
+          if(!ok) cb.checked = !wanted;
+          cb.disabled = false;
+        })
+        .catch(function(err){
+          console.error('push toggle failed:', err);
+          cb.checked = !wanted;
+          cb.disabled = false;
+        });
     });
 
     // Back/forward

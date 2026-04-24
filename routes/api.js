@@ -21,9 +21,14 @@ import {
   deleteExpense,
   updatePaymentHandles,
   updateExpenseIcon,
+  setPushEnabled,
+  savePushSubscription,
+  deletePushSubscriptionByEndpoint,
+  getUserById,
 } from '../db.js';
 import { sendInviteEmail } from '../mail.js';
 import { pickIcon } from '../icon-picker.js';
+import { getVapidPublicKey, sendExpenseNotification } from '../push.js';
 
 export function registerApiRoutes(app, ensureAuth) {
   // Middleware: all /api routes require auth and return JSON
@@ -46,6 +51,40 @@ export function registerApiRoutes(app, ensureAuth) {
     updatePaymentHandles(req.user.id, venmo, cashapp);
     req.user.venmo_handle = venmo || null;
     req.user.cashapp_handle = cashapp || null;
+    res.json({ ok: true });
+  });
+
+  // Push notification: VAPID public key
+  app.get('/api/push/vapid-public-key', ensureAuth, (req, res) => {
+    const key = getVapidPublicKey();
+    if (!key) return res.status(503).json({ error: 'Push not configured on server' });
+    res.json({ key });
+  });
+
+  // Push notification: subscribe current browser
+  app.post('/api/push/subscribe', ensureAuth, (req, res) => {
+    const endpoint = req.body.endpoint;
+    const p256dh = req.body.keys?.p256dh;
+    const auth = req.body.keys?.auth;
+    if (!endpoint || !p256dh || !auth) return res.status(400).json({ error: 'Invalid subscription' });
+    savePushSubscription(req.user.id, endpoint, p256dh, auth);
+    setPushEnabled(req.user.id, true);
+    req.user.push_enabled = 1;
+    res.json({ ok: true });
+  });
+
+  // Push notification: unsubscribe current browser
+  app.post('/api/push/unsubscribe', ensureAuth, (req, res) => {
+    const endpoint = req.body.endpoint;
+    if (endpoint) deletePushSubscriptionByEndpoint(endpoint);
+    res.json({ ok: true });
+  });
+
+  // Push notification: toggle push_enabled flag
+  app.put('/api/profile/push-enabled', ensureAuth, (req, res) => {
+    const enabled = !!req.body.enabled;
+    setPushEnabled(req.user.id, enabled);
+    req.user.push_enabled = enabled ? 1 : 0;
     res.json({ ok: true });
   });
 
@@ -150,6 +189,19 @@ export function registerApiRoutes(app, ensureAuth) {
       pickIcon({ name, category })
         .then(icon => { if (icon) updateExpenseIcon(id, icon); })
         .catch(err => console.error('pickIcon failed:', err.message));
+    }
+
+    // Fire push notifications to other members (not for demo groups).
+    const group = getGroup(groupId);
+    if (group && !group.is_demo) {
+      const payer = getUserById(paidBy);
+      const settledUser = settledWith ? getUserById(settledWith) : null;
+      sendExpenseNotification({
+        group,
+        expense: { id, paid_by: paidBy, name, amount, settled_with: settledWith },
+        payerName: payer?.name?.split(' ')[0] || payer?.name || 'Someone',
+        settledWithName: settledUser ? (settledUser.name.split(' ')[0] || settledUser.name) : null,
+      }).catch(err => console.error('sendExpenseNotification failed:', err.message));
     }
   });
 
