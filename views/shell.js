@@ -780,7 +780,7 @@ export function shell(data) {
       if(D.groups.length){
         D.groups.forEach(function(g){
           h += '<div class="card card-link" style="margin-bottom:1rem" data-link="/groups/'+g.id+'">'
-            + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem">'
+            + '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.5rem">'
             + '<div style="font-weight:600;font-size:1.125rem;min-width:0;overflow:hidden;text-overflow:ellipsis">'+esc(g.name)+'</div>'
             + balancePill(g)
             + '</div>'
