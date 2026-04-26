@@ -234,7 +234,7 @@ export function shell(data) {
       background: white;
       border: 2px solid var(--gray-200);
       border-radius: var(--radius);
-      padding: 0.75rem 1rem;
+      padding: 1rem;
       margin-bottom: 0.75rem;
     }
 
