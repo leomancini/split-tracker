@@ -217,7 +217,7 @@ export function getUserGroups(userId, showDemo = false) {
   `).all(userId);
 
   const avatarStmt = db.prepare(`
-    SELECT u.avatar_url, u.is_placeholder,
+    SELECT u.avatar_url, u.is_placeholder, u.email, u.name,
       EXISTS (SELECT 1 FROM group_invites gi WHERE gi.group_id = gm.group_id AND gi.email = u.email AND gi.status = 'pending') as is_pending
     FROM group_members gm
     JOIN users u ON u.id = gm.user_id
@@ -229,6 +229,7 @@ export function getUserGroups(userId, showDemo = false) {
     g.member_avatars = avatarStmt.all(g.id).map(r => ({
       url: r.avatar_url,
       is_pending: !!r.is_pending || !!r.is_placeholder,
+      letter: ((r.name && r.name.trim().charAt(0)) || (r.email && r.email.charAt(0)) || '').toUpperCase(),
     }));
     const { balance, expenseCount } = getUserGroupBalance(g.id, userId);
     g.my_balance = balance;

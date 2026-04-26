@@ -440,7 +440,7 @@ export function shell(data) {
     .avatar-stack img, .avatar-stack .avatar-placeholder {
       width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: var(--gray-200);
     }
-    .avatar-placeholder { background: var(--gray-200); flex-shrink: 0; }
+    .avatar-placeholder { background: var(--gray-200); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--gray-500); font-size: 0.8125rem; font-weight: 500; text-transform: uppercase; }
 
     .expense-icon {
       width: 42px;
@@ -597,9 +597,10 @@ export function shell(data) {
       avatars.forEach(function(a){
         var url = (typeof a === 'string') ? a : (a && a.url);
         var faded = (typeof a === 'object') && a && a.faded;
+        var letter = (typeof a === 'object') && a && a.letter ? a.letter.charAt(0) : '';
         var styleAttr = faded ? ' style="opacity:0.5"' : '';
         if(url){ cacheAvatar(url); h += '<img src="'+esc(getCachedAvatar(url))+'" alt=""'+styleAttr+'>'; }
-        else h += '<div class="avatar-placeholder"'+styleAttr+'></div>';
+        else h += '<div class="avatar-placeholder"'+styleAttr+'>'+esc(letter)+'</div>';
       });
       h += '</div>';
       return h;
@@ -790,7 +791,7 @@ export function shell(data) {
             + '<div style="font-weight:600;font-size:1.125rem;min-width:0;overflow:hidden;text-overflow:ellipsis">'+esc(g.name)+'</div>'
             + balancePill(g)
             + '</div>'
-            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.75rem;margin-bottom:0.25rem">'+avatarStack(g.member_avatars.map(function(a){return {url:a.url,faded:a.is_pending}}))+'</div>' : '')
+            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.75rem;margin-bottom:0.25rem">'+avatarStack(g.member_avatars.map(function(a){return {url:a.url,faded:a.is_pending,letter:a.letter}}))+'</div>' : '')
             + '</div>';
         });
       } else {
@@ -829,7 +830,7 @@ export function shell(data) {
       var settlements = calcSettlements(members, detail.expenses);
       h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;margin-bottom:1rem">';
       h += '<div style="display:flex;align-items:center">'
-        + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return {url:m.avatar_url,faded:!!m.pending_invite_id}})) + '</div>'
+        + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return {url:m.avatar_url,faded:!!m.pending_invite_id,letter:((m.name||m.email||'').charAt(0)||'').toUpperCase()}})) + '</div>'
         + '<div class="add-member-icon" data-link="/groups/'+g.id+'/add-member" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.625rem;transition:background 150ms,color 150ms;cursor:pointer;user-select:none;-webkit-user-select:none">+</div>'
         + '</div>';
       var mySettlements = settlements.filter(function(s){ return s.from==D.user.id || s.to==D.user.id; });
