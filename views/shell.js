@@ -598,7 +598,7 @@ export function shell(data) {
         var url = (typeof a === 'string') ? a : (a && a.url);
         var faded = (typeof a === 'object') && a && a.faded;
         var letter = (typeof a === 'object') && a && a.letter ? a.letter.charAt(0) : '';
-        var styleAttr = faded ? ' style="opacity:0.5"' : '';
+        var styleAttr = faded ? ' style="opacity:0.25"' : '';
         if(url){ cacheAvatar(url); h += '<img src="'+esc(getCachedAvatar(url))+'" alt=""'+styleAttr+'>'; }
         else h += '<div class="avatar-placeholder"'+styleAttr+'>'+esc(letter)+'</div>';
       });
@@ -1045,7 +1045,7 @@ export function shell(data) {
       h += '<div style="margin-top:-12px">';
       members.forEach(function(m){
         var pending = !!m.pending_invite_id;
-        var rowOpacity = pending ? ';opacity:0.5' : '';
+        var rowOpacity = pending ? ';opacity:0.25' : '';
         var avatarHtml = m.avatar_url
           ? '<img src="'+esc(getCachedAvatar(m.avatar_url))+'" class="member-avatar" alt="">'
           : '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc((m.email||'?').charAt(0).toUpperCase())+'</div>';
@@ -1066,7 +1066,7 @@ export function shell(data) {
       });
 
       invites.forEach(function(i){
-        h += '<div class="member-row" style="opacity:0.5">'
+        h += '<div class="member-row" style="opacity:0.25">'
           + '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc(i.email.charAt(0).toUpperCase())+'</div>'
           + '<div class="member-info"><div class="member-name">'+esc(i.email)+'</div>'
           + '<div class="member-email">Pending</div></div>';
