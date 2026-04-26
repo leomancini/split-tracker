@@ -615,7 +615,7 @@ export function shell(data) {
       var label = bal < 0 ? 'You owe' : 'Owed';
       var color = bal < 0 ? '#dc2626' : 'var(--green-600)';
       var amt = fmtAmt(Math.abs(bal));
-      return '<span style="display:inline-flex;align-items:baseline;gap:0.375rem;flex-shrink:0;font-size:0.875rem;padding-right:0.375rem">'
+      return '<span style="display:inline-flex;align-items:baseline;gap:0.375rem;flex-shrink:0;font-size:0.875rem;padding-right:4px">'
         + '<span style="font-weight:500">'+label+'</span>'
         + '<span style="font-family:var(--mono);font-weight:600;color:'+color+'">'+amt+'</span>'
         + '</span>';
