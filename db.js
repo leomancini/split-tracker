@@ -96,6 +96,11 @@ try {
 } catch (e) {
   // Column already exists
 }
+try {
+  db.exec('ALTER TABLE users ADD COLUMN is_placeholder INTEGER NOT NULL DEFAULT 0');
+} catch (e) {
+  // Column already exists
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -124,15 +129,16 @@ export function normalizeEmail(email) {
 
 export function findOrCreateUser({ googleId, email, name, avatarUrl }) {
   const normalizedEmail = normalizeEmail(email);
-  const insert = db.prepare(`
-    INSERT OR IGNORE INTO users (google_id, email, name, avatar_url)
-    VALUES (?, ?, ?, ?)
-  `);
-  const update = db.prepare('UPDATE users SET email = ? WHERE google_id = ? AND email != ?');
-  const select = db.prepare('SELECT * FROM users WHERE google_id = ?');
-  insert.run(googleId, normalizedEmail, name, avatarUrl);
-  update.run(normalizedEmail, googleId, normalizedEmail);
-  return select.get(googleId);
+  // Claim an existing placeholder for this email, preserving group memberships and balances.
+  const placeholder = db.prepare('SELECT * FROM users WHERE email = ? AND is_placeholder = 1').get(normalizedEmail);
+  if (placeholder) {
+    db.prepare('UPDATE users SET google_id = ?, name = ?, avatar_url = ?, is_placeholder = 0 WHERE id = ?')
+      .run(googleId, name, avatarUrl, placeholder.id);
+    return db.prepare('SELECT * FROM users WHERE id = ?').get(placeholder.id);
+  }
+  db.prepare('INSERT OR IGNORE INTO users (google_id, email, name, avatar_url) VALUES (?, ?, ?, ?)').run(googleId, normalizedEmail, name, avatarUrl);
+  db.prepare('UPDATE users SET email = ? WHERE google_id = ? AND email != ?').run(normalizedEmail, googleId, normalizedEmail);
+  return db.prepare('SELECT * FROM users WHERE google_id = ?').get(googleId);
 }
 
 export function getUserById(id) {
@@ -185,14 +191,14 @@ export function getUserGroups(userId, showDemo = false) {
   `).all(userId);
 
   const avatarStmt = db.prepare(`
-    SELECT u.avatar_url FROM group_members gm
+    SELECT u.avatar_url, u.is_placeholder FROM group_members gm
     JOIN users u ON u.id = gm.user_id
     WHERE gm.group_id = ?
     ORDER BY (CASE WHEN gm.role = 'owner' THEN 0 ELSE 1 END), gm.joined_at ASC
   `);
 
   for (const g of groups) {
-    g.member_avatars = avatarStmt.all(g.id).map(r => r.avatar_url);
+    g.member_avatars = avatarStmt.all(g.id).map(r => ({ url: r.avatar_url, is_placeholder: !!r.is_placeholder }));
     const { balance, expenseCount } = getUserGroupBalance(g.id, userId);
     g.my_balance = balance;
     g.expense_count = expenseCount;
@@ -258,7 +264,9 @@ export function renameGroup(groupId, name) {
 
 export function getGroupMembers(groupId) {
   return db.prepare(`
-    SELECT u.id, u.name, u.email, u.avatar_url, u.venmo_handle, u.cashapp_handle, gm.role, gm.joined_at
+    SELECT u.id, u.name, u.email, u.avatar_url, u.venmo_handle, u.cashapp_handle, u.is_placeholder,
+      gm.role, gm.joined_at,
+      (SELECT id FROM group_invites WHERE group_id = gm.group_id AND email = u.email AND status = 'pending' LIMIT 1) as pending_invite_id
     FROM group_members gm
     JOIN users u ON u.id = gm.user_id
     WHERE gm.group_id = ?
@@ -279,34 +287,53 @@ export function isGroupOwner(groupId, userId) {
 // --- Invite helpers ---
 
 export function getGroupInvites(groupId) {
+  // Only invites whose email isn't already a member of the group. Placeholders are
+  // already in group_members, so this filter prevents duplicating them in the UI.
   return db.prepare(`
     SELECT gi.*, u.name as invited_by_name
     FROM group_invites gi
     JOIN users u ON u.id = gi.invited_by
     WHERE gi.group_id = ? AND gi.status = 'pending'
+      AND NOT EXISTS (
+        SELECT 1 FROM group_members gm
+        JOIN users mu ON mu.id = gm.user_id
+        WHERE gm.group_id = gi.group_id AND mu.email = gi.email
+      )
     ORDER BY gi.created_at DESC
   `).all(groupId);
 }
 
 export function createInvite(groupId, email, invitedBy) {
   const normalized = normalizeEmail(email);
-  // Check if already a member
-  const existing = db.prepare(`
-    SELECT 1 FROM group_members gm
+  const memberByEmail = db.prepare(`
+    SELECT u.id FROM group_members gm
     JOIN users u ON u.id = gm.user_id
     WHERE gm.group_id = ? AND u.email = ?
   `).get(groupId, normalized);
-  if (existing) return { error: 'Already a member' };
+  if (memberByEmail) return { error: 'Already a member' };
 
-  try {
-    db.prepare('INSERT INTO group_invites (group_id, email, invited_by) VALUES (?, ?, ?)').run(groupId, normalized, invitedBy);
-    return { success: true };
-  } catch (err) {
-    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-      return { error: 'Already invited' };
+  const invite = db.transaction(() => {
+    let user = db.prepare('SELECT id, is_placeholder FROM users WHERE email = ?').get(normalized);
+    if (!user) {
+      // Brand new email — create a placeholder user so they can be split with right away.
+      const localPart = normalized.split('@')[0];
+      const result = db.prepare(
+        'INSERT INTO users (google_id, email, name, is_placeholder) VALUES (?, ?, ?, 1)'
+      ).run('placeholder:' + normalized, normalized, localPart);
+      user = { id: result.lastInsertRowid, is_placeholder: 1 };
     }
-    throw err;
-  }
+    if (user.is_placeholder) {
+      db.prepare('INSERT OR IGNORE INTO group_members (group_id, user_id, role) VALUES (?, ?, ?)').run(groupId, user.id, 'member');
+    }
+    try {
+      db.prepare('INSERT INTO group_invites (group_id, email, invited_by) VALUES (?, ?, ?)').run(groupId, normalized, invitedBy);
+      return { success: true };
+    } catch (err) {
+      if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') return { error: 'Already invited' };
+      throw err;
+    }
+  });
+  return invite();
 }
 
 export function getPendingInvitesForUser(email) {
@@ -342,11 +369,28 @@ export function declineInvite(inviteId) {
 }
 
 export function removeMember(groupId, userId) {
-  db.prepare('DELETE FROM group_members WHERE group_id = ? AND user_id = ?').run(groupId, userId);
+  const remove = db.transaction(() => {
+    const user = db.prepare('SELECT email FROM users WHERE id = ?').get(userId);
+    db.prepare('DELETE FROM group_members WHERE group_id = ? AND user_id = ?').run(groupId, userId);
+    if (user) {
+      db.prepare("DELETE FROM group_invites WHERE group_id = ? AND email = ? AND status = 'pending'").run(groupId, user.email);
+    }
+  });
+  remove();
 }
 
 export function cancelInvite(inviteId) {
-  db.prepare('DELETE FROM group_invites WHERE id = ?').run(inviteId);
+  const cancel = db.transaction(() => {
+    const invite = db.prepare('SELECT * FROM group_invites WHERE id = ?').get(inviteId);
+    if (!invite) return;
+    db.prepare('DELETE FROM group_invites WHERE id = ?').run(inviteId);
+    // If this invite created a placeholder member, drop them from the group too.
+    const placeholder = db.prepare('SELECT id FROM users WHERE email = ? AND is_placeholder = 1').get(invite.email);
+    if (placeholder) {
+      db.prepare('DELETE FROM group_members WHERE group_id = ? AND user_id = ?').run(invite.group_id, placeholder.id);
+    }
+  });
+  cancel();
 }
 
 // --- Expense helpers ---

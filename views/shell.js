@@ -594,9 +594,12 @@ export function shell(data) {
     function avatarStack(avatars){
       if(!avatars||!avatars.length) return '';
       var h = '<div class="avatar-stack">';
-      avatars.forEach(function(url){
-        if(url){ cacheAvatar(url); h += '<img src="'+esc(getCachedAvatar(url))+'" alt="">'; }
-        else h += '<div class="avatar-placeholder"></div>';
+      avatars.forEach(function(a){
+        var url = (typeof a === 'string') ? a : (a && a.url);
+        var faded = (typeof a === 'object') && a && a.faded;
+        var styleAttr = faded ? ' style="opacity:0.5"' : '';
+        if(url){ cacheAvatar(url); h += '<img src="'+esc(getCachedAvatar(url))+'" alt=""'+styleAttr+'>'; }
+        else h += '<div class="avatar-placeholder"'+styleAttr+'></div>';
       });
       h += '</div>';
       return h;
@@ -787,7 +790,7 @@ export function shell(data) {
             + '<div style="font-weight:600;font-size:1.125rem;min-width:0;overflow:hidden;text-overflow:ellipsis">'+esc(g.name)+'</div>'
             + balancePill(g)
             + '</div>'
-            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.75rem;margin-bottom:0.25rem">'+avatarStack(g.member_avatars)+'</div>' : '')
+            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.75rem;margin-bottom:0.25rem">'+avatarStack(g.member_avatars.map(function(a){return {url:a.url,faded:a.is_placeholder}}))+'</div>' : '')
             + '</div>';
         });
       } else {
@@ -826,7 +829,7 @@ export function shell(data) {
       var settlements = calcSettlements(members, detail.expenses);
       h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;margin-bottom:1rem">';
       h += '<div style="display:flex;align-items:center">'
-        + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return m.avatar_url})) + '</div>'
+        + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return {url:m.avatar_url,faded:!!m.is_placeholder}})) + '</div>'
         + '<div class="add-member-icon" data-link="/groups/'+g.id+'/add-member" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.625rem;transition:background 150ms,color 150ms;cursor:pointer;user-select:none;-webkit-user-select:none">+</div>'
         + '</div>';
       var mySettlements = settlements.filter(function(s){ return s.from==D.user.id || s.to==D.user.id; });
@@ -1040,18 +1043,29 @@ export function shell(data) {
       h += '<h1>People</h1>';
       h += '<div style="margin-top:-12px">';
       members.forEach(function(m){
-        h += '<div class="member-row">'
-          + (m.avatar_url ? '<img src="'+esc(getCachedAvatar(m.avatar_url))+'" class="member-avatar" alt="">' : '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc(m.email.charAt(0).toUpperCase())+'</div>')
+        var pending = !!m.is_placeholder;
+        var rowOpacity = pending ? ';opacity:0.5' : '';
+        var avatarHtml = m.avatar_url
+          ? '<img src="'+esc(getCachedAvatar(m.avatar_url))+'" class="member-avatar" alt="">'
+          : '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc((m.email||'?').charAt(0).toUpperCase())+'</div>';
+        h += '<div class="member-row" style="align-items:center'+rowOpacity+'">'
+          + avatarHtml
           + '<div class="member-info"><div class="member-name">'+esc(dispNames[m.id]||m.name)+'</div>'
-          + '<div class="member-email">'+esc(m.email)+(m.role==='owner'?' &middot; Group creator':'')+'</div></div>';
+          + '<div class="member-email">'+esc(m.email)
+            + (m.role==='owner' ? ' &middot; Group creator' : (pending ? ' &middot; Pending' : ''))
+            + '</div></div>';
         if(isOwner && m.role !== 'owner'){
-          h += '<button class="btn btn-xs btn-danger" data-action="remove-member" data-group-id="'+g.id+'" data-user-id="'+m.id+'">Remove</button>';
+          if(pending && m.pending_invite_id){
+            h += '<button class="btn btn-xs btn-danger" data-action="cancel-invite" data-group-id="'+g.id+'" data-invite-id="'+m.pending_invite_id+'">Cancel</button>';
+          } else {
+            h += '<button class="btn btn-xs btn-danger" data-action="remove-member" data-group-id="'+g.id+'" data-user-id="'+m.id+'">Remove</button>';
+          }
         }
         h += '</div>';
       });
 
       invites.forEach(function(i){
-        h += '<div class="member-row">'
+        h += '<div class="member-row" style="opacity:0.5">'
           + '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc(i.email.charAt(0).toUpperCase())+'</div>'
           + '<div class="member-info"><div class="member-name">'+esc(i.email)+'</div>'
           + '<div class="member-email">Pending</div></div>';
