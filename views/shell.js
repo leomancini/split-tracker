@@ -179,6 +179,20 @@ export function shell(data) {
     .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .toggle-row label.toggle-label { margin: 0; font-weight: 500; color: var(--gray-900); }
 
+    .bal-pill {
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .bal-settled { background: var(--green-100); color: var(--green-700); }
+    .bal-owed { background: var(--green-100); color: var(--green-700); }
+    .bal-owe { background: #fef2f2; color: #dc2626; }
+
     .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; width: auto; height: auto; }
     .btn-xs { padding: 0.5rem 0.875rem; font-size: 0.8125rem; width: auto; height: auto; }
     .pay-btn { transition: transform 150ms; -webkit-user-select: none; user-select: none; }
@@ -592,6 +606,18 @@ export function shell(data) {
       return '$'+s;
     }
 
+    function balancePill(g){
+      if(!g.expense_count) return '';
+      var bal = g.my_balance || 0;
+      if(Math.abs(bal) < 0.01){
+        return '<span class="bal-pill bal-settled"><i class="fa-solid fa-check" style="margin-right:0.4rem"></i>Settled</span>';
+      }
+      if(bal < 0){
+        return '<span class="bal-pill bal-owe">You owe '+fmtAmt(-bal)+'</span>';
+      }
+      return '<span class="bal-pill bal-owed">Owed '+fmtAmt(bal)+'</span>';
+    }
+
     // Build a map of userId → display name for a group. Uses first names unless
     // two or more members share a first name — those keep full names.
     function buildDisplayNames(members){
@@ -751,7 +777,10 @@ export function shell(data) {
       if(D.groups.length){
         D.groups.forEach(function(g){
           h += '<div class="card card-link" style="margin-bottom:1rem" data-link="/groups/'+g.id+'">'
-            + '<div style="font-weight:600;font-size:1.125rem">'+esc(g.name)+'</div>'
+            + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem">'
+            + '<div style="font-weight:600;font-size:1.125rem;min-width:0;overflow:hidden;text-overflow:ellipsis">'+esc(g.name)+'</div>'
+            + balancePill(g)
+            + '</div>'
             + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.75rem;margin-bottom:0.25rem">'+avatarStack(g.member_avatars)+'</div>' : '')
             + '</div>';
         });

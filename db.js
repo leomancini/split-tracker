@@ -192,9 +192,46 @@ export function getUserGroups(userId, showDemo = false) {
 
   for (const g of groups) {
     g.member_avatars = avatarStmt.all(g.id).map(r => r.avatar_url);
+    const { balance, expenseCount } = getUserGroupBalance(g.id, userId);
+    g.my_balance = balance;
+    g.expense_count = expenseCount;
   }
 
   return groups;
+}
+
+export function getUserGroupBalance(groupId, userId) {
+  const memberIds = db.prepare('SELECT user_id FROM group_members WHERE group_id = ?').all(groupId).map(r => r.user_id);
+  const expenses = db.prepare(
+    'SELECT paid_by, amount, settled_with, split_type, split_participants FROM expenses WHERE group_id = ?'
+  ).all(groupId);
+  let bal = 0;
+  for (const ex of expenses) {
+    if (ex.settled_with) {
+      if (ex.paid_by === userId) bal += ex.amount;
+      else if (ex.settled_with === userId) bal -= ex.amount;
+    } else if (ex.split_type === 'full') {
+      const owes = ex.split_participants ? JSON.parse(ex.split_participants) : [];
+      if (!owes.length) continue;
+      const per = ex.amount / owes.length;
+      if (ex.paid_by === userId) bal += ex.amount;
+      if (owes.includes(userId)) bal -= per;
+    } else {
+      const participants = ex.split_participants ? JSON.parse(ex.split_participants) : memberIds;
+      const pn = participants.length || memberIds.length;
+      if (!pn) continue;
+      const share = ex.amount / pn;
+      const payerInList = participants.includes(ex.paid_by);
+      if (payerInList) {
+        if (ex.paid_by === userId) bal += ex.amount - share;
+        else if (participants.includes(userId)) bal -= share;
+      } else {
+        if (ex.paid_by === userId) bal += ex.amount;
+        if (participants.includes(userId)) bal -= share;
+      }
+    }
+  }
+  return { balance: bal, expenseCount: expenses.length };
 }
 
 export function createGroup(name, createdBy) {
