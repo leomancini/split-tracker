@@ -1045,11 +1045,11 @@ export function shell(data) {
       h += '<div style="margin-top:-12px">';
       members.forEach(function(m){
         var pending = !!m.pending_invite_id;
-        var rowOpacity = pending ? ';opacity:0.25' : '';
+        var avatarOpacity = pending ? ';opacity:0.25' : '';
         var avatarHtml = m.avatar_url
-          ? '<img src="'+esc(getCachedAvatar(m.avatar_url))+'" class="member-avatar" alt="">'
-          : '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc((m.email||'?').charAt(0).toUpperCase())+'</div>';
-        h += '<div class="member-row" style="align-items:center'+rowOpacity+'">'
+          ? '<img src="'+esc(getCachedAvatar(m.avatar_url))+'" class="member-avatar" alt=""'+(pending?' style="opacity:0.25"':'')+'>'
+          : '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem'+avatarOpacity+'">'+esc((m.email||'?').charAt(0).toUpperCase())+'</div>';
+        h += '<div class="member-row" style="align-items:center">'
           + avatarHtml
           + '<div class="member-info"><div class="member-name">'+esc(dispNames[m.id]||m.name)+'</div>'
           + '<div class="member-email">'+esc(m.email)
@@ -1066,8 +1066,8 @@ export function shell(data) {
       });
 
       invites.forEach(function(i){
-        h += '<div class="member-row" style="opacity:0.25">'
-          + '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem">'+esc(i.email.charAt(0).toUpperCase())+'</div>'
+        h += '<div class="member-row">'
+          + '<div class="member-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gray-500);font-size:1rem;opacity:0.25">'+esc(i.email.charAt(0).toUpperCase())+'</div>'
           + '<div class="member-info"><div class="member-name">'+esc(i.email)+'</div>'
           + '<div class="member-email">Pending</div></div>';
         h += '<button class="btn btn-xs btn-danger" data-action="cancel-invite" data-group-id="'+g.id+'" data-invite-id="'+i.id+'">Cancel</button>';
