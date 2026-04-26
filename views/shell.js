@@ -612,10 +612,13 @@ export function shell(data) {
       if(Math.abs(bal) < 0.01){
         return '<span class="bal-pill bal-settled"><i class="fa-solid fa-check" style="margin-right:0.4rem"></i>Settled</span>';
       }
-      if(bal < 0){
-        return '<span class="bal-pill bal-owe">You owe '+fmtAmt(-bal)+'</span>';
-      }
-      return '<span class="bal-pill bal-owed">Owed '+fmtAmt(bal)+'</span>';
+      var label = bal < 0 ? 'You owe' : 'Owed';
+      var color = bal < 0 ? '#dc2626' : 'var(--green-600)';
+      var amt = fmtAmt(Math.abs(bal));
+      return '<span style="display:inline-flex;align-items:baseline;gap:0.375rem;flex-shrink:0;font-size:0.875rem">'
+        + '<span style="font-weight:500">'+label+'</span>'
+        + '<span style="font-family:var(--mono);font-weight:600;color:'+color+'">'+amt+'</span>'
+        + '</span>';
     }
 
     // Build a map of userId → display name for a group. Uses first names unless
