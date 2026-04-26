@@ -176,11 +176,12 @@ export function getPushSubscriptionsForGroupMembers(groupId, excludeUserId) {
 export function getUserGroups(userId, showDemo = false) {
   const groups = db.prepare(`
     SELECT g.*, COALESCE(gm.role, 'viewer') as role,
-      (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) as member_count
+      (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) as member_count,
+      COALESCE((SELECT MAX(created_at) FROM expenses WHERE group_id = g.id), g.created_at) as last_activity_at
     FROM groups g
     LEFT JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = ?
     WHERE ${showDemo ? "g.is_demo = 1" : "gm.user_id IS NOT NULL AND g.is_demo = 0"}
-    ORDER BY g.created_at DESC
+    ORDER BY last_activity_at DESC
   `).all(userId);
 
   const avatarStmt = db.prepare(`
