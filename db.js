@@ -114,16 +114,31 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
 `);
 
-// One-time backfill: any pending invite whose email matches an existing user
-// should now have that user as a (pending) group member, so splits and avatar
-// rows include them. Safe to run repeatedly thanks to INSERT OR IGNORE.
-db.exec(`
-  INSERT OR IGNORE INTO group_members (group_id, user_id, role)
-  SELECT gi.group_id, u.id, 'member'
-  FROM group_invites gi
-  JOIN users u ON u.email = gi.email
-  WHERE gi.status = 'pending'
-`);
+// One-time backfill: every pending invite should now correspond to a (pending)
+// group member. For emails without a user yet, create a placeholder first.
+const backfillInvites = db.transaction(() => {
+  const orphanInvites = db.prepare(`
+    SELECT DISTINCT gi.email
+    FROM group_invites gi
+    LEFT JOIN users u ON u.email = gi.email
+    WHERE gi.status = 'pending' AND u.id IS NULL
+  `).all();
+  const insertPlaceholder = db.prepare(
+    'INSERT INTO users (google_id, email, name, is_placeholder) VALUES (?, ?, ?, 1)'
+  );
+  for (const row of orphanInvites) {
+    const localPart = row.email.split('@')[0];
+    insertPlaceholder.run('placeholder:' + row.email, row.email, localPart);
+  }
+  db.exec(`
+    INSERT OR IGNORE INTO group_members (group_id, user_id, role)
+    SELECT gi.group_id, u.id, 'member'
+    FROM group_invites gi
+    JOIN users u ON u.email = gi.email
+    WHERE gi.status = 'pending'
+  `);
+});
+backfillInvites();
 
 // --- Helpers ---
 
