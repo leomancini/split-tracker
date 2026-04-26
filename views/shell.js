@@ -790,7 +790,7 @@ export function shell(data) {
             + '<div style="font-weight:600;font-size:1.125rem;min-width:0;overflow:hidden;text-overflow:ellipsis">'+esc(g.name)+'</div>'
             + balancePill(g)
             + '</div>'
-            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.75rem;margin-bottom:0.25rem">'+avatarStack(g.member_avatars.map(function(a){return {url:a.url,faded:a.is_placeholder}}))+'</div>' : '')
+            + (g.member_avatars && g.member_avatars.length ? '<div style="margin-top:0.75rem;margin-bottom:0.25rem">'+avatarStack(g.member_avatars.map(function(a){return {url:a.url,faded:a.is_pending}}))+'</div>' : '')
             + '</div>';
         });
       } else {
@@ -829,7 +829,7 @@ export function shell(data) {
       var settlements = calcSettlements(members, detail.expenses);
       h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;margin-bottom:1rem">';
       h += '<div style="display:flex;align-items:center">'
-        + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return {url:m.avatar_url,faded:!!m.is_placeholder}})) + '</div>'
+        + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return {url:m.avatar_url,faded:!!m.pending_invite_id}})) + '</div>'
         + '<div class="add-member-icon" data-link="/groups/'+g.id+'/add-member" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.625rem;transition:background 150ms,color 150ms;cursor:pointer;user-select:none;-webkit-user-select:none">+</div>'
         + '</div>';
       var mySettlements = settlements.filter(function(s){ return s.from==D.user.id || s.to==D.user.id; });
@@ -1043,7 +1043,7 @@ export function shell(data) {
       h += '<h1>People</h1>';
       h += '<div style="margin-top:-12px">';
       members.forEach(function(m){
-        var pending = !!m.is_placeholder;
+        var pending = !!m.pending_invite_id;
         var rowOpacity = pending ? ';opacity:0.5' : '';
         var avatarHtml = m.avatar_url
           ? '<img src="'+esc(getCachedAvatar(m.avatar_url))+'" class="member-avatar" alt="">'

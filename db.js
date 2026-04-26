@@ -114,6 +114,17 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
 `);
 
+// One-time backfill: any pending invite whose email matches an existing user
+// should now have that user as a (pending) group member, so splits and avatar
+// rows include them. Safe to run repeatedly thanks to INSERT OR IGNORE.
+db.exec(`
+  INSERT OR IGNORE INTO group_members (group_id, user_id, role)
+  SELECT gi.group_id, u.id, 'member'
+  FROM group_invites gi
+  JOIN users u ON u.email = gi.email
+  WHERE gi.status = 'pending'
+`);
+
 // --- Helpers ---
 
 export function normalizeEmail(email) {
@@ -191,14 +202,19 @@ export function getUserGroups(userId, showDemo = false) {
   `).all(userId);
 
   const avatarStmt = db.prepare(`
-    SELECT u.avatar_url, u.is_placeholder FROM group_members gm
+    SELECT u.avatar_url, u.is_placeholder,
+      EXISTS (SELECT 1 FROM group_invites gi WHERE gi.group_id = gm.group_id AND gi.email = u.email AND gi.status = 'pending') as is_pending
+    FROM group_members gm
     JOIN users u ON u.id = gm.user_id
     WHERE gm.group_id = ?
     ORDER BY (CASE WHEN gm.role = 'owner' THEN 0 ELSE 1 END), gm.joined_at ASC
   `);
 
   for (const g of groups) {
-    g.member_avatars = avatarStmt.all(g.id).map(r => ({ url: r.avatar_url, is_placeholder: !!r.is_placeholder }));
+    g.member_avatars = avatarStmt.all(g.id).map(r => ({
+      url: r.avatar_url,
+      is_pending: !!r.is_pending || !!r.is_placeholder,
+    }));
     const { balance, expenseCount } = getUserGroupBalance(g.id, userId);
     g.my_balance = balance;
     g.expense_count = expenseCount;
@@ -322,9 +338,10 @@ export function createInvite(groupId, email, invitedBy) {
       ).run('placeholder:' + normalized, normalized, localPart);
       user = { id: result.lastInsertRowid, is_placeholder: 1 };
     }
-    if (user.is_placeholder) {
-      db.prepare('INSERT OR IGNORE INTO group_members (group_id, user_id, role) VALUES (?, ?, ?)').run(groupId, user.id, 'member');
-    }
+    // Auto-add the invitee as a member regardless of whether they have an account yet,
+    // so splits and avatar rows include them. Their pending status is tracked by the
+    // group_invites row below.
+    db.prepare('INSERT OR IGNORE INTO group_members (group_id, user_id, role) VALUES (?, ?, ?)').run(groupId, user.id, 'member');
     try {
       db.prepare('INSERT INTO group_invites (group_id, email, invited_by) VALUES (?, ?, ?)').run(groupId, normalized, invitedBy);
       return { success: true };
@@ -365,7 +382,16 @@ export function acceptInvite(inviteId, userId) {
 }
 
 export function declineInvite(inviteId) {
-  db.prepare("UPDATE group_invites SET status = 'declined' WHERE id = ?").run(inviteId);
+  const decline = db.transaction(() => {
+    const invite = db.prepare('SELECT * FROM group_invites WHERE id = ?').get(inviteId);
+    if (!invite) return;
+    db.prepare("UPDATE group_invites SET status = 'declined' WHERE id = ?").run(inviteId);
+    const user = db.prepare('SELECT id FROM users WHERE email = ?').get(invite.email);
+    if (user) {
+      db.prepare('DELETE FROM group_members WHERE group_id = ? AND user_id = ?').run(invite.group_id, user.id);
+    }
+  });
+  decline();
 }
 
 export function removeMember(groupId, userId) {
@@ -384,10 +410,10 @@ export function cancelInvite(inviteId) {
     const invite = db.prepare('SELECT * FROM group_invites WHERE id = ?').get(inviteId);
     if (!invite) return;
     db.prepare('DELETE FROM group_invites WHERE id = ?').run(inviteId);
-    // If this invite created a placeholder member, drop them from the group too.
-    const placeholder = db.prepare('SELECT id FROM users WHERE email = ? AND is_placeholder = 1').get(invite.email);
-    if (placeholder) {
-      db.prepare('DELETE FROM group_members WHERE group_id = ? AND user_id = ?').run(invite.group_id, placeholder.id);
+    // The invite added them to group_members on creation; drop them since the invite is being canceled.
+    const user = db.prepare('SELECT id FROM users WHERE email = ?').get(invite.email);
+    if (user) {
+      db.prepare('DELETE FROM group_members WHERE group_id = ? AND user_id = ?').run(invite.group_id, user.id);
     }
   });
   cancel();
