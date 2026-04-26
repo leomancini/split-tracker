@@ -193,6 +193,9 @@ export function shell(data) {
     .bal-owed { background: var(--green-100); color: var(--green-700); }
     .bal-owe { background: #fef2f2; color: #dc2626; }
 
+    .group-bottom-spacer { height: 5rem; }
+    @media (min-width: 601px) { .group-bottom-spacer { height: 9rem; } }
+
     .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; width: auto; height: auto; }
     .btn-xs { padding: 0.5rem 0.875rem; font-size: 0.8125rem; width: auto; height: auto; }
     .pay-btn { transition: transform 150ms; -webkit-user-select: none; user-select: none; }
@@ -910,7 +913,7 @@ export function shell(data) {
       }
 
       // Bottom padding so list isn't hidden behind sticky button
-      h += '<div style="height:5rem"></div>';
+      h += '<div class="group-bottom-spacer"></div>';
 
       // Sticky add item button
       h += '<div class="sticky-bottom"><button class="btn" data-link="/groups/'+g.id+'/add-expense">Add item</button></div>';
