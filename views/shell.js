@@ -849,13 +849,13 @@ export function shell(data) {
           var venmoUrl = '', cashappUrl = '';
           var note = 'Balance on Split for ' + g.name;
           if(isYou){
-            if(s.toVenmo) venmoUrl = 'https://venmo.com/'+encodeURIComponent(s.toVenmo)+'?txn=pay&note='+encodeURIComponent(note).replace(/%20/g,'%C2%A0')+'&amount='+encodeURIComponent(s.amt.toFixed(2));
+            if(s.toVenmo){ var vh = s.toVenmo.replace(/^@/, ''); venmoUrl = 'https://venmo.com/'+encodeURIComponent(vh)+'?txn=pay&note='+encodeURIComponent(note).replace(/%20/g,'%C2%A0')+'&amount='+encodeURIComponent(s.amt.toFixed(2)); }
             if(s.toCashapp){
               var tag = s.toCashapp.replace(/^\$/, '');
               cashappUrl = 'https://cash.app/$'+encodeURIComponent(tag)+'/'+encodeURIComponent(s.amt.toFixed(2));
             }
           } else if(s.to==D.user.id){
-            if(s.fromVenmo) venmoUrl = 'https://venmo.com/'+encodeURIComponent(s.fromVenmo)+'?txn=charge&note='+encodeURIComponent(note).replace(/%20/g,'%C2%A0')+'&amount='+encodeURIComponent(s.amt.toFixed(2));
+            if(s.fromVenmo){ var vh = s.fromVenmo.replace(/^@/, ''); venmoUrl = 'https://venmo.com/'+encodeURIComponent(vh)+'?txn=charge&note='+encodeURIComponent(note).replace(/%20/g,'%C2%A0')+'&amount='+encodeURIComponent(s.amt.toFixed(2)); }
             if(s.fromCashapp){
               var tag = s.fromCashapp.replace(/^\$/, '');
               cashappUrl = 'https://cash.app/$'+encodeURIComponent(tag)+'/'+encodeURIComponent(s.amt.toFixed(2));
