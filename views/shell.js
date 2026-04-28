@@ -1198,6 +1198,11 @@ export function shell(data) {
       if(path === '/' || path === ''){
         document.title = 'Split';
         app.innerHTML = dashboardView(opts.alert);
+        // Refresh in the background so balances/order reflect changes made in groups.
+        refreshData().then(function(){
+          if(myVer !== routeVer) return;
+          app.innerHTML = dashboardView(opts.alert);
+        });
         // Prefetch Font Awesome so it's ready when user opens a group
         if(!document.querySelector('link[data-fa-prefetch]')){
           var faLink = document.createElement('link');
