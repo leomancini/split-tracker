@@ -838,7 +838,7 @@ export function shell(data) {
         + '</div>';
       var mySettlements = settlements.filter(function(s){ return s.from==D.user.id || s.to==D.user.id; });
       if(!mySettlements.length && detail.expenses && detail.expenses.length){
-        h += '<span style="display:inline-flex;align-items:center;font-size:0.8125rem;color:var(--green-700);font-weight:500;padding:0.375rem 0.75rem;background:var(--green-100);border-radius:999px"><i class="fa-solid fa-check" style="margin-right:0.4rem"></i>Settled</span>';
+        h += '<span style="display:inline-flex;align-items:center;gap:0.4rem;flex-shrink:0;font-size:0.875rem;padding-right:4px;color:var(--gray-500)"><i class="fa-solid fa-check"></i><span style="font-weight:500">Settled</span></span>';
       }
       h += '</div>';
 
