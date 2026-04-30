@@ -1677,6 +1677,10 @@ export function shell(data) {
       }
 
       if(e.target.id === 'create-group-form'){
+        if(D.demoMode){
+          alert('This is a demo — no group will actually be created.');
+          return;
+        }
         var titleEl = document.getElementById('grp-title');
         var invEl = document.getElementById('grp-inv');
         var name = titleEl.value.trim();
