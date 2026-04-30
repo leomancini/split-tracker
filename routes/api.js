@@ -41,7 +41,10 @@ export function registerApiRoutes(app, ensureAuth) {
   // Toggle demo mode
   app.post('/api/demo-mode', ensureAuth, (req, res) => {
     req.session.demoMode = !req.session.demoMode;
-    res.json({ ok: true, demoMode: req.session.demoMode });
+    req.session.save(err => {
+      if (err) return res.status(500).json({ error: 'Session save failed' });
+      res.json({ ok: true, demoMode: req.session.demoMode });
+    });
   });
 
   // Update payment handles
