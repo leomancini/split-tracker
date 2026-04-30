@@ -254,7 +254,7 @@ export function shell(data) {
     .card-link:active { transform: scale(0.95); transition: transform 150ms; }
 
     @media (hover: hover) { h1[data-action="rename-group"]:hover .fa-pen { color: var(--gray-700) !important; } }
-    .edit-expense-pen { font-size: 0.75rem; color: var(--gray-400); margin-left: 0.375rem; vertical-align: middle; cursor: pointer; padding: 0.5rem; margin-right: -0.5rem; transition: color 150ms; }
+    .edit-expense-pen { font-size: 0.75rem; color: var(--gray-400); margin-left: 0.375rem; vertical-align: middle; cursor: pointer; padding: 0.125rem 0.25rem 0.25rem 0.25rem; transition: color 150ms; }
     @media (hover: hover) { .edit-expense-pen:hover { color: var(--gray-700); } }
     @media (hover: hover) { .add-member-icon:hover { background: var(--gray-200) !important; color: var(--gray-700) !important; } }
 
