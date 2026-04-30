@@ -460,6 +460,10 @@ export function updateExpenseIcon(id, icon) {
   db.prepare('UPDATE expenses SET icon = ? WHERE id = ?').run(icon, id);
 }
 
+export function updateExpenseName(id, name) {
+  db.prepare('UPDATE expenses SET name = ? WHERE id = ?').run(name, id);
+}
+
 export function updateExpenseClassification(id, icon, category) {
   db.prepare('UPDATE expenses SET icon = ?, category = ? WHERE id = ?').run(icon, category, id);
 }

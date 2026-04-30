@@ -22,6 +22,7 @@ import {
   updatePaymentHandles,
   updateExpenseIcon,
   updateExpenseClassification,
+  updateExpenseName,
   setPushEnabled,
   savePushSubscription,
   deletePushSubscriptionByEndpoint,
@@ -218,6 +219,35 @@ export function registerApiRoutes(app, ensureAuth) {
         payerName: payer?.name?.split(' ')[0] || payer?.name || 'Someone',
         settledWithName: settledUser ? (settledUser.name.split(' ')[0] || settledUser.name) : null,
       }).catch(err => console.error('sendExpenseNotification failed:', err.message));
+    }
+  });
+
+  // Rename expense
+  app.put('/api/groups/:gid/expenses/:eid', ensureAuth, (req, res) => {
+    const groupId = parseInt(req.params.gid);
+    const expenseId = parseInt(req.params.eid);
+    if (!isGroupMember(groupId, req.user.id)) return res.status(403).json({ error: 'Not a member' });
+
+    const expense = getExpenseById(expenseId);
+    if (!expense || expense.group_id !== groupId) return res.status(404).json({ error: 'Expense not found' });
+
+    if (expense.paid_by !== req.user.id) {
+      return res.status(403).json({ error: 'Only the payer can rename' });
+    }
+
+    const name = req.body.name?.trim();
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+    if (name === expense.name) return res.json({ ok: true });
+
+    updateExpenseName(expenseId, name);
+    res.json({ ok: true });
+
+    // Re-classify icon + category for the new name (skip for settlements).
+    const isSettlement = !!expense.settled_with || expense.category === 'settlement';
+    if (!isSettlement) {
+      classifyExpense({ name })
+        .then(({ icon, category: cat }) => updateExpenseClassification(expenseId, icon, cat))
+        .catch(err => console.error('classifyExpense after rename failed:', err.message));
     }
   });
 

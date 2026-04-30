@@ -254,6 +254,8 @@ export function shell(data) {
     .card-link:active { transform: scale(0.95); transition: transform 150ms; }
 
     @media (hover: hover) { h1[data-action="rename-group"]:hover .fa-pen { color: var(--gray-700) !important; } }
+    .edit-expense-pen { font-size: 0.75rem; color: var(--gray-400); margin-left: 0.375rem; vertical-align: middle; cursor: pointer; padding: 0.5rem; margin-right: -0.5rem; transition: color 150ms; }
+    @media (hover: hover) { .edit-expense-pen:hover { color: var(--gray-700); } }
     @media (hover: hover) { .add-member-icon:hover { background: var(--gray-200) !important; color: var(--gray-700) !important; } }
 
     .expense-row { transition: background 150ms, transform 100ms; border-radius: var(--radius); margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
@@ -989,13 +991,14 @@ export function shell(data) {
       var detailMembers = groupCache[gid] ? groupCache[gid].members : [];
       var dispNames = buildDisplayNames(detailMembers);
       var canDelete = ex.paid_by === D.user.id || isOwner;
+      var canEditName = !ex.settled_with && ex.paid_by === D.user.id;
       var detailNameHtml;
       if(ex.settled_with){
         var payer = ex.paid_by === D.user.id ? 'You' : (dispNames[ex.paid_by] || ex.paid_by_name);
         var payee = ex.settled_with === D.user.id ? 'You' : (dispNames[ex.settled_with] || ex.settled_with_name);
         detailNameHtml = '<span style="font-weight:600">'+esc(payer)+'</span> paid <span style="font-weight:600">'+esc(payee)+'</span>';
       } else {
-        detailNameHtml = esc(ex.name);
+        detailNameHtml = esc(ex.name) + (canEditName ? ' <i class="fa-solid fa-pen edit-expense-pen" data-action="rename-expense" data-group-id="'+gid+'" data-expense-id="'+ex.id+'"></i>' : '');
       }
       var h = '<div class="item-detail-icon"'+(ex.settled_with ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+expenseIcon(ex, 32)+'</div>';
       h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';
@@ -1395,6 +1398,14 @@ export function shell(data) {
       window.scrollTo(0,0);
     }
 
+    function demoBlocked(){
+      if(D.demoMode){
+        alert('This is a demo — changes won\\'t be saved.');
+        return true;
+      }
+      return false;
+    }
+
     async function refreshData(){
       try{
         var r = await fetch('/api/data');
@@ -1493,6 +1504,31 @@ export function shell(data) {
         return;
       }
 
+      // Rename expense (must come before data-link — pencil sits inside a clickable row)
+      var renameExpEl = e.target.closest('[data-action="rename-expense"]');
+      if(renameExpEl){
+        e.preventDefault();
+        e.stopPropagation();
+        if(demoBlocked()) return;
+        var rxGid = renameExpEl.getAttribute('data-group-id');
+        var rxId = renameExpEl.getAttribute('data-expense-id');
+        var detail = groupCache[rxGid];
+        var ex = detail && (detail.expenses||[]).find(function(x){return String(x.id)===rxId});
+        if(!ex) return;
+        var newName = prompt('Rename item:', ex.name);
+        if(!newName || !newName.trim() || newName.trim() === ex.name) return;
+        fetch('/api/groups/'+rxGid+'/expenses/'+rxId, {
+          method:'PUT', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({name:newName.trim()})
+        }).then(function(r){return r.json()}).then(function(d){
+          if(d.ok){
+            delete groupCache[rxGid];
+            route(location.pathname);
+          }
+        });
+        return;
+      }
+
       // data-link navigation
       var el = e.target.closest('[data-link]');
       if(el){
@@ -1521,6 +1557,7 @@ export function shell(data) {
       var delItemBtn = e.target.closest('[data-action="delete-item"]');
       if(delItemBtn){
         e.preventDefault();
+        if(demoBlocked()) return;
         if(!confirm('Delete this item?'))return;
         var expId = delItemBtn.getAttribute('data-id');
         var expGid = delItemBtn.getAttribute('data-group-id');
@@ -1544,6 +1581,7 @@ export function shell(data) {
       var renameEl = e.target.closest('[data-action="rename-group"]');
       if(renameEl){
         e.preventDefault();
+        if(demoBlocked()) return;
         var rgId = renameEl.getAttribute('data-group-id');
         var current = renameEl.textContent.trim();
         var newName = prompt('Rename group:', current);
@@ -1567,6 +1605,7 @@ export function shell(data) {
       var rmBtn = e.target.closest('[data-action="remove-member"]');
       if(rmBtn){
         e.preventDefault();
+        if(demoBlocked()) return;
         if(!confirm('Remove this person from the group?'))return;
         var rmGid = rmBtn.getAttribute('data-group-id');
         var rmUid = rmBtn.getAttribute('data-user-id');
@@ -1586,6 +1625,7 @@ export function shell(data) {
       var cancelBtn = e.target.closest('[data-action="cancel-invite"]');
       if(cancelBtn){
         e.preventDefault();
+        if(demoBlocked()) return;
         var ciGid = cancelBtn.getAttribute('data-group-id');
         var ciIid = cancelBtn.getAttribute('data-invite-id');
         cancelBtn.disabled = true;
@@ -1607,6 +1647,7 @@ export function shell(data) {
       e.preventDefault();
 
       if(e.target.id === 'add-expense-form'){
+        if(demoBlocked()) return;
         var gid3 = e.target.getAttribute('data-group-id');
         var descEl = document.getElementById('exp-desc');
         var costEl = document.getElementById('exp-cost');
@@ -1681,10 +1722,7 @@ export function shell(data) {
       }
 
       if(e.target.id === 'create-group-form'){
-        if(D.demoMode){
-          alert('This is a demo — no group will actually be created.');
-          return;
-        }
+        if(demoBlocked()) return;
         var titleEl = document.getElementById('grp-title');
         var invEl = document.getElementById('grp-inv');
         var name = titleEl.value.trim();
@@ -1717,6 +1755,7 @@ export function shell(data) {
       }
 
       if(e.target.id === 'invite-form'){
+        if(demoBlocked()) return;
         var gid2 = e.target.getAttribute('data-group-id');
         var emailEl = document.getElementById('invite-email');
         var email = emailEl.value.trim().toLowerCase();
