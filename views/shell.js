@@ -385,7 +385,7 @@ export function shell(data) {
       text-align: center;
       color: var(--gray-400);
       padding: 2rem 1rem;
-      font-size: 0.875rem;
+      font-size: 1rem;
     }
 
     .section { margin-bottom: 1.5rem; }
