@@ -460,9 +460,19 @@ export function updateExpenseIcon(id, icon) {
   db.prepare('UPDATE expenses SET icon = ? WHERE id = ?').run(icon, id);
 }
 
+export function updateExpenseClassification(id, icon, category) {
+  db.prepare('UPDATE expenses SET icon = ?, category = ? WHERE id = ?').run(icon, category, id);
+}
+
 export function getExpensesMissingIcon() {
   return db.prepare(
     "SELECT id, name, category FROM expenses WHERE (icon IS NULL OR icon = '') AND settled_with IS NULL AND category != 'settlement'"
+  ).all();
+}
+
+export function getNonSettlementExpenses() {
+  return db.prepare(
+    "SELECT id, name FROM expenses WHERE settled_with IS NULL AND category != 'settlement'"
   ).all();
 }
 

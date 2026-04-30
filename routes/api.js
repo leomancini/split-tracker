@@ -21,13 +21,14 @@ import {
   deleteExpense,
   updatePaymentHandles,
   updateExpenseIcon,
+  updateExpenseClassification,
   setPushEnabled,
   savePushSubscription,
   deletePushSubscriptionByEndpoint,
   getUserById,
 } from '../db.js';
 import { sendInviteEmail } from '../mail.js';
-import { pickIcon } from '../icon-picker.js';
+import { classifyExpense } from '../icon-picker.js';
 import { getVapidPublicKey, sendExpenseNotification, sendPushToSubscription } from '../push.js';
 
 export function registerApiRoutes(app, ensureAuth) {
@@ -197,11 +198,12 @@ export function registerApiRoutes(app, ensureAuth) {
     const id = createExpense(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, isSettlement ? 'fa-dollar-sign' : null);
     res.json({ ok: true, id });
 
-    // Pick icon asynchronously for regular expenses. Settlements already have their fixed icon.
+    // Classify (icon + category) asynchronously for regular expenses.
+    // Settlements already have their fixed icon and 'settlement' category.
     if (!isSettlement) {
-      pickIcon({ name, category })
-        .then(icon => { if (icon) updateExpenseIcon(id, icon); })
-        .catch(err => console.error('pickIcon failed:', err.message));
+      classifyExpense({ name })
+        .then(({ icon, category: cat }) => updateExpenseClassification(id, icon, cat))
+        .catch(err => console.error('classifyExpense failed:', err.message));
     }
 
     // Fire push notifications to other members (not for demo groups).

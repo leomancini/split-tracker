@@ -42,9 +42,18 @@ export const ICON_CHOICES = [
   'fa-receipt', 'fa-tag',
 ];
 
-const SYSTEM_PROMPT = `You pick a single Font Awesome 6 Free Solid icon that best visually represents a transaction name. Return only one of the allowed icon class names.`;
+export const CATEGORY_CHOICES = [
+  'food', 'transport', 'entertainment', 'shopping', 'utilities', 'health', 'education', 'general',
+];
+
+const SYSTEM_PROMPT = `For a transaction name, pick:
+1. A single Font Awesome 6 Free Solid icon class that best visually represents it.
+2. A single category that best classifies the transaction.
+
+Return both as JSON. Use only values from the allowed lists.`;
 
 const ICON_LIST_TEXT = ICON_CHOICES.join(', ');
+const CATEGORY_LIST_TEXT = CATEGORY_CHOICES.join(', ');
 
 const client = new Anthropic();
 
@@ -61,17 +70,17 @@ function isTransientError(err) {
 
 const RETRY_DELAYS_MS = [1000, 3000];
 
-export async function pickIcon({ name, category }) {
+export async function classifyExpense({ name }) {
   let lastErr;
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     try {
       const response = await client.messages.create({
         model: 'claude-haiku-4-5',
-        max_tokens: 64,
+        max_tokens: 96,
         system: [
           {
             type: 'text',
-            text: `${SYSTEM_PROMPT}\n\nAllowed icons: ${ICON_LIST_TEXT}`,
+            text: `${SYSTEM_PROMPT}\n\nAllowed icons: ${ICON_LIST_TEXT}\n\nAllowed categories: ${CATEGORY_LIST_TEXT}`,
             cache_control: { type: 'ephemeral' },
           },
         ],
@@ -82,8 +91,9 @@ export async function pickIcon({ name, category }) {
               type: 'object',
               properties: {
                 icon: { type: 'string', enum: ICON_CHOICES },
+                category: { type: 'string', enum: CATEGORY_CHOICES },
               },
-              required: ['icon'],
+              required: ['icon', 'category'],
               additionalProperties: false,
             },
           },
@@ -91,7 +101,7 @@ export async function pickIcon({ name, category }) {
         messages: [
           {
             role: 'user',
-            content: `Transaction name: "${name}"${category && category !== 'general' ? `\nCategory hint: ${category}` : ''}\n\nPick the best matching icon.`,
+            content: `Transaction name: "${name}"\n\nPick the best matching icon and category.`,
           },
         ],
       });
@@ -100,18 +110,20 @@ export async function pickIcon({ name, category }) {
         if (block.type === 'text') {
           try {
             const parsed = JSON.parse(block.text);
-            if (parsed.icon && ICON_CHOICES.includes(parsed.icon)) return parsed.icon;
+            const icon = ICON_CHOICES.includes(parsed.icon) ? parsed.icon : 'fa-receipt';
+            const category = CATEGORY_CHOICES.includes(parsed.category) ? parsed.category : 'general';
+            return { icon, category };
           } catch {
             // fall through
           }
         }
       }
-      return 'fa-receipt';
+      return { icon: 'fa-receipt', category: 'general' };
     } catch (err) {
       lastErr = err;
       if (!isTransientError(err) || attempt === RETRY_DELAYS_MS.length) break;
       const delay = RETRY_DELAYS_MS[attempt];
-      console.warn(`pickIcon transient error (status=${err.status || err.statusCode || 'none'}), retrying in ${delay}ms:`, err.message);
+      console.warn(`classifyExpense transient error (status=${err.status || err.statusCode || 'none'}), retrying in ${delay}ms:`, err.message);
       await new Promise(r => setTimeout(r, delay));
     }
   }

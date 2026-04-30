@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { getExpensesMissingIcon, updateExpenseIcon, setSettlementIcons } from './db.js';
-import { pickIcon } from './icon-picker.js';
+import { getNonSettlementExpenses, updateExpenseClassification, setSettlementIcons } from './db.js';
+import { classifyExpense } from './icon-picker.js';
 
 const CONCURRENCY = 5;
 
@@ -8,8 +8,8 @@ async function run() {
   const settlementChanges = setSettlementIcons();
   if (settlementChanges) console.log(`Set ${settlementChanges} settlement rows to fa-dollar-sign.`);
 
-  const rows = getExpensesMissingIcon();
-  console.log(`Backfilling icons for ${rows.length} expenses...`);
+  const rows = getNonSettlementExpenses();
+  console.log(`Re-classifying ${rows.length} expenses (icon + category)...`);
   if (!rows.length) return;
 
   let done = 0;
@@ -19,10 +19,10 @@ async function run() {
     while (queue.length) {
       const row = queue.shift();
       try {
-        const icon = await pickIcon({ name: row.name, category: row.category });
-        updateExpenseIcon(row.id, icon);
+        const { icon, category } = await classifyExpense({ name: row.name });
+        updateExpenseClassification(row.id, icon, category);
         done++;
-        console.log(`[${done + failed}/${rows.length}] #${row.id} "${row.name}" → ${icon}`);
+        console.log(`[${done + failed}/${rows.length}] #${row.id} "${row.name}" → ${icon} / ${category}`);
       } catch (err) {
         failed++;
         console.error(`[${done + failed}/${rows.length}] #${row.id} failed:`, err.message);
