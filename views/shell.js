@@ -617,8 +617,9 @@ export function shell(data) {
       if(!g.expense_count) return '';
       var bal = g.my_balance || 0;
       if(Math.abs(bal) < 0.01){
-        return '<span style="display:inline-flex;align-items:baseline;flex-shrink:0;font-size:0.875rem;padding-right:4px">'
-          + '<span style="font-weight:500;color:var(--green-700)">Settled</span>'
+        return '<span style="display:inline-flex;align-items:center;gap:0.4rem;flex-shrink:0;font-size:0.875rem;padding-right:4px;color:var(--gray-500)">'
+          + '<i class="fa-solid fa-check"></i>'
+          + '<span style="font-weight:500">Settled</span>'
           + '</span>';
       }
       var label = bal < 0 ? 'You owe' : 'Owed';
