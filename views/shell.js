@@ -677,19 +677,23 @@ export function shell(data) {
     }
 
     function catLabel(cat){
-      var labels = {food:'Food',transport:'Transport',entertainment:'Entertainment',shopping:'Shopping',utilities:'Utilities',health:'Health',education:'Education',settlement:'Settlement',general:'General'};
+      var labels = {food:'Food',transport:'Transport',housing:'Housing',entertainment:'Entertainment',shopping:'Shopping',utilities:'Utilities',health:'Health',education:'Education',subscriptions:'Subscriptions',gifts:'Gifts',pets:'Pets',settlement:'Settlement',general:'General'};
       return labels[cat] || 'General';
     }
 
     // --- Category detection ---
     var CATS = {
       food:          {icon:'fa-utensils',       kw:['food','grocery','groceries','restaurant','pizza','burger','sushi','lunch','dinner','breakfast','cafe','coffee','starbucks','mcdonald','kfc','subway','taco','noodle','rice','bread','meal','eat','snack','bakery','deli','brunch']},
-      transport:     {icon:'fa-car',            kw:['uber','lyft','taxi','cab','bus','train','metro','gas','fuel','parking','toll','flight','airline','airbnb','hotel','travel','trip']},
+      transport:     {icon:'fa-car',            kw:['uber','lyft','taxi','cab','bus','train','metro','gas','fuel','parking','toll','flight','airline','travel','trip']},
+      housing:       {icon:'fa-house',          kw:['rent','mortgage','airbnb','hotel','lodging','lease','apartment']},
       entertainment: {icon:'fa-film',           kw:['movie','cinema','netflix','spotify','concert','show','theater','game','ticket','museum','bar','club','party','beer','wine','drink','alcohol']},
       shopping:      {icon:'fa-bag-shopping',   kw:['amazon','walmart','target','clothes','shirt','shoes','electronics','phone','laptop','furniture','ikea','home','decor']},
-      utilities:     {icon:'fa-bolt',           kw:['electric','electricity','water','internet','wifi','phone','mobile','bill','utility','utilities','rent','mortgage','insurance']},
+      utilities:     {icon:'fa-bolt',           kw:['electric','electricity','water','internet','wifi','phone','mobile','bill','utility','utilities','insurance']},
       health:        {icon:'fa-heart-pulse',    kw:['doctor','hospital','pharmacy','medicine','gym','fitness','health','dental','medical','prescription','vitamin']},
       education:     {icon:'fa-graduation-cap', kw:['book','books','course','school','tuition','class','study','education','library','textbook']},
+      subscriptions: {icon:'fa-credit-card',    kw:['subscription','membership','hosting','domain','renewal','plan','dropbox','prime','adobe','icloud']},
+      gifts:         {icon:'fa-gift',           kw:['gift','present','birthday','anniversary','wedding','donation','charity']},
+      pets:          {icon:'fa-paw',            kw:['pet','dog','cat','vet','kibble','litter','grooming']},
       settlement:    {icon:'fa-dollar-sign',     kw:[]},
       general:       {icon:'fa-receipt',        kw:[]}
     };

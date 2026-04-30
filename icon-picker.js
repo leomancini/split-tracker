@@ -43,7 +43,7 @@ export const ICON_CHOICES = [
 ];
 
 export const CATEGORY_CHOICES = [
-  'food', 'transport', 'entertainment', 'shopping', 'utilities', 'health', 'education', 'general',
+  'food', 'transport', 'housing', 'entertainment', 'shopping', 'utilities', 'health', 'education', 'subscriptions', 'gifts', 'pets', 'general',
 ];
 
 const SYSTEM_PROMPT = `For a transaction name, pick:

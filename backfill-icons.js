@@ -2,7 +2,8 @@ import 'dotenv/config';
 import { getNonSettlementExpenses, updateExpenseClassification, setSettlementIcons } from './db.js';
 import { classifyExpense } from './icon-picker.js';
 
-const CONCURRENCY = 5;
+const CONCURRENCY = 2;
+const PER_REQUEST_DELAY_MS = 800;
 
 async function run() {
   const settlementChanges = setSettlementIcons();
@@ -27,6 +28,7 @@ async function run() {
         failed++;
         console.error(`[${done + failed}/${rows.length}] #${row.id} failed:`, err.message);
       }
+      if (queue.length) await new Promise(r => setTimeout(r, PER_REQUEST_DELAY_MS));
     }
   }
 
