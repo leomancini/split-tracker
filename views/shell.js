@@ -737,6 +737,17 @@ export function shell(data) {
               if(bal[pid] !== undefined) bal[pid] -= perPerson;
             });
           }
+        } else if(ex.split_type === 'custom'){
+          // Each participant owes a specific custom amount
+          var customParts = ex.split_participants ? JSON.parse(ex.split_participants) : [];
+          var customAmts = ex.split_amounts ? JSON.parse(ex.split_amounts) : [];
+          if(customParts.length){
+            bal[ex.paid_by] += ex.amount;
+            customParts.forEach(function(pid, i){
+              var owed = customAmts[i] || 0;
+              if(bal[pid] !== undefined) bal[pid] -= owed;
+            });
+          }
         } else {
           // Equal split among participants (default: all members)
           var participants = ex.split_participants ? JSON.parse(ex.split_participants) : allIds;
@@ -964,21 +975,27 @@ export function shell(data) {
           h += '<option value="you_owe">You owe full amount</option>';
           h += '<option value="they_owe">They owe full amount</option>';
         }
+        h += '<option value="uneven">Uneven split</option>';
         h += '</select></div>';
-        // Participant picker (shown/hidden by JS)
-        if(members.length > 2){
-          h += '<div id="exp-participants-wrap" class="form-group">'
-            + '<label id="exp-participants-label">Split between</label>'
-            + '<div id="exp-participants" style="border:2px solid var(--gray-200);border-radius:var(--radius);overflow:hidden">';
-          members.forEach(function(m, idx){
-            var isLast = idx === members.length - 1;
-            h += '<label style="display:flex;align-items:center;gap:0.625rem;padding:0.75rem;cursor:pointer;margin:0'+(isLast ? '' : ';border-bottom:1px solid var(--gray-100)')+'">'
-              + '<input type="checkbox" class="exp-participant-cb" value="'+m.id+'" checked>'
-              + '<span style="font-size:0.9375rem;color:var(--gray-900)">'+esc(m.id === D.user.id ? 'You' : (dispNames[m.id]||m.name))+'</span>'
-              + '</label>';
-          });
-          h += '</div></div>';
-        }
+        // Participant picker — always rendered for 2+ members; hidden for 2-person groups until uneven is selected
+        var wrapHidden = members.length === 2 ? 'display:none;' : '';
+        h += '<div id="exp-participants-wrap" class="form-group" style="'+wrapHidden+'">'
+          + '<label id="exp-participants-label">Split between</label>'
+          + '<div id="exp-participants" style="border:2px solid var(--gray-200);border-radius:var(--radius);overflow:hidden">';
+        members.forEach(function(m, idx){
+          var isLast = idx === members.length - 1;
+          var borderStyle = isLast ? '' : ';border-bottom:1px solid var(--gray-100)';
+          h += '<div class="exp-participant-row" style="display:flex;align-items:center;gap:0.625rem;padding:0.75rem;margin:0'+borderStyle+'">'
+            + '<input type="checkbox" class="exp-participant-cb" value="'+m.id+'" checked style="flex-shrink:0">'
+            + '<span class="exp-participant-name" style="flex:1;font-size:0.9375rem;color:var(--gray-900)">'+esc(m.id === D.user.id ? 'You' : (dispNames[m.id]||m.name))+'</span>'
+            + '<span class="exp-uneven-prefix" style="display:none;color:var(--gray-500);font-size:0.9375rem">$</span>'
+            + '<input type="number" class="exp-uneven-amt" data-member-id="'+m.id+'" step="0.01" min="0" placeholder="0.00"'
+            + ' style="display:none;width:72px;text-align:right;padding:0.25rem 0.375rem;border:1px solid var(--gray-300);border-radius:4px;font-size:0.9375rem">'
+            + '</div>';
+        });
+        h += '</div>'
+          + '<div id="exp-uneven-msg" style="display:none;font-size:0.8125rem;color:#e53e3e;margin-top:0.375rem"></div>'
+          + '</div>';
       }
       h += '</form>'
         + '<div class="sticky-bottom"><button type="submit" form="add-expense-form" class="btn" disabled>Add item</button></div>';
@@ -1247,10 +1264,35 @@ export function shell(data) {
         var addBtn = document.querySelector('button[form="add-expense-form"]');
         function syncAddBtn(){
           var ok = nameEl && amtEl && nameEl.value.trim() && parseFloat(amtEl.value) > 0;
+          if(ok){
+            var splitSel2 = document.getElementById('exp-split-type');
+            if(splitSel2 && splitSel2.value === 'uneven'){
+              var total2 = parseFloat(amtEl.value) || 0;
+              var sum2 = 0;
+              document.querySelectorAll('.exp-uneven-amt').forEach(function(inp){ sum2 += parseFloat(inp.value) || 0; });
+              var msg2 = document.getElementById('exp-uneven-msg');
+              if(Math.abs(sum2 - total2) > 0.01){
+                ok = false;
+                if(msg2){ msg2.textContent = 'Amounts must add up to '+fmtAmt(total2); msg2.style.display = ''; }
+              } else {
+                if(msg2) msg2.style.display = 'none';
+              }
+            }
+          }
           if(addBtn) addBtn.disabled = !ok;
         }
         if(nameEl) nameEl.addEventListener('input', syncAddBtn);
-        if(amtEl) amtEl.addEventListener('input', syncAddBtn);
+        if(amtEl) amtEl.addEventListener('input', function(){
+          // When total amount changes while in uneven mode, redistribute evenly as defaults
+          var splitSelChk = document.getElementById('exp-split-type');
+          if(splitSelChk && splitSelChk.value === 'uneven'){
+            var newTotal = parseFloat(amtEl.value) || 0;
+            var amtInputs = document.querySelectorAll('.exp-uneven-amt');
+            var newDefault = amtInputs.length ? (newTotal / amtInputs.length).toFixed(2) : '0.00';
+            amtInputs.forEach(function(inp){ inp.value = newDefault; });
+          }
+          syncAddBtn();
+        });
         // Wire up split type change handler
         var splitSel = document.getElementById('exp-split-type');
         if(splitSel){
@@ -1271,36 +1313,66 @@ export function shell(data) {
               else if(v === 'they_owe') paidByEl.value = String(D.user.id);
               else if(v === 'equal') paidByEl.value = String(D.user.id);
             }
-            // For 3+ person groups: show/hide participant picker
+            // Helper: switch participant rows to checkbox mode
+            function showCheckboxMode(){
+              var rows = partWrap.querySelectorAll('.exp-participant-row');
+              rows.forEach(function(row){ row.style.display = 'flex'; });
+              partWrap.querySelectorAll('.exp-participant-cb').forEach(function(cb){ cb.style.display = ''; });
+              partWrap.querySelectorAll('.exp-uneven-prefix').forEach(function(p){ p.style.display = 'none'; });
+              partWrap.querySelectorAll('.exp-uneven-amt').forEach(function(inp){ inp.style.display = 'none'; });
+              var msg = document.getElementById('exp-uneven-msg');
+              if(msg) msg.style.display = 'none';
+            }
+            // Show/hide participant picker based on mode
             if(partWrap){
               if(v === 'equal'){
-                partWrap.style.display = '';
+                if(memberCount > 2) partWrap.style.display = '';
+                else partWrap.style.display = 'none';
                 partLabel.textContent = 'Split between';
-                // Show all checkboxes, check all
+                showCheckboxMode();
+                // Check all, show all rows
                 var cbs = partWrap.querySelectorAll('.exp-participant-cb');
-                cbs.forEach(function(cb){ cb.parentElement.style.display = 'flex'; cb.checked = true; });
+                cbs.forEach(function(cb){ cb.closest('.exp-participant-row').style.display = 'flex'; cb.checked = true; });
               } else if(v === 'they_owe'){
-                partWrap.style.display = '';
+                if(memberCount > 2) partWrap.style.display = '';
+                else partWrap.style.display = 'none';
                 partLabel.textContent = 'Who owes';
+                showCheckboxMode();
                 // Hide "You" checkbox, show & check others
                 var cbs = partWrap.querySelectorAll('.exp-participant-cb');
                 cbs.forEach(function(cb){
-                  if(parseInt(cb.value) === D.user.id){ cb.parentElement.style.display = 'none'; cb.checked = false; }
-                  else { cb.parentElement.style.display = 'flex'; cb.checked = true; }
+                  if(parseInt(cb.value) === D.user.id){ cb.closest('.exp-participant-row').style.display = 'none'; cb.checked = false; }
+                  else { cb.closest('.exp-participant-row').style.display = 'flex'; cb.checked = true; }
                 });
                 // Auto-set paid_by to you
                 if(paidByEl) paidByEl.value = String(D.user.id);
               } else if(v === 'you_owe'){
                 partWrap.style.display = 'none';
+                showCheckboxMode();
                 // Auto-switch paid_by to someone else if it's you
                 if(paidByEl && parseInt(paidByEl.value) === D.user.id){
                   for(var i=0;i<paidByEl.options.length;i++){
                     if(parseInt(paidByEl.options[i].value) !== D.user.id){ paidByEl.value = paidByEl.options[i].value; break; }
                   }
                 }
+              } else if(v === 'uneven'){
+                partWrap.style.display = '';
+                partLabel.textContent = 'Split amounts';
+                // Hide checkboxes, show amount inputs for all rows
+                var rows = partWrap.querySelectorAll('.exp-participant-row');
+                rows.forEach(function(row){ row.style.display = 'flex'; });
+                partWrap.querySelectorAll('.exp-participant-cb').forEach(function(cb){ cb.style.display = 'none'; });
+                partWrap.querySelectorAll('.exp-uneven-prefix').forEach(function(p){ p.style.display = ''; });
+                var amtInputs = partWrap.querySelectorAll('.exp-uneven-amt');
+                var totalAmt = parseFloat(document.getElementById('exp-cost').value) || 0;
+                var defaultAmt = amtInputs.length ? (totalAmt / amtInputs.length).toFixed(2) : '0.00';
+                amtInputs.forEach(function(inp){
+                  inp.style.display = '';
+                  inp.value = defaultAmt;
+                  inp.addEventListener('input', syncAddBtn);
+                });
+                syncAddBtn();
               }
-            } else {
-              // 2-person group - no participant wrap needed
             }
           });
         }
@@ -1660,6 +1732,7 @@ export function shell(data) {
         var splitTypeVal = splitTypeEl ? splitTypeEl.value : 'equal';
         var splitType = 'equal';
         var splitParticipants = null;
+        var splitAmountsData = null;
         var cachedMem = groupCache[gid3] ? groupCache[gid3].members : [];
         var paidByEl = document.getElementById('exp-paid-by');
         if(splitTypeVal === 'you_owe'){
@@ -1678,6 +1751,16 @@ export function shell(data) {
             cbs.forEach(function(cb){ if(parseInt(cb.value) !== D.user.id) ids.push(parseInt(cb.value)); });
             splitParticipants = ids.length ? ids : null;
           }
+        } else if(splitTypeVal === 'uneven'){
+          splitType = 'custom';
+          var unevenInputs = document.querySelectorAll('.exp-uneven-amt');
+          var ids = [], amts = [];
+          unevenInputs.forEach(function(inp){
+            ids.push(parseInt(inp.getAttribute('data-member-id')));
+            amts.push(parseFloat(inp.value) || 0);
+          });
+          splitParticipants = ids;
+          splitAmountsData = amts;
         } else {
           // equal split
           splitType = 'equal';
@@ -1692,6 +1775,7 @@ export function shell(data) {
         var bodyData = {name:expName,amount:expAmount,category:cat,paid_by:paidByEl?paidByEl.value:undefined};
         if(splitType !== 'equal') bodyData.split_type = splitType;
         if(splitParticipants) bodyData.split_participants = splitParticipants;
+        if(splitAmountsData) bodyData.split_amounts = splitAmountsData;
         var btn = document.querySelector('button[form="add-expense-form"]');
         var btnText = btn.innerHTML;
         btn.disabled = true;

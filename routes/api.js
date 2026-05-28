@@ -189,14 +189,20 @@ export function registerApiRoutes(app, ensureAuth) {
     const settledWith = req.body.settled_with ? parseInt(req.body.settled_with) : null;
     const splitType = req.body.split_type || 'equal';
     const splitParticipants = req.body.split_participants ? JSON.stringify(req.body.split_participants.map(Number)) : null;
+    const splitAmountsRaw = req.body.split_amounts;
+    const splitAmounts = splitAmountsRaw ? JSON.stringify(splitAmountsRaw.map(Number)) : null;
 
     if (!name) return res.status(400).json({ error: 'Name is required' });
     if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: 'Valid amount is required' });
     if (paidBy !== req.user.id && !isGroupMember(groupId, paidBy)) return res.status(400).json({ error: 'Invalid member' });
     if (settledWith && !isGroupMember(groupId, settledWith)) return res.status(400).json({ error: 'Invalid member' });
+    if (splitType === 'custom' && splitAmountsRaw) {
+      const sum = splitAmountsRaw.map(Number).reduce((a, b) => a + b, 0);
+      if (Math.abs(sum - amount) > 0.02) return res.status(400).json({ error: 'Split amounts must add up to total' });
+    }
 
     const isSettlement = !!settledWith || category === 'settlement';
-    const id = createExpense(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, isSettlement ? 'fa-dollar-sign' : null);
+    const id = createExpense(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, isSettlement ? 'fa-dollar-sign' : null, splitAmounts);
     res.json({ ok: true, id });
 
     // Classify (icon + category) asynchronously for regular expenses.

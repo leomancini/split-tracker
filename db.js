@@ -101,6 +101,11 @@ try {
 } catch (e) {
   // Column already exists
 }
+try {
+  db.exec('ALTER TABLE expenses ADD COLUMN split_amounts TEXT');
+} catch (e) {
+  // Column already exists
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -242,7 +247,7 @@ export function getUserGroups(userId, showDemo = false) {
 export function getUserGroupBalance(groupId, userId) {
   const memberIds = db.prepare('SELECT user_id FROM group_members WHERE group_id = ?').all(groupId).map(r => r.user_id);
   const expenses = db.prepare(
-    'SELECT paid_by, amount, settled_with, split_type, split_participants FROM expenses WHERE group_id = ?'
+    'SELECT paid_by, amount, settled_with, split_type, split_participants, split_amounts FROM expenses WHERE group_id = ?'
   ).all(groupId);
   let bal = 0;
   for (const ex of expenses) {
@@ -255,6 +260,13 @@ export function getUserGroupBalance(groupId, userId) {
       const per = ex.amount / owes.length;
       if (ex.paid_by === userId) bal += ex.amount;
       if (owes.includes(userId)) bal -= per;
+    } else if (ex.split_type === 'custom') {
+      const participants = ex.split_participants ? JSON.parse(ex.split_participants) : [];
+      const amounts = ex.split_amounts ? JSON.parse(ex.split_amounts) : [];
+      if (!participants.length) continue;
+      if (ex.paid_by === userId) bal += ex.amount;
+      const idx = participants.indexOf(userId);
+      if (idx !== -1 && amounts[idx] != null) bal -= amounts[idx];
     } else {
       const participants = ex.split_participants ? JSON.parse(ex.split_participants) : memberIds;
       const pn = participants.length || memberIds.length;
@@ -449,10 +461,10 @@ export function getGroupExpenses(groupId) {
   `).all(groupId);
 }
 
-export function createExpense(groupId, paidBy, name, amount, category, settledWith = null, splitType = 'equal', splitParticipants = null, icon = null) {
+export function createExpense(groupId, paidBy, name, amount, category, settledWith = null, splitType = 'equal', splitParticipants = null, icon = null, splitAmounts = null) {
   const result = db.prepare(
-    'INSERT INTO expenses (group_id, paid_by, name, amount, category, settled_with, split_type, split_participants, icon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, icon);
+    'INSERT INTO expenses (group_id, paid_by, name, amount, category, settled_with, split_type, split_participants, icon, split_amounts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, icon, splitAmounts);
   return result.lastInsertRowid;
 }
 
