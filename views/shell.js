@@ -1262,6 +1262,17 @@ export function shell(data) {
         var nameEl = document.getElementById('exp-desc');
         var amtEl = document.getElementById('exp-cost');
         var addBtn = document.querySelector('button[form="add-expense-form"]');
+        function distributeUnevenAmounts(totalVal, inputs) {
+          if (!inputs.length) return;
+          var totalCents = Math.round((parseFloat(totalVal) || 0) * 100);
+          var N = inputs.length;
+          var baseShare = Math.floor(totalCents / N);
+          var remainder = totalCents % N;
+          inputs.forEach(function(inp, idx){
+            var cents = baseShare + (idx < remainder ? 1 : 0);
+            inp.value = (cents / 100).toFixed(2);
+          });
+        }
         function syncAddBtn(){
           var ok = nameEl && amtEl && nameEl.value.trim() && parseFloat(amtEl.value) > 0;
           if(ok){
@@ -1271,7 +1282,7 @@ export function shell(data) {
               var sum2 = 0;
               document.querySelectorAll('.exp-uneven-amt').forEach(function(inp){ sum2 += parseFloat(inp.value) || 0; });
               var msg2 = document.getElementById('exp-uneven-msg');
-              if(Math.abs(sum2 - total2) > 0.01){
+              if(Math.round(sum2 * 100) !== Math.round(total2 * 100)){
                 ok = false;
                 if(msg2){ msg2.textContent = 'Amounts must add up to '+fmtAmt(total2); msg2.style.display = ''; }
               } else {
@@ -1288,8 +1299,7 @@ export function shell(data) {
           if(splitSelChk && splitSelChk.value === 'uneven'){
             var newTotal = parseFloat(amtEl.value) || 0;
             var amtInputs = document.querySelectorAll('.exp-uneven-amt');
-            var newDefault = amtInputs.length ? (newTotal / amtInputs.length).toFixed(2) : '0.00';
-            amtInputs.forEach(function(inp){ inp.value = newDefault; });
+            distributeUnevenAmounts(newTotal, amtInputs);
           }
           syncAddBtn();
         });
@@ -1365,10 +1375,9 @@ export function shell(data) {
                 partWrap.querySelectorAll('.exp-uneven-prefix').forEach(function(p){ p.style.display = ''; });
                 var amtInputs = partWrap.querySelectorAll('.exp-uneven-amt');
                 var totalAmt = parseFloat(document.getElementById('exp-cost').value) || 0;
-                var defaultAmt = amtInputs.length ? (totalAmt / amtInputs.length).toFixed(2) : '0.00';
+                distributeUnevenAmounts(totalAmt, amtInputs);
                 amtInputs.forEach(function(inp){
                   inp.style.display = '';
-                  inp.value = defaultAmt;
                   inp.addEventListener('input', syncAddBtn);
                 });
                 syncAddBtn();

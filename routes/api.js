@@ -198,7 +198,7 @@ export function registerApiRoutes(app, ensureAuth) {
     if (settledWith && !isGroupMember(groupId, settledWith)) return res.status(400).json({ error: 'Invalid member' });
     if (splitType === 'custom' && splitAmountsRaw) {
       const sum = splitAmountsRaw.map(Number).reduce((a, b) => a + b, 0);
-      if (Math.abs(sum - amount) > 0.02) return res.status(400).json({ error: 'Split amounts must add up to total' });
+      if (Math.round(sum * 100) !== Math.round(amount * 100)) return res.status(400).json({ error: 'Split amounts must add up to total' });
     }
 
     const isSettlement = !!settledWith || category === 'settlement';
