@@ -1038,21 +1038,62 @@ export function shell(data) {
           if(uid === D.user.id) return 'You';
           return dispNames[uid] || 'Unknown';
         }
-        var splitText;
         if(ex.split_type === 'full'){
           var owes = ex.split_participants ? JSON.parse(ex.split_participants) : [];
           var names = owes.map(memberName);
           var verb = owes.length === 1 && names[0] !== 'You' ? 'owes' : (names[0] === 'You' && owes.length === 1 ? 'owe' : 'owe');
-          splitText = names.join(', ') + ' ' + verb + ' full amount';
+          var splitText = names.join(', ') + ' ' + verb + ' full amount';
+          h += '<div class="info-row"><span class="info-label">Split</span><span class="info-value">'+esc(splitText)+'</span></div>';
+        } else if(ex.split_type === 'custom'){
+          h += '<div class="info-row" style="border-bottom:none; padding-bottom:10px"><span class="info-label">Split</span><span class="info-value">Uneven</span></div>';
+          var parts = ex.split_participants ? JSON.parse(ex.split_participants) : [];
+          var amts = ex.split_amounts ? JSON.parse(ex.split_amounts) : [];
+          var activeParts = [];
+          parts.forEach(function(pid, idx){
+            var a = amts[idx] || 0;
+            if(a > 0){
+              activeParts.push({ pid: pid, amt: a });
+            }
+          });
+          activeParts.forEach(function(item, idx){
+            var pid = item.pid;
+            var a = item.amt;
+            var isLastPart = idx === activeParts.length - 1;
+            var m = detailMembers.find(function(mem){ return mem.id === pid; }) || (pid === D.user.id ? D.user : null);
+            var avatarHtml = '';
+            if(m){
+              var avUrl = m.avatar_url;
+              if(avUrl){
+                avatarHtml = '<img src="'+esc(getCachedAvatar(avUrl))+'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;background:var(--gray-200);flex-shrink:0" alt="">';
+              } else {
+                var letter = ((m.name||m.email||'').charAt(0)||'').toUpperCase();
+                avatarHtml = '<div style="width:24px;height:24px;border-radius:50%;background:var(--gray-200);color:var(--gray-500);font-size:0.75rem;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-transform:uppercase">'+esc(letter)+'</div>';
+              }
+            }
+            var rowStyle = 'display:flex; align-items:center;';
+            if(isLastPart){
+              rowStyle += ' border-bottom:2px solid var(--gray-100); padding:10px 0 16px 0;';
+            } else {
+              rowStyle += ' border-bottom:none; padding:10px 0;';
+            }
+            h += '<div class="info-row" style="'+rowStyle+'">'
+              + '<span class="info-label" style="display:flex;align-items:center;gap:0.5rem">'
+              + avatarHtml
+              + '<span>'+esc(memberName(pid))+'</span>'
+              + '</span>'
+              + '<span class="info-value">'+esc(fmtAmt(a))+'</span>'
+              + '</div>';
+          });
         } else {
           var parts = ex.split_participants ? JSON.parse(ex.split_participants) : allIds;
+          var splitText;
           if(parts.length >= allIds.length){
             splitText = 'Equally';
           } else {
             splitText = 'Equally between ' + parts.map(memberName).join(', ');
           }
+          h += '<div class="info-row"><span class="info-label">Split</span><span class="info-value">'+esc(splitText)+'</span></div>';
         }
-        h += '<div class="info-row"><span class="info-label">Split</span><span class="info-value">'+esc(splitText)+'</span></div>';
       }
       h += '</div>';
       if(canDelete){
