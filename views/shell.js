@@ -195,6 +195,8 @@ export function shell(data) {
 
     .group-bottom-spacer { height: 5rem; }
     @media (min-width: 601px) { .group-bottom-spacer { height: 9rem; } }
+    .add-expense-bottom-spacer { height: 9rem; }
+    .add-expense-bottom-spacer { height: 9rem; }
 
     .btn-sm { padding: 1rem 1.25rem; font-size: 1rem; width: auto; height: auto; }
     .btn-xs { padding: 0.5rem 0.875rem; font-size: 0.8125rem; width: auto; height: auto; }
@@ -998,6 +1000,7 @@ export function shell(data) {
           + '</div>';
       }
       h += '</form>'
+        + '<div class="add-expense-bottom-spacer"></div>'
         + '<div class="sticky-bottom"><button type="submit" form="add-expense-form" class="btn" disabled>Add item</button></div>';
       return h;
     }
