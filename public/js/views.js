@@ -193,7 +193,7 @@ function addExpenseView(gid){
         + '<input type="checkbox" class="exp-participant-cb" value="'+m.id+'" checked style="flex-shrink:0">'
         + '<span class="exp-participant-name" style="flex:1;font-size:0.9375rem;color:var(--gray-900)">'+esc(m.id === D.user.id ? 'You' : (dispNames[m.id]||m.name))+'</span>'
         + '<input type="number" class="exp-uneven-amt" data-member-id="'+m.id+'" step="0.01" min="0" placeholder="0.00"'
-        + ' style="display:none;width:72px;height:1.4rem;text-align:right;padding:0 0.375rem;border:1px solid var(--gray-300);border-radius:4px;font-size:0.9375rem">'
+        + ' style="display:none;width:72px;height:1.4rem;text-align:right;padding:0 0.375rem;border:1px solid var(--gray-300);border-radius:4px;font-size:16px">'
         + '</div>';
     });
     h += '</div>'
