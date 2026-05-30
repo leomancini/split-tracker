@@ -550,7 +550,7 @@ export function shell(data) {
 
   // Prevent iOS viewport shift when keyboard opens
   document.addEventListener('focusin', function(e){
-    if(e.target.matches('input,textarea')){
+    if(e.target.matches('input,textarea') && !e.target.closest('#add-expense-form')){
       setTimeout(function(){ window.scrollTo(0,0); }, 50);
     }
   });
