@@ -982,7 +982,10 @@ export function shell(data) {
         // Participant picker — always rendered for 2+ members; hidden for 2-person groups until uneven is selected
         var wrapHidden = members.length === 2 ? 'display:none;' : '';
         h += '<div id="exp-participants-wrap" class="form-group" style="'+wrapHidden+'">'
-          + '<label id="exp-participants-label">Split between</label>'
+          + '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.5rem;margin-bottom:0.375rem">'
+            + '<label id="exp-participants-label" style="margin-bottom:0">Split between</label>'
+            + '<span id="exp-uneven-msg" style="display:none;font-size:0.8125rem;color:#e53e3e"></span>'
+          + '</div>'
           + '<div id="exp-participants" style="border:2px solid var(--gray-200);border-radius:var(--radius);overflow:hidden">';
         members.forEach(function(m, idx){
           var isLast = idx === members.length - 1;
@@ -990,13 +993,11 @@ export function shell(data) {
           h += '<div class="exp-participant-row" style="display:flex;align-items:center;gap:0.625rem;padding:0.75rem;margin:0'+borderStyle+'">'
             + '<input type="checkbox" class="exp-participant-cb" value="'+m.id+'" checked style="flex-shrink:0">'
             + '<span class="exp-participant-name" style="flex:1;font-size:0.9375rem;color:var(--gray-900)">'+esc(m.id === D.user.id ? 'You' : (dispNames[m.id]||m.name))+'</span>'
-            + '<span class="exp-uneven-prefix" style="display:none;color:var(--gray-500);font-size:0.9375rem">$</span>'
             + '<input type="number" class="exp-uneven-amt" data-member-id="'+m.id+'" step="0.01" min="0" placeholder="0.00"'
-            + ' style="display:none;width:72px;text-align:right;padding:0.25rem 0.375rem;border:1px solid var(--gray-300);border-radius:4px;font-size:0.9375rem">'
+            + ' style="display:none;width:72px;height:1.4rem;text-align:right;padding:0 0.375rem;border:1px solid var(--gray-300);border-radius:4px;font-size:0.9375rem">'
             + '</div>';
         });
         h += '</div>'
-          + '<div id="exp-uneven-msg" style="display:none;font-size:0.8125rem;color:#e53e3e;margin-top:0.375rem"></div>'
           + '</div>';
       }
       h += '</form>'
@@ -1319,19 +1320,24 @@ export function shell(data) {
         }
         function syncAddBtn(){
           var ok = nameEl && amtEl && nameEl.value.trim() && parseFloat(amtEl.value) > 0;
-          if(ok){
-            var splitSel2 = document.getElementById('exp-split-type');
-            if(splitSel2 && splitSel2.value === 'uneven'){
-              var total2 = parseFloat(amtEl.value) || 0;
-              var sum2 = 0;
-              document.querySelectorAll('.exp-uneven-amt').forEach(function(inp){ sum2 += parseFloat(inp.value) || 0; });
-              var msg2 = document.getElementById('exp-uneven-msg');
-              if(Math.round(sum2 * 100) !== Math.round(total2 * 100)){
-                ok = false;
-                if(msg2){ msg2.textContent = 'Amounts must add up to '+fmtAmt(total2); msg2.style.display = ''; }
-              } else {
-                if(msg2) msg2.style.display = 'none';
+          var splitSel2 = document.getElementById('exp-split-type');
+          if(splitSel2 && splitSel2.value === 'uneven'){
+            var total2 = parseFloat(amtEl ? amtEl.value : 0) || 0;
+            var sum2 = 0;
+            document.querySelectorAll('.exp-uneven-amt').forEach(function(inp){ sum2 += parseFloat(inp.value) || 0; });
+            var msg2 = document.getElementById('exp-uneven-msg');
+            var diffCents2 = Math.round(total2 * 100) - Math.round(sum2 * 100);
+            if(diffCents2 !== 0){
+              ok = false;
+              if(msg2){
+                if(total2 > 0){
+                  var rem2 = Math.abs(diffCents2) / 100;
+                  msg2.textContent = diffCents2 > 0 ? (fmtAmt(rem2)+' left') : (fmtAmt(rem2)+' over');
+                  msg2.style.display = '';
+                } else { msg2.style.display = 'none'; }
               }
+            } else {
+              if(msg2) msg2.style.display = 'none';
             }
           }
           if(addBtn) addBtn.disabled = !ok;
@@ -1411,7 +1417,7 @@ export function shell(data) {
                 }
               } else if(v === 'uneven'){
                 partWrap.style.display = '';
-                partLabel.textContent = 'Split amounts';
+                partLabel.textContent = 'Amounts';
                 // Hide checkboxes, show amount inputs for all rows
                 var rows = partWrap.querySelectorAll('.exp-participant-row');
                 rows.forEach(function(row){ row.style.display = 'flex'; });
