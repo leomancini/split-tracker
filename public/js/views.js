@@ -176,7 +176,7 @@ function addExpenseView(gid){
       h += '<option value="you_owe">You owe full amount</option>';
       h += '<option value="they_owe">They owe full amount</option>';
     }
-    h += '<option value="uneven">Uneven split</option>';
+    h += '<option value="uneven">Split unequally</option>';
     h += '</select></div>';
     // Participant picker — always rendered for 2+ members; hidden for 2-person groups until uneven is selected
     var wrapHidden = members.length === 2 ? 'display:none;' : '';
@@ -248,7 +248,7 @@ function itemDetailView(gid, ex, isOwner){
       var splitText = names.join(', ') + ' ' + verb + ' full amount';
       h += '<div class="info-row"><span class="info-label">Split</span><span class="info-value">'+esc(splitText)+'</span></div>';
     } else if(ex.split_type === 'custom'){
-      h += '<div class="info-row" style="border-bottom:none; padding-bottom:10px"><span class="info-label">Split</span><span class="info-value">Uneven</span></div>';
+      h += '<div class="info-row" style="border-bottom:none; padding-bottom:10px"><span class="info-label">Split</span><span class="info-value">Unequally</span></div>';
       var parts = ex.split_participants ? JSON.parse(ex.split_participants) : [];
       var amts = ex.split_amounts ? JSON.parse(ex.split_amounts) : [];
       var activeParts = [];
