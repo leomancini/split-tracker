@@ -5,6 +5,7 @@ import connectSqlite3 from 'connect-sqlite3';
 import passport from 'passport';
 import { registerAuthRoutes, ensureAuth } from './auth.js';
 import { registerApiRoutes, getAllData } from './routes/api.js';
+import { registerMcp } from './mcp.js';
 import { shell } from './views/shell.js';
 
 const app = express();
@@ -40,6 +41,10 @@ registerAuthRoutes(app);
 
 // JSON API routes
 registerApiRoutes(app, ensureAuth);
+
+// Remote MCP server + its OAuth authorization server (bearer-token / Google
+// bridge; NOT session-gated). Must be mounted before the catch-all below.
+registerMcp(app);
 
 // Static files (icons, manifest, service worker)
 app.use(express.static('public', {
