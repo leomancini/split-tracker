@@ -275,7 +275,7 @@ function itemDetailView(gid, ex, isOwner){
         }
         var rowStyle = 'display:flex; align-items:center;';
         if(isLastPart){
-          rowStyle += ' border-bottom:2px solid var(--gray-100); padding:10px 0 16px 0;';
+          rowStyle += ' border-bottom:none; padding:10px 0 16px 0;';
         } else {
           rowStyle += ' border-bottom:none; padding:10px 0;';
         }
@@ -299,6 +299,8 @@ function itemDetailView(gid, ex, isOwner){
     }
   }
   h += '</div>';
+  // Bottom padding so content isn't hidden behind sticky button
+  h += '<div class="group-bottom-spacer"></div>';
   if(canDelete){
     h += '<div class="sticky-bottom"><button class="btn btn-danger" data-action="delete-item" data-id="'+ex.id+'" data-group-id="'+gid+'">Delete item</button></div>';
   }
