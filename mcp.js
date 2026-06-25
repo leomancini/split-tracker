@@ -185,7 +185,17 @@ function buildMcpServer(userId) {
   });
 
   server.registerTool('add_expense', {
-    description: 'Add an expense to a group you belong to. Defaults to splitting equally; you are the payer unless paid_by is given. Set settled_with for a settlement/payment. For an uneven split, use split_type "custom" with split_amounts (one per split_participant, must sum to amount). The category and icon are auto-classified.',
+    description: [
+      'Add an expense to a group you belong to. You are the payer unless paid_by names another member. The category and icon are auto-classified.',
+      'Member ids come from get_group; never guess them.',
+      '',
+      'Choose split_type:',
+      '• "equal" (default) — split evenly. Optionally pass split_participants to split among a subset; omit it to include everyone.',
+      '• "custom" — an uneven split where each person owes a specific amount. Pass split_participants AND split_amounts as parallel arrays (same length): split_amounts[i] is what split_participants[i] owes. Include EVERYONE who owes a share, INCLUDING the payer if the payer consumed part of it, and the amounts must sum to the total. Example: you pay $100, you owe $40 and Alice (id 7) owes $60 → split_participants: [<your id>, 7], split_amounts: [40, 60].',
+      '• "full" — one or more people owe the WHOLE amount to the payer (the payer owes nothing). List them in split_participants; the amount is divided equally among them. For "you owe someone the whole thing", set paid_by to that person and split_participants to [<your id>].',
+      '',
+      'For a settlement/payment between two people, set settled_with to the other member and omit split_type.',
+    ].join('\n'),
     inputSchema: {
       group_id: z.number().int(),
       name: z.string().min(1),
@@ -193,7 +203,7 @@ function buildMcpServer(userId) {
       category: z.string().optional(),
       paid_by: z.number().int().optional(),
       settled_with: z.number().int().optional(),
-      split_type: z.enum(['equal', 'custom', 'you_owe_full', 'they_owe_full']).optional(),
+      split_type: z.enum(['equal', 'custom', 'full']).optional(),
       split_participants: z.array(z.number().int()).optional(),
       split_amounts: z.array(z.number()).optional(),
     },
@@ -210,15 +220,34 @@ function buildMcpServer(userId) {
 
     const category = (args.category && args.category.trim()) || 'general';
     const splitType = args.split_type || 'equal';
-    const splitParticipants = args.split_participants ? JSON.stringify(args.split_participants.map(Number)) : null;
-    const splitAmounts = args.split_amounts ? JSON.stringify(args.split_amounts.map(Number)) : null;
+    const participants = args.split_participants?.map(Number) ?? null;
+    const amounts = args.split_amounts?.map(Number) ?? null;
 
-    if (splitType === 'custom' && args.split_amounts) {
-      const sum = args.split_amounts.reduce((a, b) => a + b, 0);
+    // Every named participant must belong to the group, regardless of split type.
+    for (const pid of participants || []) {
+      if (!isGroupMember(group_id, pid)) return fail(`Member ${pid} is not in this group. Use get_group to find member ids.`);
+    }
+
+    if (splitType === 'custom') {
+      if (!participants || !amounts) {
+        return fail('A custom split needs both split_participants and split_amounts (parallel arrays).');
+      }
+      if (participants.length !== amounts.length) {
+        return fail(`split_participants (${participants.length}) and split_amounts (${amounts.length}) must have the same length — one amount per participant.`);
+      }
+      if (!participants.length) return fail('A custom split needs at least one participant.');
+      const sum = amounts.reduce((a, b) => a + b, 0);
       if (Math.round(sum * 100) !== Math.round(args.amount * 100)) {
-        return fail('Custom split_amounts must add up to the total amount.');
+        return fail(`split_amounts add up to ${sum.toFixed(2)} but the total is ${args.amount.toFixed(2)}. They must match — include the payer's own share if the payer owes part of it.`);
+      }
+    } else if (splitType === 'full') {
+      if (!participants || !participants.length) {
+        return fail('A "full" split needs split_participants: the member(s) who owe the whole amount to the payer.');
       }
     }
+
+    const splitParticipants = participants ? JSON.stringify(participants) : null;
+    const splitAmounts = splitType === 'custom' && amounts ? JSON.stringify(amounts) : null;
 
     const isSettlement = !!settledWith || category === 'settlement';
     const id = createExpense(group_id, paidBy, name, args.amount, category, settledWith, splitType, splitParticipants, isSettlement ? 'fa-dollar-sign' : null, splitAmounts);
@@ -230,7 +259,11 @@ function buildMcpServer(userId) {
         .then(({ icon, category: cat }) => updateExpenseClassification(id, icon, cat))
         .catch(err => console.error('classifyExpense failed:', err.message));
     }
-    return ok(`Added expense "${name}" ($${args.amount}) to group #${group_id}.`, { id });
+    let splitNote = '';
+    if (splitType === 'custom') splitNote = ` Custom split: ${participants.map((p, i) => `${p}→$${amounts[i]}`).join(', ')}.`;
+    else if (splitType === 'full') splitNote = ` Owed in full by ${participants.join(', ')}.`;
+    else if (participants) splitNote = ` Split equally among ${participants.join(', ')}.`;
+    return ok(`Added expense "${name}" ($${args.amount}) to group #${group_id}.${splitNote}`, { id, split_type: splitType });
   });
 
   server.registerTool('list_expenses', {
