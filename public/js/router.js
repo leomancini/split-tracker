@@ -125,6 +125,39 @@ async function route(path, opts){
         inp.value = (cents / 100).toFixed(2);
       });
     }
+    // Split the leftover (total minus the amounts the user has manually edited)
+    // evenly across only the inputs that haven't been touched. Edited inputs
+    // stay locked and are never auto-changed again.
+    function redistributeUnevenRemaining() {
+      var amtElLocal = document.getElementById('exp-cost');
+      var totalCents = Math.round((parseFloat(amtElLocal ? amtElLocal.value : 0) || 0) * 100);
+      var inputs = document.querySelectorAll('.exp-uneven-amt');
+      if (!inputs.length) return;
+      var lockedCents = 0;
+      var open = [];
+      inputs.forEach(function(inp){
+        if (inp.dataset.edited === '1') {
+          lockedCents += Math.round((parseFloat(inp.value) || 0) * 100);
+        } else {
+          open.push(inp);
+        }
+      });
+      if (!open.length) return;
+      var remaining = totalCents - lockedCents;
+      if (remaining < 0) remaining = 0;
+      var N = open.length;
+      var baseShare = Math.floor(remaining / N);
+      var rem = remaining % N;
+      open.forEach(function(inp, idx){
+        var cents = baseShare + (idx < rem ? 1 : 0);
+        inp.value = (cents / 100).toFixed(2);
+      });
+    }
+    function onUnevenAmtInput(e){
+      e.target.dataset.edited = '1';
+      redistributeUnevenRemaining();
+      syncAddBtn();
+    }
     function syncAddBtn(){
       var ok = nameEl && amtEl && nameEl.value.trim() && parseFloat(amtEl.value) > 0;
       var splitSel2 = document.getElementById('exp-split-type');
@@ -151,12 +184,11 @@ async function route(path, opts){
     }
     if(nameEl) nameEl.addEventListener('input', syncAddBtn);
     if(amtEl) amtEl.addEventListener('input', function(){
-      // When total amount changes while in uneven mode, redistribute evenly as defaults
+      // When total amount changes while in uneven mode, re-split the leftover
+      // across untouched inputs while keeping edited amounts locked.
       var splitSelChk = document.getElementById('exp-split-type');
       if(splitSelChk && splitSelChk.value === 'uneven'){
-        var newTotal = parseFloat(amtEl.value) || 0;
-        var amtInputs = document.querySelectorAll('.exp-uneven-amt');
-        distributeUnevenAmounts(newTotal, amtInputs);
+        redistributeUnevenRemaining();
       }
       syncAddBtn();
     });
@@ -232,10 +264,13 @@ async function route(path, opts){
             partWrap.querySelectorAll('.exp-uneven-prefix').forEach(function(p){ p.style.display = ''; });
             var amtInputs = partWrap.querySelectorAll('.exp-uneven-amt');
             var totalAmt = parseFloat(document.getElementById('exp-cost').value) || 0;
+            // Fresh entry into uneven mode: clear any prior edits and split evenly.
+            amtInputs.forEach(function(inp){ delete inp.dataset.edited; });
             distributeUnevenAmounts(totalAmt, amtInputs);
             amtInputs.forEach(function(inp){
               inp.style.display = '';
-              inp.addEventListener('input', syncAddBtn);
+              inp.removeEventListener('input', onUnevenAmtInput);
+              inp.addEventListener('input', onUnevenAmtInput);
             });
             syncAddBtn();
           }
