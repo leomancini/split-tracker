@@ -53,6 +53,29 @@ function fail(text) {
   return { isError: true, content: [{ type: 'text', text }] };
 }
 
+// Resolve a member reference — a numeric id, a name, or an email — against the
+// group's roster. Lets MCP callers name people the way a human would instead of
+// having to look up numeric ids first. Returns { id } or { error } (the error
+// lists the roster so the model can self-correct on the next call).
+function makeMemberResolver(members) {
+  const roster = () => members.map(m => `${m.id}=${m.name}`).join(', ');
+  return (value) => {
+    const raw = String(value).trim();
+    if (/^\d+$/.test(raw)) {
+      const id = Number(raw);
+      return members.some(m => m.id === id) ? { id } : { error: `No member with id ${id} in this group. Members: ${roster()}.` };
+    }
+    const q = raw.toLowerCase();
+    const byEmail = members.filter(m => (m.email || '').toLowerCase() === q);
+    const byExactName = members.filter(m => (m.name || '').toLowerCase() === q);
+    const byPartialName = members.filter(m => (m.name || '').toLowerCase().includes(q));
+    const matches = byEmail.length ? byEmail : byExactName.length ? byExactName : byPartialName;
+    if (matches.length === 1) return { id: matches[0].id };
+    if (matches.length > 1) return { error: `"${raw}" matches multiple members; use a member id. Members: ${roster()}.` };
+    return { error: `Couldn't match "${raw}" to a member. Members: ${roster()}.` };
+  };
+}
+
 // Build an MCP server whose tools all act as `userId` (from the bearer token).
 function buildMcpServer(userId) {
   const server = new McpServer({ name: 'split-tracker', version: '1.0.0' });
@@ -187,12 +210,12 @@ function buildMcpServer(userId) {
   server.registerTool('add_expense', {
     description: [
       'Add an expense to a group you belong to. You are the payer unless paid_by names another member. The category and icon are auto-classified.',
-      'Member ids come from get_group; never guess them.',
+      'paid_by, settled_with, and split_participants accept a member id, name, or email — you do NOT need to look up ids first.',
       '',
       'Choose split_type:',
       '• "equal" (default) — split evenly. Optionally pass split_participants to split among a subset; omit it to include everyone.',
-      '• "custom" — an uneven split where each person owes a specific amount. Pass split_participants AND split_amounts as parallel arrays (same length): split_amounts[i] is what split_participants[i] owes. Include EVERYONE who owes a share, INCLUDING the payer if the payer consumed part of it, and the amounts must sum to the total. Example: you pay $100, you owe $40 and Alice (id 7) owes $60 → split_participants: [<your id>, 7], split_amounts: [40, 60].',
-      '• "full" — one or more people owe the WHOLE amount to the payer (the payer owes nothing). List them in split_participants; the amount is divided equally among them. For "you owe someone the whole thing", set paid_by to that person and split_participants to [<your id>].',
+      '• "custom" — an uneven split where each person owes a specific amount. Pass split_participants AND split_amounts as parallel arrays (same length): split_amounts[i] is what split_participants[i] owes. Include EVERYONE who owes a share, INCLUDING the payer if the payer consumed part of it, and the amounts must sum to the total. Example: you pay $100, you owe $40 and Alice owes $60 → split_participants: ["me", "Alice"], split_amounts: [40, 60].',
+      '• "full" — one or more people owe the WHOLE amount to the payer (the payer owes nothing). List them in split_participants; the amount is divided equally among them. For "you owe someone the whole thing", set paid_by to that person and split_participants to ["me"].',
       '',
       'For a settlement/payment between two people, set settled_with to the other member and omit split_type.',
     ].join('\n'),
@@ -201,10 +224,10 @@ function buildMcpServer(userId) {
       name: z.string().min(1),
       amount: z.number().positive(),
       category: z.string().optional(),
-      paid_by: z.number().int().optional(),
-      settled_with: z.number().int().optional(),
+      paid_by: z.union([z.number().int(), z.string()]).optional(),
+      settled_with: z.union([z.number().int(), z.string()]).optional(),
       split_type: z.enum(['equal', 'custom', 'full']).optional(),
-      split_participants: z.array(z.number().int()).optional(),
+      split_participants: z.array(z.union([z.number().int(), z.string()])).optional(),
       split_amounts: z.array(z.number()).optional(),
     },
   }, async (args) => {
@@ -213,19 +236,37 @@ function buildMcpServer(userId) {
     const name = args.name.trim();
     if (!name) return fail('Name is required.');
 
-    const paidBy = args.paid_by ?? userId;
-    const settledWith = args.settled_with ?? null;
-    if (paidBy !== userId && !isGroupMember(group_id, paidBy)) return fail('paid_by is not a member of this group.');
-    if (settledWith && !isGroupMember(group_id, settledWith)) return fail('settled_with is not a member of this group.');
+    // "me"/"myself" is a convenient self-reference; otherwise resolve against the roster.
+    const members = getGroupMembers(group_id);
+    const nameOf = (id) => members.find(m => m.id === id)?.name || `#${id}`;
+    const resolve = makeMemberResolver(members);
+    const resolveRef = (value) => /^(me|myself)$/i.test(String(value).trim()) ? { id: userId } : resolve(value);
+
+    let paidBy = userId;
+    if (args.paid_by != null) {
+      const r = resolveRef(args.paid_by);
+      if (r.error) return fail(`paid_by: ${r.error}`);
+      paidBy = r.id;
+    }
+    let settledWith = null;
+    if (args.settled_with != null) {
+      const r = resolveRef(args.settled_with);
+      if (r.error) return fail(`settled_with: ${r.error}`);
+      settledWith = r.id;
+    }
 
     const category = (args.category && args.category.trim()) || 'general';
     const splitType = args.split_type || 'equal';
-    const participants = args.split_participants?.map(Number) ?? null;
     const amounts = args.split_amounts?.map(Number) ?? null;
 
-    // Every named participant must belong to the group, regardless of split type.
-    for (const pid of participants || []) {
-      if (!isGroupMember(group_id, pid)) return fail(`Member ${pid} is not in this group. Use get_group to find member ids.`);
+    let participants = null;
+    if (args.split_participants) {
+      participants = [];
+      for (const ref of args.split_participants) {
+        const r = resolveRef(ref);
+        if (r.error) return fail(`split_participants: ${r.error}`);
+        participants.push(r.id);
+      }
     }
 
     if (splitType === 'custom') {
@@ -260,9 +301,9 @@ function buildMcpServer(userId) {
         .catch(err => console.error('classifyExpense failed:', err.message));
     }
     let splitNote = '';
-    if (splitType === 'custom') splitNote = ` Custom split: ${participants.map((p, i) => `${p}→$${amounts[i]}`).join(', ')}.`;
-    else if (splitType === 'full') splitNote = ` Owed in full by ${participants.join(', ')}.`;
-    else if (participants) splitNote = ` Split equally among ${participants.join(', ')}.`;
+    if (splitType === 'custom') splitNote = ` Custom split: ${participants.map((p, i) => `${nameOf(p)} $${amounts[i]}`).join(', ')}.`;
+    else if (splitType === 'full') splitNote = ` Owed in full by ${participants.map(nameOf).join(', ')}.`;
+    else if (participants) splitNote = ` Split equally among ${participants.map(nameOf).join(', ')}.`;
     return ok(`Added expense "${name}" ($${args.amount}) to group #${group_id}.${splitNote}`, { id, split_type: splitType });
   });
 
