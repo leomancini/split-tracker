@@ -52,7 +52,7 @@ function groupDetailView(detail, alert){
   h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;margin-bottom:1rem">';
   h += '<div style="display:flex;align-items:center">'
     + '<div data-link="/groups/'+g.id+'/members" style="cursor:pointer">' + avatarStack(members.map(function(m){return {url:m.avatar_url,faded:!!m.pending_invite_id,letter:((m.name||m.email||'').charAt(0)||'').toUpperCase()}})) + '</div>'
-    + '<div class="add-member-icon" data-link="/groups/'+g.id+'/add-member" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem;line-height:1;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;padding-bottom:1px;margin-left:0.625rem;transition:background 150ms,color 150ms;cursor:pointer;user-select:none;-webkit-user-select:none">+</div>'
+    + '<div class="add-member-icon" data-link="/groups/'+g.id+'/add-member" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--gray-500);background:var(--gray-100);flex-shrink:0;margin-left:0.625rem;transition:background 150ms,color 150ms;cursor:pointer;user-select:none;-webkit-user-select:none"><svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="1.5" x2="7" y2="12.5"></line><line x1="1.5" y1="7" x2="12.5" y2="7"></line></svg></div>'
     + '</div>';
   var mySettlements = settlements.filter(function(s){ return s.from==D.user.id || s.to==D.user.id; });
   if(!mySettlements.length && detail.expenses && detail.expenses.length){

@@ -24,8 +24,12 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
   resave: false,
   saveUninitialized: false,
+  // Refresh the session expiry on every request so active users are never
+  // logged out. Without this, the expiry is stamped once at login (in both
+  // the cookie and the session-store row) and never extended.
+  rolling: true,
   cookie: {
-    maxAge: 30 * 24 * 60 * 60 * 1000,
+    maxAge: 365 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     secure: 'auto',
     sameSite: 'lax',
