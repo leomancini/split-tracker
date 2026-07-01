@@ -19,7 +19,7 @@ function dashboardView(alert){
     h += '<div class="empty">No groups yet. Create one to get started!</div>';
   }
   h += '<div style="height:5rem"></div></div>';
-  h += '<div class="sticky-bottom"><button class="btn" data-link="/groups/new">New group</button></div>';
+  h += '<div class="sticky-bottom"><button class="btn" data-link="/groups/new">Create new group</button></div>';
   return h;
 }
 
@@ -31,7 +31,7 @@ function groupCreateView(){
     + '<div class="form-group"><label>People</label>'
     + '<textarea id="grp-inv" autocomplete="off" placeholder="Email addresses, one per line"></textarea></div>'
     + '</form>'
-    + '<div class="sticky-bottom"><button type="submit" form="create-group-form" class="btn">Create group</button></div>';
+    + '<div class="sticky-bottom"><button type="submit" form="create-group-form" class="btn">Create</button></div>';
 }
 
 function groupDetailView(detail, alert){
