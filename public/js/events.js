@@ -65,31 +65,6 @@ document.addEventListener('click', function(e){
     return;
   }
 
-  // Rename expense (must come before data-link — pencil sits inside a clickable row)
-  var renameExpEl = e.target.closest('[data-action="rename-expense"]');
-  if(renameExpEl){
-    e.preventDefault();
-    e.stopPropagation();
-    if(demoBlocked()) return;
-    var rxGid = renameExpEl.getAttribute('data-group-id');
-    var rxId = renameExpEl.getAttribute('data-expense-id');
-    var detail = groupCache[rxGid];
-    var ex = detail && (detail.expenses||[]).find(function(x){return String(x.id)===rxId});
-    if(!ex) return;
-    var newName = prompt('Rename item:', ex.name);
-    if(!newName || !newName.trim() || newName.trim() === ex.name) return;
-    fetch('/api/groups/'+rxGid+'/expenses/'+rxId, {
-      method:'PUT', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name:newName.trim()})
-    }).then(function(r){return r.json()}).then(function(d){
-      if(d.ok){
-        delete groupCache[rxGid];
-        route(location.pathname);
-      }
-    });
-    return;
-  }
-
   // data-link navigation
   var el = e.target.closest('[data-link]');
   if(el){
@@ -210,6 +185,8 @@ document.addEventListener('submit', function(e){
   if(e.target.id === 'add-expense-form'){
     if(demoBlocked()) return;
     var gid3 = e.target.getAttribute('data-group-id');
+    var eid3 = e.target.getAttribute('data-expense-id');
+    var isEdit = !!eid3;
     var descEl = document.getElementById('exp-desc');
     var costEl = document.getElementById('exp-cost');
     var expName = descEl.value.trim();
@@ -271,8 +248,8 @@ document.addEventListener('submit', function(e){
     btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:3px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
     descEl.disabled = true;
     costEl.disabled = true;
-    fetch('/api/groups/'+gid3+'/expenses',{
-      method:'POST',
+    fetch(isEdit ? '/api/groups/'+gid3+'/expenses/'+eid3 : '/api/groups/'+gid3+'/expenses',{
+      method:isEdit ? 'PUT' : 'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(bodyData)
     }).then(function(r){return r.json()})
@@ -281,7 +258,7 @@ document.addEventListener('submit', function(e){
           delete groupCache[gid3];
           return fetch('/api/groups/'+gid3).then(function(r2){return r2.json()}).then(function(detail){
             groupCache[gid3] = detail;
-            nav('/groups/'+gid3);
+            nav(isEdit ? '/groups/'+gid3+'/items/'+eid3 : '/groups/'+gid3);
           });
         } else {
           btn.disabled=false;btn.innerHTML=btnText;

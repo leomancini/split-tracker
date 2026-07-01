@@ -53,6 +53,7 @@ export function shell(data) {
         ? `<img data-avatar-url="${esc(data.user.avatar_url)}" style="width:32px;height:32px;border-radius:50%;user-select:none;-webkit-user-select:none" alt="">`
         : `<div style="width:32px;height:32px;border-radius:50%;background:var(--gray-200)"></div>`}
     </span>
+    <span class="nav-action" id="nav-action" style="display:none"></span>
   </nav>
   <div class="container" id="app"></div>
 

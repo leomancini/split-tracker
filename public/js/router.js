@@ -41,6 +41,10 @@ function startIconPoll(gid, myVer, attempt){
 var brandEl = document.querySelector('nav .brand');
 var avatarEl = document.querySelector('nav .user-info');
 function updateNav(path){
+  // The top-right edit icon is only shown on the expense detail view; clear it
+  // on every navigation so it never lingers onto another screen.
+  var na = document.getElementById('nav-action');
+  if(na){ na.style.display = 'none'; na.innerHTML = ''; na.removeAttribute('data-link'); }
   if(path === '/' || path === ''){
     brandEl.innerHTML = 'Split';
     brandEl.removeAttribute('data-link');
@@ -55,7 +59,10 @@ function updateNav(path){
     brandEl.style.color = 'var(--gray-500)';
     brandEl.style.cursor = 'pointer';
     // Set back target based on route depth
-    if(path.match(/^\/groups\/\d+\/add-member/)){
+    var editMatch = path.match(/^\/groups\/(\d+)\/items\/(\d+)\/edit$/);
+    if(editMatch){
+      brandEl.setAttribute('data-link','/groups/'+editMatch[1]+'/items/'+editMatch[2]);
+    } else if(path.match(/^\/groups\/\d+\/add-member/)){
       var gid = path.match(/^\/groups\/(\d+)/)[1];
       brandEl.setAttribute('data-link', prevPath && prevPath.indexOf('/groups/'+gid) === 0 ? prevPath : '/groups/'+gid);
     } else if(path.match(/^\/groups\/\d+\/(items|add-expense|members)/)){
@@ -110,6 +117,161 @@ async function route(path, opts){
     app.innerHTML = addExpenseView(gid);
     var expInput = document.getElementById('exp-desc');
     if(expInput) expInput.focus();
+    setupExpenseForm(gid);
+  }
+  else if((m = path.match(/^\/groups\/(\d+)\/items\/(\d+)\/edit$/))){
+    var gid = m[1], eid = parseInt(m[2]);
+    document.title = 'Split – Edit item';
+    if(!groupCache[gid]){
+      app.innerHTML = '<div style="display:flex;justify-content:center;padding:3rem 0"><div class="spinner"></div></div>';
+      var r = await fetch('/api/groups/'+gid);
+      if(myVer !== routeVer) return;
+      groupCache[gid] = await r.json();
+    }
+    var ex = (groupCache[gid].expenses||[]).find(function(e){return e.id===eid});
+    if(!ex || ex.settled_with){ nav('/groups/'+gid+'/items/'+eid); return; }
+    app.innerHTML = addExpenseView(gid, ex);
+    setupExpenseForm(gid);
+    prefillExpenseForm(gid, ex);
+    var expInput = document.getElementById('exp-desc');
+    if(expInput) expInput.focus();
+  }
+  else if((m = path.match(/^\/groups\/(\d+)\/items\/(\d+)$/))){
+    var gid = m[1], eid = parseInt(m[2]);
+    if(groupCache[gid]){
+      var ex = (groupCache[gid].expenses||[]).find(function(e){return e.id===eid});
+      if(ex){
+        document.title = 'Split – ' + esc(ex.name);
+        app.innerHTML = itemDetailView(gid, ex, groupCache[gid].isOwner);
+        setNavEditIcon(gid, ex);
+        startIconPoll(gid, myVer, 0);
+      } else { nav('/groups/'+gid); }
+    } else {
+      app.innerHTML = '<div style="display:flex;justify-content:center;padding:3rem 0"><div class="spinner"></div></div>';
+      var r = await fetch('/api/groups/'+gid);
+      if(myVer !== routeVer) return;
+      var d = await r.json();
+      groupCache[gid] = d;
+      var ex = (d.expenses||[]).find(function(e){return e.id===eid});
+      if(ex){
+        document.title = 'Split – ' + esc(ex.name);
+        app.innerHTML = itemDetailView(gid, ex, d.isOwner);
+        setNavEditIcon(gid, ex);
+        startIconPoll(gid, myVer, 0);
+      } else { nav('/groups/'+gid); }
+    }
+  }
+  else if((m = path.match(/^\/groups\/(\d+)\/add-member$/))){
+    var gid = m[1];
+    document.title = 'Split – Add person';
+    app.innerHTML = addMemberView(gid);
+    var emailInput = document.getElementById('invite-email');
+    if(emailInput) emailInput.focus();
+  }
+  else if((m = path.match(/^\/groups\/(\d+)\/members$/))){
+    var gid = m[1];
+    if(groupCache[gid]){
+      document.title = 'Split – ' + groupCache[gid].group.name;
+      app.innerHTML = groupMembersView(groupCache[gid], opts.alert);
+    } else {
+      var gInfo = D.groups.find(function(g){return g.id==gid});
+      document.title = 'Split – ' + (gInfo?gInfo.name:'Group');
+      app.innerHTML = '<div class="spinner"></div>';
+    }
+    try{
+      var r = await fetch('/api/groups/'+gid);
+      if(myVer !== routeVer) return;
+      if(!r.ok) { nav('/'); return; }
+      var detail = await r.json();
+      if(myVer !== routeVer) return;
+      groupCache[gid] = detail;
+      document.title = 'Split – ' + detail.group.name;
+      app.innerHTML = groupMembersView(detail, opts.alert);
+    }catch(e){ if(myVer === routeVer && !groupCache[gid]) nav('/groups/'+gid); }
+  }
+  else if((m = path.match(/^\/groups\/(\d+)$/))){
+    var gid = m[1];
+    // Show cached or placeholder instantly
+    if(groupCache[gid]){
+      document.title = 'Split – ' + groupCache[gid].group.name;
+      app.innerHTML = groupDetailView(groupCache[gid], opts.alert);
+    } else {
+      var gInfo = D.groups.find(function(g){return g.id==gid});
+      document.title = 'Split – ' + (gInfo?gInfo.name:'Group');
+      app.innerHTML = '<h1>'+(gInfo?esc(gInfo.name):'')+'</h1><div class="spinner"></div>';
+    }
+    try{
+      var r = await fetch('/api/groups/'+gid);
+      if(myVer !== routeVer) return;
+      if(!r.ok) { nav('/'); return; }
+      var detail = await r.json();
+      if(myVer !== routeVer) return;
+      groupCache[gid] = detail;
+      document.title = 'Split – ' + detail.group.name;
+      app.innerHTML = groupDetailView(detail, opts.alert);
+      startIconPoll(gid, myVer, 0);
+    }catch(e){ if(myVer === routeVer && !groupCache[gid]) nav('/'); }
+  }
+  else if(path === '/profile'){
+    document.title = 'Split – Profile';
+    app.innerHTML = profileView();
+  }
+  else {
+    nav('/');
+  }
+}
+
+function nav(path, opts){
+  var now = Date.now();
+  if(now - lastNav < 300 && path === location.pathname) return;
+  lastNav = now;
+  prevPath = location.pathname;
+  history.pushState({},'',path);
+  route(path, opts);
+  window.scrollTo(0,0);
+}
+
+function demoBlocked(){
+  if(D.demoMode){
+    alert('This is a demo — changes won\'t be saved.');
+    return true;
+  }
+  return false;
+}
+
+async function refreshData(){
+  try{
+    var r = await fetch('/api/data');
+    if(r.ok){
+      var d = await r.json();
+      D.groups = d.groups;
+      D.pendingInvites = d.pendingInvites;
+    }
+  }catch(e){}
+}
+
+// --- Touch navigation (fixes long-press not navigating on iOS) ---
+var touchStart = null;
+document.addEventListener('touchstart', function(e){
+  var el = e.target.closest('[data-link]');
+  if(el) touchStart = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+  else touchStart = null;
+}, {passive:true});
+document.addEventListener('touchend', function(e){
+  if(!touchStart) return;
+  var el = e.target.closest('[data-link]');
+  if(!el){touchStart=null;return;}
+  var t = e.changedTouches[0];
+  var dx = Math.abs(t.clientX - touchStart.x), dy = Math.abs(t.clientY - touchStart.y);
+  touchStart = null;
+  if(dx < 10 && dy < 10){
+    e.preventDefault();
+    nav(el.getAttribute('data-link'));
+  }
+});
+
+
+function setupExpenseForm(gid){
     // Enable "Add item" only when name and amount are both valid
     var nameEl = document.getElementById('exp-desc');
     var amtEl = document.getElementById('exp-cost');
@@ -277,136 +439,57 @@ async function route(path, opts){
         }
       });
     }
-  }
-  else if((m = path.match(/^\/groups\/(\d+)\/items\/(\d+)$/))){
-    var gid = m[1], eid = parseInt(m[2]);
-    if(groupCache[gid]){
-      var ex = (groupCache[gid].expenses||[]).find(function(e){return e.id===eid});
-      if(ex){
-        document.title = 'Split – ' + esc(ex.name);
-        app.innerHTML = itemDetailView(gid, ex, groupCache[gid].isOwner);
-        startIconPoll(gid, myVer, 0);
-      } else { nav('/groups/'+gid); }
-    } else {
-      app.innerHTML = '<div style="display:flex;justify-content:center;padding:3rem 0"><div class="spinner"></div></div>';
-      var r = await fetch('/api/groups/'+gid);
-      if(myVer !== routeVer) return;
-      var d = await r.json();
-      groupCache[gid] = d;
-      var ex = (d.expenses||[]).find(function(e){return e.id===eid});
-      if(ex){
-        document.title = 'Split – ' + esc(ex.name);
-        app.innerHTML = itemDetailView(gid, ex, d.isOwner);
-        startIconPoll(gid, myVer, 0);
-      } else { nav('/groups/'+gid); }
-    }
-  }
-  else if((m = path.match(/^\/groups\/(\d+)\/add-member$/))){
-    var gid = m[1];
-    document.title = 'Split – Add person';
-    app.innerHTML = addMemberView(gid);
-    var emailInput = document.getElementById('invite-email');
-    if(emailInput) emailInput.focus();
-  }
-  else if((m = path.match(/^\/groups\/(\d+)\/members$/))){
-    var gid = m[1];
-    if(groupCache[gid]){
-      document.title = 'Split – ' + groupCache[gid].group.name;
-      app.innerHTML = groupMembersView(groupCache[gid], opts.alert);
-    } else {
-      var gInfo = D.groups.find(function(g){return g.id==gid});
-      document.title = 'Split – ' + (gInfo?gInfo.name:'Group');
-      app.innerHTML = '<div class="spinner"></div>';
-    }
-    try{
-      var r = await fetch('/api/groups/'+gid);
-      if(myVer !== routeVer) return;
-      if(!r.ok) { nav('/'); return; }
-      var detail = await r.json();
-      if(myVer !== routeVer) return;
-      groupCache[gid] = detail;
-      document.title = 'Split – ' + detail.group.name;
-      app.innerHTML = groupMembersView(detail, opts.alert);
-    }catch(e){ if(myVer === routeVer && !groupCache[gid]) nav('/groups/'+gid); }
-  }
-  else if((m = path.match(/^\/groups\/(\d+)$/))){
-    var gid = m[1];
-    // Show cached or placeholder instantly
-    if(groupCache[gid]){
-      document.title = 'Split – ' + groupCache[gid].group.name;
-      app.innerHTML = groupDetailView(groupCache[gid], opts.alert);
-    } else {
-      var gInfo = D.groups.find(function(g){return g.id==gid});
-      document.title = 'Split – ' + (gInfo?gInfo.name:'Group');
-      app.innerHTML = '<h1>'+(gInfo?esc(gInfo.name):'')+'</h1><div class="spinner"></div>';
-    }
-    try{
-      var r = await fetch('/api/groups/'+gid);
-      if(myVer !== routeVer) return;
-      if(!r.ok) { nav('/'); return; }
-      var detail = await r.json();
-      if(myVer !== routeVer) return;
-      groupCache[gid] = detail;
-      document.title = 'Split – ' + detail.group.name;
-      app.innerHTML = groupDetailView(detail, opts.alert);
-      startIconPoll(gid, myVer, 0);
-    }catch(e){ if(myVer === routeVer && !groupCache[gid]) nav('/'); }
-  }
-  else if(path === '/profile'){
-    document.title = 'Split – Profile';
-    app.innerHTML = profileView();
-  }
-  else {
-    nav('/');
-  }
 }
 
-function nav(path, opts){
-  var now = Date.now();
-  if(now - lastNav < 300 && path === location.pathname) return;
-  lastNav = now;
-  prevPath = location.pathname;
-  history.pushState({},'',path);
-  route(path, opts);
-  window.scrollTo(0,0);
-}
-
-function demoBlocked(){
-  if(D.demoMode){
-    alert('This is a demo — changes won\'t be saved.');
-    return true;
+function prefillExpenseForm(gid, ex){
+  var members = groupCache[gid] ? groupCache[gid].members : [];
+  var parts = ex.split_participants ? JSON.parse(ex.split_participants) : null;
+  var amts = ex.split_amounts ? JSON.parse(ex.split_amounts) : null;
+  var splitSel = document.getElementById('exp-split-type');
+  var paidByEl = document.getElementById('exp-paid-by');
+  var val = 'equal';
+  if(ex.split_type === 'custom') val = 'uneven';
+  else if(ex.split_type === 'full'){
+    val = (parts && parts.length === 1 && parts[0] === D.user.id) ? 'you_owe' : 'they_owe';
   }
-  return false;
-}
-
-async function refreshData(){
-  try{
-    var r = await fetch('/api/data');
-    if(r.ok){
-      var d = await r.json();
-      D.groups = d.groups;
-      D.pendingInvites = d.pendingInvites;
-    }
-  }catch(e){}
-}
-
-// --- Touch navigation (fixes long-press not navigating on iOS) ---
-var touchStart = null;
-document.addEventListener('touchstart', function(e){
-  var el = e.target.closest('[data-link]');
-  if(el) touchStart = {x:e.touches[0].clientX, y:e.touches[0].clientY};
-  else touchStart = null;
-}, {passive:true});
-document.addEventListener('touchend', function(e){
-  if(!touchStart) return;
-  var el = e.target.closest('[data-link]');
-  if(!el){touchStart=null;return;}
-  var t = e.changedTouches[0];
-  var dx = Math.abs(t.clientX - touchStart.x), dy = Math.abs(t.clientY - touchStart.y);
-  touchStart = null;
-  if(dx < 10 && dy < 10){
-    e.preventDefault();
-    nav(el.getAttribute('data-link'));
+  if(splitSel){
+    splitSel.value = val;
+    splitSel.dispatchEvent(new Event('change'));
   }
-});
+  // Restore the original payer (the change handler may auto-switch it).
+  if(paidByEl) paidByEl.value = String(ex.paid_by);
+  if(val === 'uneven' && parts && amts){
+    document.querySelectorAll('.exp-uneven-amt').forEach(function(inp){
+      var mid = parseInt(inp.getAttribute('data-member-id'));
+      var idx = parts.indexOf(mid);
+      inp.value = idx !== -1 ? (parseFloat(amts[idx])||0).toFixed(2) : '0.00';
+      inp.dataset.edited = '1';
+    });
+  } else if(val === 'equal' && parts && parts.length < members.length){
+    document.querySelectorAll('.exp-participant-cb').forEach(function(cb){
+      cb.checked = parts.indexOf(parseInt(cb.value)) !== -1;
+    });
+  } else if(val === 'they_owe' && members.length > 2 && parts){
+    document.querySelectorAll('.exp-participant-cb').forEach(function(cb){
+      if(parseInt(cb.value) === D.user.id) return;
+      cb.checked = parts.indexOf(parseInt(cb.value)) !== -1;
+    });
+  }
+  // Re-run validation so the Save button reflects the prefilled values.
+  var descEl = document.getElementById('exp-desc');
+  if(descEl) descEl.dispatchEvent(new Event('input'));
+}
 
+function setNavEditIcon(gid, ex){
+  var na = document.getElementById('nav-action');
+  if(!na) return;
+  if(ex && !ex.settled_with){
+    na.innerHTML = '<i class="fa-solid fa-pen"></i>';
+    na.setAttribute('data-link','/groups/'+gid+'/items/'+ex.id+'/edit');
+    na.style.display = '';
+  } else {
+    na.innerHTML = '';
+    na.removeAttribute('data-link');
+    na.style.display = 'none';
+  }
+}

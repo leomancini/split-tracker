@@ -22,7 +22,7 @@ import {
   updatePaymentHandles,
   updateExpenseIcon,
   updateExpenseClassification,
-  updateExpenseName,
+  updateExpense,
   setPushEnabled,
   savePushSubscription,
   deletePushSubscriptionByEndpoint,
@@ -228,7 +228,7 @@ export function registerApiRoutes(app, ensureAuth) {
     }
   });
 
-  // Rename expense
+  // Edit expense — any group member may edit any non-settlement expense.
   app.put('/api/groups/:gid/expenses/:eid', ensureAuth, (req, res) => {
     const groupId = parseInt(req.params.gid);
     const expenseId = parseInt(req.params.eid);
@@ -237,23 +237,40 @@ export function registerApiRoutes(app, ensureAuth) {
     const expense = getExpenseById(expenseId);
     if (!expense || expense.group_id !== groupId) return res.status(404).json({ error: 'Expense not found' });
 
-    if (expense.paid_by !== req.user.id) {
-      return res.status(403).json({ error: 'Only the payer can rename' });
+    // Settlements (payments) are recorded, not edited.
+    if (expense.settled_with || expense.category === 'settlement') {
+      return res.status(400).json({ error: 'Payments cannot be edited' });
     }
 
     const name = req.body.name?.trim();
-    if (!name) return res.status(400).json({ error: 'Name is required' });
-    if (name === expense.name) return res.json({ ok: true });
+    const amount = parseFloat(req.body.amount);
+    const paidBy = req.body.paid_by ? parseInt(req.body.paid_by) : expense.paid_by;
+    const splitType = req.body.split_type || 'equal';
+    const splitParticipants = req.body.split_participants ? JSON.stringify(req.body.split_participants.map(Number)) : null;
+    const splitAmountsRaw = req.body.split_amounts;
+    const splitAmounts = splitAmountsRaw ? JSON.stringify(splitAmountsRaw.map(Number)) : null;
 
-    updateExpenseName(expenseId, name);
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+    if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: 'Valid amount is required' });
+    if (paidBy !== req.user.id && !isGroupMember(groupId, paidBy)) return res.status(400).json({ error: 'Invalid member' });
+    if (splitType === 'custom' && splitAmountsRaw) {
+      const sum = splitAmountsRaw.map(Number).reduce((a, b) => a + b, 0);
+      if (Math.round(sum * 100) !== Math.round(amount * 100)) return res.status(400).json({ error: 'Split amounts must add up to total' });
+    }
+
+    // Keep the AI-classified category/icon unless the name changed. When it
+    // changes, clear the icon so the client's icon poll re-fetches a new one.
+    const nameChanged = name !== expense.name;
+    const category = nameChanged ? (req.body.category?.trim() || 'general') : expense.category;
+    const icon = nameChanged ? null : expense.icon;
+
+    updateExpense(expenseId, { name, amount, category, paidBy, splitType, splitParticipants, splitAmounts, icon });
     res.json({ ok: true });
 
-    // Re-classify icon + category for the new name (skip for settlements).
-    const isSettlement = !!expense.settled_with || expense.category === 'settlement';
-    if (!isSettlement) {
+    if (nameChanged) {
       classifyExpense({ name })
-        .then(({ icon, category: cat }) => updateExpenseClassification(expenseId, icon, cat))
-        .catch(err => console.error('classifyExpense after rename failed:', err.message));
+        .then(({ icon: newIcon, category: cat }) => updateExpenseClassification(expenseId, newIcon, cat))
+        .catch(err => console.error('classifyExpense after edit failed:', err.message));
     }
   });
 

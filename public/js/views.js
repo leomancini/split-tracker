@@ -146,21 +146,23 @@ function groupDetailView(detail, alert){
   return h;
 }
 
-function addExpenseView(gid){
+function addExpenseView(gid, ex){
+  var isEdit = !!ex;
   var members = groupCache[gid] ? groupCache[gid].members : [];
   var dispNames = buildDisplayNames(members);
   var others = members.filter(function(m){ return m.id !== D.user.id; });
-  var h = '<h1>Add item</h1>'
-    + '<form id="add-expense-form" data-group-id="'+gid+'">'
+  var h = '<h1>'+(isEdit ? 'Edit item' : 'Add item')+'</h1>'
+    + '<form id="add-expense-form" data-group-id="'+gid+'"'+(isEdit ? ' data-expense-id="'+ex.id+'"' : '')+'>'
     + '<div class="form-group"><label>Name</label>'
-    + '<input type="text" id="exp-desc" placeholder="Pizza, groceries, ride home, etc" data-1p-ignore autocomplete="off"></div>'
+    + '<input type="text" id="exp-desc" placeholder="Pizza, groceries, ride home, etc" data-1p-ignore autocomplete="off" value="'+(isEdit ? esc(ex.name) : '')+'"></div>'
     + '<div class="form-group"><label>Amount</label>'
-    + '<input type="number" id="exp-cost" inputmode="decimal" step="0.01" placeholder="0.00"></div>';
+    + '<input type="number" id="exp-cost" inputmode="decimal" step="0.01" placeholder="0.00" value="'+(isEdit ? esc(String(ex.amount)) : '')+'"></div>';
   if(members.length){
     h += '<div class="form-group"><label>Paid by</label>'
       + '<select id="exp-paid-by">';
     members.forEach(function(m){
-      h += '<option value="'+m.id+'"'+(m.id === D.user.id ? ' selected' : '')+'>'+esc(m.id === D.user.id ? 'You' : (dispNames[m.id]||m.name))+'</option>';
+      var sel = isEdit ? (m.id === ex.paid_by) : (m.id === D.user.id);
+      h += '<option value="'+m.id+'"'+(sel ? ' selected' : '')+'>'+esc(m.id === D.user.id ? 'You' : (dispNames[m.id]||m.name))+'</option>';
     });
     h += '</select></div>';
   }
@@ -201,7 +203,7 @@ function addExpenseView(gid){
   }
   h += '</form>'
     + '<div class="add-expense-bottom-spacer"></div>'
-    + '<div class="sticky-bottom"><button type="submit" form="add-expense-form" class="btn" disabled>Add item</button></div>';
+    + '<div class="sticky-bottom"><button type="submit" form="add-expense-form" class="btn"'+(isEdit ? '' : ' disabled')+'>'+(isEdit ? 'Save' : 'Add item')+'</button></div>';
   return h;
 }
 
@@ -211,14 +213,13 @@ function itemDetailView(gid, ex, isOwner){
   var detailMembers = groupCache[gid] ? groupCache[gid].members : [];
   var dispNames = buildDisplayNames(detailMembers);
   var canDelete = ex.paid_by === D.user.id || isOwner;
-  var canEditName = !ex.settled_with && ex.paid_by === D.user.id;
   var detailNameHtml;
   if(ex.settled_with){
     var payer = ex.paid_by === D.user.id ? 'You' : (dispNames[ex.paid_by] || ex.paid_by_name);
     var payee = ex.settled_with === D.user.id ? 'You' : (dispNames[ex.settled_with] || ex.settled_with_name);
     detailNameHtml = '<span style="font-weight:600">'+esc(payer)+'</span> paid <span style="font-weight:600">'+esc(payee)+'</span>';
   } else {
-    detailNameHtml = esc(ex.name) + (canEditName ? ' <i class="fa-solid fa-pen edit-expense-pen" data-action="rename-expense" data-group-id="'+gid+'" data-expense-id="'+ex.id+'"></i>' : '');
+    detailNameHtml = esc(ex.name);
   }
   var h = '<div class="item-detail-icon"'+(ex.settled_with ? ' style="background:var(--gray-100);color:var(--gray-500)"' : '')+'>'+expenseIcon(ex, 32)+'</div>';
   h += '<div class="item-detail-amount">'+fmtAmt(ex.amount)+'</div>';

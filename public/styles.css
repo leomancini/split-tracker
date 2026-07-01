@@ -71,6 +71,19 @@
     }
     nav .user-info:active { transform: scale(0.85); }
 
+    nav .nav-action {
+      font-size: 1.5rem;
+      color: var(--gray-500);
+      cursor: pointer;
+      padding: 0.75rem 1rem;
+      margin: -0.75rem -1rem;
+      -webkit-user-select: none;
+      user-select: none;
+      transition: color 150ms, transform 100ms;
+    }
+    @media (hover: hover) { nav .nav-action:hover { color: var(--gray-700); } }
+    nav .nav-action:active { transform: scale(0.85); }
+
     nav .user-info img {
       width: 32px;
       height: 32px;
@@ -210,8 +223,6 @@
     .card-link:active { transform: scale(0.95); transition: transform 150ms; }
 
     @media (hover: hover) { h1[data-action="rename-group"]:hover .fa-pen { color: var(--gray-700) !important; } }
-    .edit-expense-pen { font-size: 0.75rem; color: var(--gray-400); vertical-align: middle; cursor: pointer; padding: 0.125rem 0.25rem 0.25rem 0.25rem; transition: color 150ms; }
-    @media (hover: hover) { .edit-expense-pen:hover { color: var(--gray-700); } }
     @media (hover: hover) { .add-member-icon:hover { background: var(--gray-200) !important; color: var(--gray-700) !important; } }
 
     .expense-row { transition: background 150ms, transform 100ms; border-radius: var(--radius); margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
