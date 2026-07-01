@@ -303,7 +303,7 @@ function itemDetailView(gid, ex, isOwner){
   // Bottom padding so content isn't hidden behind sticky button
   h += '<div class="group-bottom-spacer"></div>';
   if(canDelete){
-    h += '<div class="sticky-bottom"><button class="btn btn-danger" data-action="delete-item" data-id="'+ex.id+'" data-group-id="'+gid+'">Delete item</button></div>';
+    h += '<div class="sticky-bottom"><button class="btn btn-danger" data-action="delete-item" data-id="'+ex.id+'" data-group-id="'+gid+'">Delete</button></div>';
   }
   return h;
 }
