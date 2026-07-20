@@ -32,7 +32,9 @@ function fmtAmt(v){
 function balancePill(g){
   if(!g.expense_count) return '';
   var bal = g.my_balance || 0;
-  if(Math.abs(bal) < 0.01){
+  // A cent or less either way counts as settled — pre-cents-math groups can
+  // carry a 1¢ residue from settlements that were recorded at rounded amounts.
+  if(Math.abs(bal) < 0.015){
     return '<span style="display:inline-flex;align-items:center;gap:0.4rem;flex-shrink:0;font-size:0.875rem;padding-right:4px;color:var(--gray-500)">'
       + '<i class="fa-solid fa-check"></i>'
       + '<span style="font-weight:500">Settled</span>'
@@ -130,25 +132,41 @@ function expenseIcon(ex, size){
 }
 
 // --- Balance calculation ---
+// All balance math is done in integer cents (matching getUserGroupBalance on
+// the server). Equal splits divide into whole-cent shares: leftover cents go
+// to participants in ascending-id order with the payer last, so every expense
+// is zero-sum and balances are exact regardless of summation order.
+function equalShareCents(totalCents, participants, payerId){
+  var base = Math.floor(totalCents / participants.length);
+  var rem = totalCents - base * participants.length;
+  var order = participants.slice().sort(function(a,b){return a-b;})
+    .sort(function(a,b){return (a===payerId?1:0)-(b===payerId?1:0);});
+  var shares = {};
+  order.forEach(function(pid){
+    shares[pid] = base + (rem > 0 ? 1 : 0);
+    if(rem > 0) rem--;
+  });
+  return shares;
+}
 function calcSettlements(members, expenses){
   if(!expenses||!expenses.length||!members.length) return [];
-  var n = members.length;
   var allIds = members.map(function(m){return m.id;});
-  var bal = {}; // userId -> net balance (positive = owed money, negative = owes)
+  var bal = {}; // userId -> net balance in integer cents (positive = owed money, negative = owes)
   members.forEach(function(m){bal[m.id]=0;});
   expenses.forEach(function(ex){
+    var total = Math.round(ex.amount * 100);
     if(ex.settled_with){
       // Settlement: direct payment between two people
-      bal[ex.paid_by] += ex.amount;
-      bal[ex.settled_with] -= ex.amount;
+      bal[ex.paid_by] += total;
+      bal[ex.settled_with] -= total;
     } else if(ex.split_type === 'full'){
       // Full amount owed by specific participants to the payer
       var owes = ex.split_participants ? JSON.parse(ex.split_participants) : [];
       if(owes.length){
-        bal[ex.paid_by] += ex.amount;
-        var perPerson = ex.amount / owes.length;
+        bal[ex.paid_by] += total;
+        var fullShares = equalShareCents(total, owes, ex.paid_by);
         owes.forEach(function(pid){
-          if(bal[pid] !== undefined) bal[pid] -= perPerson;
+          if(bal[pid] !== undefined) bal[pid] -= fullShares[pid];
         });
       }
     } else if(ex.split_type === 'custom'){
@@ -156,27 +174,27 @@ function calcSettlements(members, expenses){
       var customParts = ex.split_participants ? JSON.parse(ex.split_participants) : [];
       var customAmts = ex.split_amounts ? JSON.parse(ex.split_amounts) : [];
       if(customParts.length){
-        bal[ex.paid_by] += ex.amount;
+        bal[ex.paid_by] += total;
         customParts.forEach(function(pid, i){
-          var owed = customAmts[i] || 0;
+          var owed = Math.round((customAmts[i] || 0) * 100);
           if(bal[pid] !== undefined) bal[pid] -= owed;
         });
       }
     } else {
       // Equal split among participants (default: all members)
       var participants = ex.split_participants ? JSON.parse(ex.split_participants) : allIds;
-      var pn = participants.length || n;
-      var share = ex.amount / pn;
+      if(!participants.length) participants = allIds;
+      var shares = equalShareCents(total, participants, ex.paid_by);
       var payerInList = participants.indexOf(ex.paid_by) !== -1;
       if(payerInList){
         participants.forEach(function(pid){
-          if(pid === ex.paid_by) bal[pid] += ex.amount - share;
-          else if(bal[pid] !== undefined) bal[pid] -= share;
+          if(pid === ex.paid_by) bal[pid] += total - shares[pid];
+          else if(bal[pid] !== undefined) bal[pid] -= shares[pid];
         });
       } else {
-        bal[ex.paid_by] += ex.amount;
+        bal[ex.paid_by] += total;
         participants.forEach(function(pid){
-          if(bal[pid] !== undefined) bal[pid] -= share;
+          if(bal[pid] !== undefined) bal[pid] -= shares[pid];
         });
       }
     }
@@ -184,12 +202,13 @@ function calcSettlements(members, expenses){
   // Build name/venmo map
   var names = {}, venmos = {}, cashapps = {};
   members.forEach(function(m){names[m.id]=m.name; venmos[m.id]=m.venmo_handle; cashapps[m.id]=m.cashapp_handle;});
-  // Greedy settle: debtors pay creditors
+  // Greedy settle: debtors pay creditors (amounts in integer cents until the
+  // settlement objects are built)
   var debtors=[], creditors=[];
   for(var id in bal){
-    var v=Math.round(bal[id]*100)/100;
-    if(v<-0.01) debtors.push({id:id,amt:-v});
-    else if(v>0.01) creditors.push({id:id,amt:v});
+    var v=bal[id];
+    if(v<-1) debtors.push({id:id,amt:-v});
+    else if(v>1) creditors.push({id:id,amt:v});
   }
   debtors.sort(function(a,b){return b.amt-a.amt;});
   creditors.sort(function(a,b){return b.amt-a.amt;});
@@ -197,16 +216,16 @@ function calcSettlements(members, expenses){
   var di=0,ci=0;
   while(di<debtors.length && ci<creditors.length){
     var pay=Math.min(debtors[di].amt,creditors[ci].amt);
-    if(pay>0.01){
-      settlements.push({from:debtors[di].id,to:creditors[ci].id,amt:pay,
+    if(pay>0){
+      settlements.push({from:debtors[di].id,to:creditors[ci].id,amt:pay/100,
         fromName:names[debtors[di].id],toName:names[creditors[ci].id],
         toVenmo:venmos[creditors[ci].id],toCashapp:cashapps[creditors[ci].id],
         fromVenmo:venmos[debtors[di].id],fromCashapp:cashapps[debtors[di].id]});
     }
     debtors[di].amt-=pay;
     creditors[ci].amt-=pay;
-    if(debtors[di].amt<0.01) di++;
-    if(creditors[ci].amt<0.01) ci++;
+    if(debtors[di].amt<1) di++;
+    if(creditors[ci].amt<1) ci++;
   }
   return settlements;
 }

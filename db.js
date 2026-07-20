@@ -244,45 +244,61 @@ export function getUserGroups(userId, showDemo = false) {
   return groups;
 }
 
+// All balance math is done in integer cents. Equal splits divide into
+// whole-cent shares: leftover cents go to participants in ascending-id order
+// with the payer last, so every expense is zero-sum and every balance is an
+// exact number of cents regardless of summation order.
+function equalShareCents(totalCents, participants, payerId) {
+  const base = Math.floor(totalCents / participants.length);
+  let rem = totalCents - base * participants.length;
+  const order = [...participants].sort((a, b) => a - b).sort((a, b) => (a === payerId) - (b === payerId));
+  const shares = new Map();
+  for (const pid of order) {
+    shares.set(pid, base + (rem > 0 ? 1 : 0));
+    if (rem > 0) rem--;
+  }
+  return shares;
+}
+
 export function getUserGroupBalance(groupId, userId) {
   const memberIds = db.prepare('SELECT user_id FROM group_members WHERE group_id = ?').all(groupId).map(r => r.user_id);
   const expenses = db.prepare(
     'SELECT paid_by, amount, settled_with, split_type, split_participants, split_amounts FROM expenses WHERE group_id = ?'
   ).all(groupId);
-  let bal = 0;
+  let bal = 0; // integer cents
   for (const ex of expenses) {
+    const total = Math.round(ex.amount * 100);
     if (ex.settled_with) {
-      if (ex.paid_by === userId) bal += ex.amount;
-      else if (ex.settled_with === userId) bal -= ex.amount;
+      if (ex.paid_by === userId) bal += total;
+      else if (ex.settled_with === userId) bal -= total;
     } else if (ex.split_type === 'full') {
       const owes = ex.split_participants ? JSON.parse(ex.split_participants) : [];
       if (!owes.length) continue;
-      const per = ex.amount / owes.length;
-      if (ex.paid_by === userId) bal += ex.amount;
-      if (owes.includes(userId)) bal -= per;
+      const shares = equalShareCents(total, owes, ex.paid_by);
+      if (ex.paid_by === userId) bal += total;
+      if (shares.has(userId)) bal -= shares.get(userId);
     } else if (ex.split_type === 'custom') {
       const participants = ex.split_participants ? JSON.parse(ex.split_participants) : [];
       const amounts = ex.split_amounts ? JSON.parse(ex.split_amounts) : [];
       if (!participants.length) continue;
-      if (ex.paid_by === userId) bal += ex.amount;
+      if (ex.paid_by === userId) bal += total;
       const idx = participants.indexOf(userId);
-      if (idx !== -1 && amounts[idx] != null) bal -= amounts[idx];
+      if (idx !== -1 && amounts[idx] != null) bal -= Math.round(amounts[idx] * 100);
     } else {
       const participants = ex.split_participants ? JSON.parse(ex.split_participants) : memberIds;
-      const pn = participants.length || memberIds.length;
-      if (!pn) continue;
-      const share = ex.amount / pn;
+      if (!participants.length) continue;
+      const shares = equalShareCents(total, participants, ex.paid_by);
       const payerInList = participants.includes(ex.paid_by);
       if (payerInList) {
-        if (ex.paid_by === userId) bal += ex.amount - share;
-        else if (participants.includes(userId)) bal -= share;
+        if (ex.paid_by === userId) bal += total - shares.get(userId);
+        else if (shares.has(userId)) bal -= shares.get(userId);
       } else {
-        if (ex.paid_by === userId) bal += ex.amount;
-        if (participants.includes(userId)) bal -= share;
+        if (ex.paid_by === userId) bal += total;
+        if (shares.has(userId)) bal -= shares.get(userId);
       }
     }
   }
-  return { balance: bal, expenseCount: expenses.length };
+  return { balance: bal / 100, expenseCount: expenses.length };
 }
 
 export function createGroup(name, createdBy) {
