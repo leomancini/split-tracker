@@ -282,8 +282,8 @@ function resizeSplitInput(inp){
   _splitMeasureCtx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
   var text = String(inp.value || inp.placeholder || '0');
   var textW = _splitMeasureCtx.measureText(text).width;
-  // 12px padding + 2px border + 2px caret allowance (constant, so the gap is too)
-  inp.style.width = Math.ceil(textW + 16) + 'px';
+  // 8px padding + 2px border + 2px caret allowance (constant, so the gap is too)
+  inp.style.width = Math.ceil(textW + 12) + 'px';
 }
 
 function setupExpenseForm(gid){
@@ -299,7 +299,7 @@ function setupExpenseForm(gid){
       var remainder = totalCents % N;
       inputs.forEach(function(inp, idx){
         var cents = baseShare + (idx < remainder ? 1 : 0);
-        inp.value = (cents / 100).toFixed(2);
+        inp.value = cents ? (cents / 100).toFixed(2) : '0';
         resizeSplitInput(inp);
       });
     }
@@ -328,7 +328,7 @@ function setupExpenseForm(gid){
       var rem = remaining % N;
       open.forEach(function(inp, idx){
         var cents = baseShare + (idx < rem ? 1 : 0);
-        inp.value = (cents / 100).toFixed(2);
+        inp.value = cents ? (cents / 100).toFixed(2) : '0';
         resizeSplitInput(inp);
       });
     }
@@ -582,7 +582,8 @@ function prefillExpenseForm(gid, ex){
     document.querySelectorAll('.exp-uneven-amt').forEach(function(inp){
       var mid = parseInt(inp.getAttribute('data-member-id'));
       var idx = parts.indexOf(mid);
-      inp.value = idx !== -1 ? (parseFloat(amts[idx])||0).toFixed(2) : '0.00';
+      var amtVal = idx !== -1 ? (parseFloat(amts[idx])||0) : 0;
+      inp.value = amtVal ? amtVal.toFixed(2) : '0';
       inp.dataset.edited = '1';
       resizeSplitInput(inp);
     });
