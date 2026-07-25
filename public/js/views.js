@@ -178,7 +178,7 @@ function addExpenseView(gid, ex){
       h += '<option value="you_owe">You owe full amount</option>';
       h += '<option value="they_owe">They owe full amount</option>';
     }
-    h += '<option value="uneven">Split unequally</option>';
+    h += '<option value="uneven">Split by amount</option>';
     h += '<option value="uneven_pct">Split by percentage</option>';
     h += '</select></div>';
     // Participant picker — always rendered for 2+ members; hidden for 2-person groups until uneven is selected
@@ -195,12 +195,13 @@ function addExpenseView(gid, ex){
       h += '<div class="exp-participant-row" style="display:flex;align-items:center;gap:0.625rem;padding:0.75rem;margin:0'+borderStyle+'">'
         + '<input type="checkbox" class="exp-participant-cb" value="'+m.id+'" checked style="flex-shrink:0">'
         + '<span class="exp-participant-name" style="flex:1;font-size:0.9375rem;color:var(--gray-900)">'+esc(m.id === D.user.id ? 'You' : (dispNames[m.id]||m.name))+'</span>'
+        + '<span class="exp-uneven-prefix" style="display:none;font-size:0.9375rem;color:var(--gray-500);margin-right:-0.375rem">$</span>'
         + '<input type="number" class="exp-uneven-amt" data-member-id="'+m.id+'" step="0.01" min="0" placeholder="0.00"'
         + ' style="display:none;width:72px;height:1.4rem;text-align:right;padding:0 0.375rem;border:1px solid var(--gray-300);border-radius:4px;font-size:16px">'
-        + '<span class="exp-pct-preview" style="display:none;font-size:0.8125rem;color:var(--gray-500);white-space:nowrap"></span>'
+        + '<span class="exp-pct-preview" style="display:none;font-size:0.9375rem;color:var(--gray-500);white-space:nowrap"></span>'
         + '<input type="number" class="exp-pct-amt" data-member-id="'+m.id+'" step="0.01" min="0" max="100" placeholder="0"'
         + ' style="display:none;width:60px;height:1.4rem;text-align:right;padding:0 0.375rem;border:1px solid var(--gray-300);border-radius:4px;font-size:16px">'
-        + '<span class="exp-pct-sign" style="display:none;font-size:0.9375rem;color:var(--gray-500)">%</span>'
+        + '<span class="exp-pct-sign" style="display:none;font-size:0.9375rem;color:var(--gray-500);margin-left:-0.375rem">%</span>'
         + '</div>';
     });
     h += '</div>'
@@ -255,7 +256,7 @@ function itemDetailView(gid, ex, isOwner){
       h += '<div class="info-row"><span class="info-label">Split</span><span class="info-value">'+esc(splitText)+'</span></div>';
     } else if(ex.split_type === 'custom'){
       var pcts = ex.split_percentages ? JSON.parse(ex.split_percentages) : null;
-      h += '<div class="info-row" style="border-bottom:none; padding-bottom:10px"><span class="info-label">Split</span><span class="info-value">'+(pcts ? 'By percentage' : 'Unequally')+'</span></div>';
+      h += '<div class="info-row" style="border-bottom:none; padding-bottom:10px"><span class="info-label">Split</span><span class="info-value">'+(pcts ? 'By percentage' : 'By amount')+'</span></div>';
       var parts = ex.split_participants ? JSON.parse(ex.split_participants) : [];
       var amts = ex.split_amounts ? JSON.parse(ex.split_amounts) : [];
       var activeParts = [];
