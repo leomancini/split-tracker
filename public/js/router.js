@@ -282,8 +282,8 @@ function resizeSplitInput(inp){
   _splitMeasureCtx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
   var text = String(inp.value || inp.placeholder || '0');
   var textW = _splitMeasureCtx.measureText(text).width;
-  // 8px padding + 2px border + 2px caret allowance (constant, so the gap is too)
-  inp.style.width = Math.ceil(textW + 12) + 'px';
+  // 4px padding + 2px border; the padding doubles as caret room
+  inp.style.width = Math.ceil(textW + 6) + 'px';
 }
 
 function setupExpenseForm(gid){
