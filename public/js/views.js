@@ -293,7 +293,7 @@ function itemDetailView(gid, ex, isOwner){
           + avatarHtml
           + '<span>'+esc(memberName(pid))+'</span>'
           + '</span>'
-          + '<span class="info-value">'+esc(fmtAmt(a))+(item.pct !== null && item.pct !== undefined ? ' <span style="color:var(--gray-500)">('+esc(String(Math.round(item.pct*100)/100))+'%)</span>' : '')+'</span>'
+          + '<span class="info-value">'+esc(fmtAmt(a))+(item.pct !== null && item.pct !== undefined ? ' · '+esc(String(Math.round(item.pct*100)/100))+'%' : '')+'</span>'
           + '</div>';
       });
     } else {
