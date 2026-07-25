@@ -271,6 +271,13 @@ document.addEventListener('touchend', function(e){
 });
 
 
+// Size a split amount/percent input to fit its content so the $/% affixes
+// hug the number. ch tracks the input's own font; padding + border on top.
+function resizeSplitInput(inp){
+  var len = String(inp.value || inp.placeholder || '').length || 1;
+  inp.style.width = 'calc(' + len + 'ch + 0.75rem + 2px)';
+}
+
 function setupExpenseForm(gid){
     // Enable "Add item" only when name and amount are both valid
     var nameEl = document.getElementById('exp-desc');
@@ -285,6 +292,7 @@ function setupExpenseForm(gid){
       inputs.forEach(function(inp, idx){
         var cents = baseShare + (idx < remainder ? 1 : 0);
         inp.value = (cents / 100).toFixed(2);
+        resizeSplitInput(inp);
       });
     }
     // Split the leftover (total minus the amounts the user has manually edited)
@@ -313,10 +321,12 @@ function setupExpenseForm(gid){
       open.forEach(function(inp, idx){
         var cents = baseShare + (idx < rem ? 1 : 0);
         inp.value = (cents / 100).toFixed(2);
+        resizeSplitInput(inp);
       });
     }
     function onUnevenAmtInput(e){
       e.target.dataset.edited = '1';
+      resizeSplitInput(e.target);
       redistributeUnevenRemaining();
       syncAddBtn();
     }
@@ -330,6 +340,7 @@ function setupExpenseForm(gid){
       inputs.forEach(function(inp, idx){
         var bp = baseBp + (idx < remBp ? 1 : 0);
         inp.value = String(bp / 100);
+        resizeSplitInput(inp);
       });
     }
     function redistributePctRemaining() {
@@ -353,6 +364,7 @@ function setupExpenseForm(gid){
       open.forEach(function(inp, idx){
         var bp = baseBp + (idx < remBp ? 1 : 0);
         inp.value = String(bp / 100);
+        resizeSplitInput(inp);
       });
     }
     // Show each row's dollar equivalent next to its percentage input.
@@ -368,6 +380,7 @@ function setupExpenseForm(gid){
     }
     function onPctInput(e){
       e.target.dataset.edited = '1';
+      resizeSplitInput(e.target);
       redistributePctRemaining();
       updatePctPreviews();
       syncAddBtn();
@@ -563,6 +576,7 @@ function prefillExpenseForm(gid, ex){
       var idx = parts.indexOf(mid);
       inp.value = idx !== -1 ? (parseFloat(amts[idx])||0).toFixed(2) : '0.00';
       inp.dataset.edited = '1';
+      resizeSplitInput(inp);
     });
   } else if(val === 'uneven_pct' && parts && pcts){
     var firstPct = null;
@@ -571,6 +585,7 @@ function prefillExpenseForm(gid, ex){
       var idx = parts.indexOf(mid);
       inp.value = idx !== -1 ? String(parseFloat(pcts[idx])||0) : '0';
       inp.dataset.edited = '1';
+      resizeSplitInput(inp);
       if(!firstPct) firstPct = inp;
     });
     // Refresh the dollar previews (all inputs are locked, so nothing redistributes).

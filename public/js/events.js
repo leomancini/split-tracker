@@ -1,4 +1,13 @@
 // --- Event delegation ---
+// Tapping a money/percent field selects its whole value so typing replaces it.
+// The setTimeout keeps the tap's own mouseup/click from collapsing the selection.
+document.addEventListener('focusin', function(e){
+  var t = e.target;
+  if(t.id === 'exp-cost' || (t.classList && (t.classList.contains('exp-uneven-amt') || t.classList.contains('exp-pct-amt')))){
+    setTimeout(function(){ t.select(); }, 0);
+  }
+});
+
 document.addEventListener('click', function(e){
   // Expand pay/request buttons
   var expandBtn = e.target.closest('[data-action="expand-pay"]');
