@@ -53,6 +53,21 @@ function fail(text) {
   return { isError: true, content: [{ type: 'text', text }] };
 }
 
+// Some MCP clients HTML-escape free text before sending it ("Tom &amp; Jerry"),
+// and escape it again when showing tool results — which reads as "the & didn't
+// save". Decode entities on the way in so titles always store the literal
+// characters. &amp; must be decoded last or "&amp;lt;" would double-decode.
+function decodeEntities(s) {
+  return s
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&amp;/gi, '&');
+}
+
 // Resolve a member reference — a numeric id, a name, or an email — against the
 // group's roster. Lets MCP callers name people the way a human would instead of
 // having to look up numeric ids first. Returns { id } or { error } (the error
@@ -124,7 +139,7 @@ function buildMcpServer(userId) {
     description: 'Create a new group (you become the owner). Optionally invite people by email.',
     inputSchema: { name: z.string().min(1), invite_emails: z.array(z.string().email()).optional() },
   }, async ({ name, invite_emails }) => {
-    const trimmed = name.trim();
+    const trimmed = decodeEntities(name.trim());
     if (!trimmed) return fail('Name is required.');
     const groupId = createGroup(trimmed, userId);
 
@@ -146,7 +161,7 @@ function buildMcpServer(userId) {
     inputSchema: { group_id: z.number().int(), name: z.string().min(1) },
   }, async ({ group_id, name }) => {
     if (!isGroupOwner(group_id, userId)) return fail('Only the group owner can rename it.');
-    const trimmed = name.trim();
+    const trimmed = decodeEntities(name.trim());
     if (!trimmed) return fail('Name is required.');
     renameGroup(group_id, trimmed);
     return ok(`Renamed group #${group_id} to "${trimmed}".`, { groupId: group_id, name: trimmed });
@@ -233,7 +248,7 @@ function buildMcpServer(userId) {
   }, async (args) => {
     const { group_id } = args;
     if (!isGroupMember(group_id, userId)) return fail('You are not a member of this group.');
-    const name = args.name.trim();
+    const name = decodeEntities(args.name.trim());
     if (!name) return fail('Name is required.');
 
     // "me"/"myself" is a convenient self-reference; otherwise resolve against the roster.
