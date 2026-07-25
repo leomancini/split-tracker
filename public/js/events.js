@@ -199,6 +199,7 @@ document.addEventListener('submit', function(e){
     var splitType = 'equal';
     var splitParticipants = null;
     var splitAmountsData = null;
+    var splitPercentagesData = null;
     var cachedMem = groupCache[gid3] ? groupCache[gid3].members : [];
     var paidByEl = document.getElementById('exp-paid-by');
     if(splitTypeVal === 'you_owe'){
@@ -227,6 +228,28 @@ document.addEventListener('submit', function(e){
       });
       splitParticipants = ids;
       splitAmountsData = amts;
+    } else if(splitTypeVal === 'uneven_pct'){
+      // Stored as a custom (exact-amount) split so balance math is unchanged;
+      // the percentages ride along so the form and detail view remember them.
+      splitType = 'custom';
+      var pctInputs = document.querySelectorAll('.exp-pct-amt');
+      var ids = [], pcts = [];
+      pctInputs.forEach(function(inp){
+        ids.push(parseInt(inp.getAttribute('data-member-id')));
+        pcts.push(parseFloat(inp.value) || 0);
+      });
+      // Largest-remainder allocation in integer cents so shares sum to the
+      // total to the penny.
+      var totalCents = Math.round((parseFloat(expAmount) || 0) * 100);
+      var raw = pcts.map(function(p){ return totalCents * p / 100; });
+      var cents = raw.map(function(r){ return Math.floor(r + 1e-9); });
+      var leftover = totalCents - cents.reduce(function(a,b){ return a+b; }, 0);
+      var byFrac = raw.map(function(r, i){ return { i: i, frac: r - Math.floor(r + 1e-9) }; })
+                      .sort(function(a, b){ return b.frac - a.frac || a.i - b.i; });
+      for(var k = 0; k < leftover; k++){ cents[byFrac[k % byFrac.length].i]++; }
+      splitParticipants = ids;
+      splitAmountsData = cents.map(function(c){ return c / 100; });
+      splitPercentagesData = pcts;
     } else {
       // equal split
       splitType = 'equal';
@@ -242,6 +265,7 @@ document.addEventListener('submit', function(e){
     if(splitType !== 'equal') bodyData.split_type = splitType;
     if(splitParticipants) bodyData.split_participants = splitParticipants;
     if(splitAmountsData) bodyData.split_amounts = splitAmountsData;
+    if(splitPercentagesData) bodyData.split_percentages = splitPercentagesData;
     var btn = document.querySelector('button[form="add-expense-form"]');
     var btnText = btn.innerHTML;
     btn.disabled = true;

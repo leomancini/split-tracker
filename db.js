@@ -106,6 +106,11 @@ try {
 } catch (e) {
   // Column already exists
 }
+try {
+  db.exec('ALTER TABLE expenses ADD COLUMN split_percentages TEXT');
+} catch (e) {
+  // Column already exists
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -477,10 +482,10 @@ export function getGroupExpenses(groupId) {
   `).all(groupId);
 }
 
-export function createExpense(groupId, paidBy, name, amount, category, settledWith = null, splitType = 'equal', splitParticipants = null, icon = null, splitAmounts = null) {
+export function createExpense(groupId, paidBy, name, amount, category, settledWith = null, splitType = 'equal', splitParticipants = null, icon = null, splitAmounts = null, splitPercentages = null) {
   const result = db.prepare(
-    'INSERT INTO expenses (group_id, paid_by, name, amount, category, settled_with, split_type, split_participants, icon, split_amounts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, icon, splitAmounts);
+    'INSERT INTO expenses (group_id, paid_by, name, amount, category, settled_with, split_type, split_participants, icon, split_amounts, split_percentages) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, icon, splitAmounts, splitPercentages);
   return result.lastInsertRowid;
 }
 
@@ -492,10 +497,10 @@ export function updateExpenseName(id, name) {
   db.prepare('UPDATE expenses SET name = ? WHERE id = ?').run(name, id);
 }
 
-export function updateExpense(id, { name, amount, category, paidBy, splitType, splitParticipants, splitAmounts, icon }) {
+export function updateExpense(id, { name, amount, category, paidBy, splitType, splitParticipants, splitAmounts, splitPercentages = null, icon }) {
   db.prepare(
-    'UPDATE expenses SET name = ?, amount = ?, category = ?, paid_by = ?, split_type = ?, split_participants = ?, split_amounts = ?, icon = ? WHERE id = ?'
-  ).run(name, amount, category, paidBy, splitType, splitParticipants, splitAmounts, icon, id);
+    'UPDATE expenses SET name = ?, amount = ?, category = ?, paid_by = ?, split_type = ?, split_participants = ?, split_amounts = ?, split_percentages = ?, icon = ? WHERE id = ?'
+  ).run(name, amount, category, paidBy, splitType, splitParticipants, splitAmounts, splitPercentages, icon, id);
 }
 
 export function updateExpenseClassification(id, icon, category) {

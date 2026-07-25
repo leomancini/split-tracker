@@ -320,6 +320,58 @@ function setupExpenseForm(gid){
       redistributeUnevenRemaining();
       syncAddBtn();
     }
+    // Percentage mode: same distribute/redistribute pattern as amounts, but the
+    // pot is 100% tracked in basis points (10000) instead of the total in cents.
+    function distributePcts(inputs) {
+      if (!inputs.length) return;
+      var N = inputs.length;
+      var baseBp = Math.floor(10000 / N);
+      var remBp = 10000 % N;
+      inputs.forEach(function(inp, idx){
+        var bp = baseBp + (idx < remBp ? 1 : 0);
+        inp.value = String(bp / 100);
+      });
+    }
+    function redistributePctRemaining() {
+      var inputs = document.querySelectorAll('.exp-pct-amt');
+      if (!inputs.length) return;
+      var lockedBp = 0;
+      var open = [];
+      inputs.forEach(function(inp){
+        if (inp.dataset.edited === '1') {
+          lockedBp += Math.round((parseFloat(inp.value) || 0) * 100);
+        } else {
+          open.push(inp);
+        }
+      });
+      if (!open.length) return;
+      var remaining = 10000 - lockedBp;
+      if (remaining < 0) remaining = 0;
+      var N = open.length;
+      var baseBp = Math.floor(remaining / N);
+      var remBp = remaining % N;
+      open.forEach(function(inp, idx){
+        var bp = baseBp + (idx < remBp ? 1 : 0);
+        inp.value = String(bp / 100);
+      });
+    }
+    // Show each row's dollar equivalent next to its percentage input.
+    function updatePctPreviews(){
+      var totalCents = Math.round((parseFloat(amtEl ? amtEl.value : 0) || 0) * 100);
+      document.querySelectorAll('.exp-participant-row').forEach(function(row){
+        var inp = row.querySelector('.exp-pct-amt');
+        var prev = row.querySelector('.exp-pct-preview');
+        if (!inp || !prev) return;
+        var pct = parseFloat(inp.value) || 0;
+        prev.textContent = fmtAmt(Math.round(totalCents * pct / 100) / 100);
+      });
+    }
+    function onPctInput(e){
+      e.target.dataset.edited = '1';
+      redistributePctRemaining();
+      updatePctPreviews();
+      syncAddBtn();
+    }
     function syncAddBtn(){
       var ok = nameEl && amtEl && nameEl.value.trim() && parseFloat(amtEl.value) > 0;
       var splitSel2 = document.getElementById('exp-split-type');
@@ -341,6 +393,21 @@ function setupExpenseForm(gid){
         } else {
           if(msg2) msg2.style.display = 'none';
         }
+      } else if(splitSel2 && splitSel2.value === 'uneven_pct'){
+        var sumBp = 0;
+        document.querySelectorAll('.exp-pct-amt').forEach(function(inp){ sumBp += Math.round((parseFloat(inp.value) || 0) * 100); });
+        var msgP = document.getElementById('exp-uneven-msg');
+        var diffBp = 10000 - sumBp;
+        if(diffBp !== 0){
+          ok = false;
+          if(msgP){
+            var remPct = Math.abs(diffBp) / 100;
+            msgP.textContent = diffBp > 0 ? (remPct+'% left') : (remPct+'% over');
+            msgP.style.display = '';
+          }
+        } else {
+          if(msgP) msgP.style.display = 'none';
+        }
       }
       if(addBtn) addBtn.disabled = !ok;
     }
@@ -351,6 +418,9 @@ function setupExpenseForm(gid){
       var splitSelChk = document.getElementById('exp-split-type');
       if(splitSelChk && splitSelChk.value === 'uneven'){
         redistributeUnevenRemaining();
+      } else if(splitSelChk && splitSelChk.value === 'uneven_pct'){
+        // Percentages don't depend on the total, but the dollar previews do.
+        updatePctPreviews();
       }
       syncAddBtn();
     });
@@ -381,8 +451,14 @@ function setupExpenseForm(gid){
           partWrap.querySelectorAll('.exp-participant-cb').forEach(function(cb){ cb.style.display = ''; });
           partWrap.querySelectorAll('.exp-uneven-prefix').forEach(function(p){ p.style.display = 'none'; });
           partWrap.querySelectorAll('.exp-uneven-amt').forEach(function(inp){ inp.style.display = 'none'; });
+          hidePctMode();
           var msg = document.getElementById('exp-uneven-msg');
           if(msg) msg.style.display = 'none';
+        }
+        function hidePctMode(){
+          partWrap.querySelectorAll('.exp-pct-amt').forEach(function(inp){ inp.style.display = 'none'; });
+          partWrap.querySelectorAll('.exp-pct-sign').forEach(function(s){ s.style.display = 'none'; });
+          partWrap.querySelectorAll('.exp-pct-preview').forEach(function(s){ s.style.display = 'none'; });
         }
         // Show/hide participant picker based on mode
         if(partWrap){
@@ -424,6 +500,7 @@ function setupExpenseForm(gid){
             rows.forEach(function(row){ row.style.display = 'flex'; });
             partWrap.querySelectorAll('.exp-participant-cb').forEach(function(cb){ cb.style.display = 'none'; });
             partWrap.querySelectorAll('.exp-uneven-prefix').forEach(function(p){ p.style.display = ''; });
+            hidePctMode();
             var amtInputs = partWrap.querySelectorAll('.exp-uneven-amt');
             var totalAmt = parseFloat(document.getElementById('exp-cost').value) || 0;
             // Fresh entry into uneven mode: clear any prior edits and split evenly.
@@ -435,6 +512,27 @@ function setupExpenseForm(gid){
               inp.addEventListener('input', onUnevenAmtInput);
             });
             syncAddBtn();
+          } else if(v === 'uneven_pct'){
+            partWrap.style.display = '';
+            partLabel.textContent = 'Percentages';
+            var rows = partWrap.querySelectorAll('.exp-participant-row');
+            rows.forEach(function(row){ row.style.display = 'flex'; });
+            partWrap.querySelectorAll('.exp-participant-cb').forEach(function(cb){ cb.style.display = 'none'; });
+            partWrap.querySelectorAll('.exp-uneven-prefix').forEach(function(p){ p.style.display = 'none'; });
+            partWrap.querySelectorAll('.exp-uneven-amt').forEach(function(inp){ inp.style.display = 'none'; });
+            var pctInputs = partWrap.querySelectorAll('.exp-pct-amt');
+            // Fresh entry into percentage mode: clear any prior edits and split evenly.
+            pctInputs.forEach(function(inp){ delete inp.dataset.edited; });
+            distributePcts(pctInputs);
+            pctInputs.forEach(function(inp){
+              inp.style.display = '';
+              inp.removeEventListener('input', onPctInput);
+              inp.addEventListener('input', onPctInput);
+            });
+            partWrap.querySelectorAll('.exp-pct-sign').forEach(function(s){ s.style.display = ''; });
+            partWrap.querySelectorAll('.exp-pct-preview').forEach(function(s){ s.style.display = ''; });
+            updatePctPreviews();
+            syncAddBtn();
           }
         }
       });
@@ -445,10 +543,11 @@ function prefillExpenseForm(gid, ex){
   var members = groupCache[gid] ? groupCache[gid].members : [];
   var parts = ex.split_participants ? JSON.parse(ex.split_participants) : null;
   var amts = ex.split_amounts ? JSON.parse(ex.split_amounts) : null;
+  var pcts = ex.split_percentages ? JSON.parse(ex.split_percentages) : null;
   var splitSel = document.getElementById('exp-split-type');
   var paidByEl = document.getElementById('exp-paid-by');
   var val = 'equal';
-  if(ex.split_type === 'custom') val = 'uneven';
+  if(ex.split_type === 'custom') val = pcts ? 'uneven_pct' : 'uneven';
   else if(ex.split_type === 'full'){
     val = (parts && parts.length === 1 && parts[0] === D.user.id) ? 'you_owe' : 'they_owe';
   }
@@ -465,6 +564,17 @@ function prefillExpenseForm(gid, ex){
       inp.value = idx !== -1 ? (parseFloat(amts[idx])||0).toFixed(2) : '0.00';
       inp.dataset.edited = '1';
     });
+  } else if(val === 'uneven_pct' && parts && pcts){
+    var firstPct = null;
+    document.querySelectorAll('.exp-pct-amt').forEach(function(inp){
+      var mid = parseInt(inp.getAttribute('data-member-id'));
+      var idx = parts.indexOf(mid);
+      inp.value = idx !== -1 ? String(parseFloat(pcts[idx])||0) : '0';
+      inp.dataset.edited = '1';
+      if(!firstPct) firstPct = inp;
+    });
+    // Refresh the dollar previews (all inputs are locked, so nothing redistributes).
+    if(firstPct) firstPct.dispatchEvent(new Event('input'));
   } else if(val === 'equal' && parts && parts.length < members.length){
     document.querySelectorAll('.exp-participant-cb').forEach(function(cb){
       cb.checked = parts.indexOf(parseInt(cb.value)) !== -1;

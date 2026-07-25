@@ -191,6 +191,8 @@ export function registerApiRoutes(app, ensureAuth) {
     const splitParticipants = req.body.split_participants ? JSON.stringify(req.body.split_participants.map(Number)) : null;
     const splitAmountsRaw = req.body.split_amounts;
     const splitAmounts = splitAmountsRaw ? JSON.stringify(splitAmountsRaw.map(Number)) : null;
+    const splitPercentagesRaw = req.body.split_percentages;
+    const splitPercentages = splitPercentagesRaw ? JSON.stringify(splitPercentagesRaw.map(Number)) : null;
 
     if (!name) return res.status(400).json({ error: 'Name is required' });
     if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: 'Valid amount is required' });
@@ -200,9 +202,16 @@ export function registerApiRoutes(app, ensureAuth) {
       const sum = splitAmountsRaw.map(Number).reduce((a, b) => a + b, 0);
       if (Math.round(sum * 100) !== Math.round(amount * 100)) return res.status(400).json({ error: 'Split amounts must add up to total' });
     }
+    if (splitPercentagesRaw) {
+      const pcts = splitPercentagesRaw.map(Number);
+      const pctSum = pcts.reduce((a, b) => a + b, 0);
+      if (pcts.some(p => isNaN(p) || p < 0) || Math.round(pctSum * 100) !== 10000) {
+        return res.status(400).json({ error: 'Percentages must add up to 100' });
+      }
+    }
 
     const isSettlement = !!settledWith || category === 'settlement';
-    const id = createExpense(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, isSettlement ? 'fa-dollar-sign' : null, splitAmounts);
+    const id = createExpense(groupId, paidBy, name, amount, category, settledWith, splitType, splitParticipants, isSettlement ? 'fa-dollar-sign' : null, splitAmounts, splitPercentages);
     res.json({ ok: true, id });
 
     // Classify (icon + category) asynchronously for regular expenses.
@@ -249,6 +258,8 @@ export function registerApiRoutes(app, ensureAuth) {
     const splitParticipants = req.body.split_participants ? JSON.stringify(req.body.split_participants.map(Number)) : null;
     const splitAmountsRaw = req.body.split_amounts;
     const splitAmounts = splitAmountsRaw ? JSON.stringify(splitAmountsRaw.map(Number)) : null;
+    const splitPercentagesRaw = req.body.split_percentages;
+    const splitPercentages = splitPercentagesRaw ? JSON.stringify(splitPercentagesRaw.map(Number)) : null;
 
     if (!name) return res.status(400).json({ error: 'Name is required' });
     if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: 'Valid amount is required' });
@@ -257,6 +268,13 @@ export function registerApiRoutes(app, ensureAuth) {
       const sum = splitAmountsRaw.map(Number).reduce((a, b) => a + b, 0);
       if (Math.round(sum * 100) !== Math.round(amount * 100)) return res.status(400).json({ error: 'Split amounts must add up to total' });
     }
+    if (splitPercentagesRaw) {
+      const pcts = splitPercentagesRaw.map(Number);
+      const pctSum = pcts.reduce((a, b) => a + b, 0);
+      if (pcts.some(p => isNaN(p) || p < 0) || Math.round(pctSum * 100) !== 10000) {
+        return res.status(400).json({ error: 'Percentages must add up to 100' });
+      }
+    }
 
     // Keep the AI-classified category/icon unless the name changed. When it
     // changes, clear the icon so the client's icon poll re-fetches a new one.
@@ -264,7 +282,7 @@ export function registerApiRoutes(app, ensureAuth) {
     const category = nameChanged ? (req.body.category?.trim() || 'general') : expense.category;
     const icon = nameChanged ? null : expense.icon;
 
-    updateExpense(expenseId, { name, amount, category, paidBy, splitType, splitParticipants, splitAmounts, icon });
+    updateExpense(expenseId, { name, amount, category, paidBy, splitType, splitParticipants, splitAmounts, splitPercentages, icon });
     res.json({ ok: true });
 
     if (nameChanged) {
