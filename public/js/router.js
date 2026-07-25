@@ -271,11 +271,19 @@ document.addEventListener('touchend', function(e){
 });
 
 
-// Size a split amount/percent input to fit its content so the $/% affixes
-// hug the number. ch tracks the input's own font; padding + border on top.
+// Size a split amount/percent input to exactly fit its content so the $/%
+// affixes hug the number and the inner gap is identical for every value.
+// ch-counting won't do: "." is narrower than a digit, so the leftover space
+// would vary between "33", "33.33", and the placeholder.
+var _splitMeasureCtx;
 function resizeSplitInput(inp){
-  var len = String(inp.value || inp.placeholder || '').length || 1;
-  inp.style.width = 'calc(' + len + 'ch + 0.75rem + 2px)';
+  if(!_splitMeasureCtx) _splitMeasureCtx = document.createElement('canvas').getContext('2d');
+  var cs = getComputedStyle(inp);
+  _splitMeasureCtx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+  var text = String(inp.value || inp.placeholder || '0');
+  var textW = _splitMeasureCtx.measureText(text).width;
+  // 12px padding + 2px border + 2px caret allowance (constant, so the gap is too)
+  inp.style.width = Math.ceil(textW + 16) + 'px';
 }
 
 function setupExpenseForm(gid){
