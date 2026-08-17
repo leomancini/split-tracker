@@ -28,11 +28,17 @@ document.addEventListener('click', function(e){
     var settleGroup = expandBtn.getAttribute('data-settle-group');
     var origText = textEl.innerHTML;
     var origBtns = btnsEl.innerHTML;
-    textEl.innerHTML = (isReq ? 'Request from ' : 'Pay ') + '<span style="font-weight:500">'+name+'</span>';
+    var hasPayOption = vUrl || cUrl;
+    if(hasPayOption){
+      textEl.innerHTML = (isReq ? 'Request from ' : 'Pay ') + '<span style="font-weight:500">'+name+'</span>';
+    } else {
+      textEl.innerHTML = isReq ? '<span style="font-weight:500">'+name+'</span> paid you?' : 'Paid <span style="font-weight:500">'+name+'</span>?';
+    }
     var settleAttrs = ' data-action="settle-pay" data-settle-from="'+settleFrom+'" data-settle-to="'+settleTo+'" data-settle-amt="'+settleAmt+'" data-settle-group="'+settleGroup+'" data-other-name="'+name+'"';
     var btns = '';
     if(vUrl) btns += '<a href="'+vUrl+'" target="_blank" rel="noopener" class="pay-btn'+(D.demoMode ? ' demo-pay' : '')+'" style="'+btnStyle+';background:#008CFF"'+settleAttrs+' data-method="Venmo">Venmo</a>';
     if(cUrl) btns += '<a href="'+cUrl+'" target="_blank" rel="noopener" class="pay-btn'+(D.demoMode ? ' demo-pay' : '')+'" style="'+btnStyle+';background:var(--green-500)"'+settleAttrs+' data-method="Cash App">Cash App</a>';
+    if(!hasPayOption) btns += '<span class="pay-btn'+(D.demoMode ? ' demo-pay' : '')+'" style="'+btnStyle+';background:var(--green-500);cursor:pointer"'+settleAttrs+' data-method="">Mark paid</span>';
     btns += '<span class="pay-btn" style="font-weight:600;text-decoration:none;border-radius:999px;background:var(--gray-100);color:var(--gray-500);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.375rem;font-weight:400;width:36px;height:36px;flex-shrink:0;line-height:1" data-action="collapse-pay"><svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/></svg></span>';
     btnsEl.innerHTML = btns;
     btnsEl.querySelector('[data-action="collapse-pay"]').addEventListener('click', function(){
@@ -56,9 +62,16 @@ document.addEventListener('click', function(e){
     var sName = settleBtn.getAttribute('data-other-name');
     var sMethod = settleBtn.getAttribute('data-method');
     var isFromYou = parseInt(sFrom) === D.user.id;
-    var expName = isFromYou
-      ? sMethod + ' payment to ' + sName
-      : sMethod + ' request from ' + sName;
+    var expName;
+    if(sMethod){
+      expName = isFromYou
+        ? sMethod + ' payment to ' + sName
+        : sMethod + ' request from ' + sName;
+    } else {
+      expName = isFromYou
+        ? 'Payment to ' + sName
+        : 'Payment from ' + sName;
+    }
     fetch('/api/groups/'+sGroup+'/expenses',{
       method:'POST',
       headers:{'Content-Type':'application/json'},

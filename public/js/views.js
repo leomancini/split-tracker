@@ -99,7 +99,7 @@ function groupDetailView(detail, alert){
         + ' <span style="font-family:var(--mono);font-weight:600;color:'+(isYou?'#dc2626':'var(--green-600)')+'">'+fmtAmt(s.amt)+'</span>'
         + '</span>'
         + '<div class="settlement-btns" style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;margin-left:0.5rem">'
-        + (hasPayOption ? '<span class="pay-btn" style="'+payBtnStyle+';color:#fff;background:var(--green-500);cursor:pointer" data-action="expand-pay"'
+        + '<span class="pay-btn" style="'+payBtnStyle+';color:#fff;background:var(--green-500);cursor:pointer" data-action="expand-pay"'
           + (venmoUrl ? ' data-venmo-url="'+esc(venmoUrl)+'"' : '')
           + (cashappUrl ? ' data-cashapp-url="'+esc(cashappUrl)+'"' : '')
           + ' data-other-name="'+otherName+'"'
@@ -108,7 +108,7 @@ function groupDetailView(detail, alert){
           + ' data-settle-to="'+s.to+'"'
           + ' data-settle-amt="'+s.amt.toFixed(2)+'"'
           + ' data-settle-group="'+g.id+'"'
-          + '>'+actionLabel+'</span>' : '')
+          + '>'+(hasPayOption ? actionLabel : 'Mark paid')+'</span>'
         + '</div>'
         + '</div>';
       firstSettlement = false;
