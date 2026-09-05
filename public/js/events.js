@@ -206,8 +206,9 @@ document.addEventListener('submit', function(e){
 
   if(e.target.id === 'add-expense-form'){
     if(demoBlocked()) return;
-    var gid3 = e.target.getAttribute('data-group-id');
-    var eid3 = e.target.getAttribute('data-expense-id');
+    var expForm = e.target;
+    var gid3 = expForm.getAttribute('data-group-id');
+    var eid3 = expForm.getAttribute('data-expense-id');
     var isEdit = !!eid3;
     var descEl = document.getElementById('exp-desc');
     var costEl = document.getElementById('exp-cost');
@@ -292,8 +293,7 @@ document.addEventListener('submit', function(e){
     var btnText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:3px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>';
-    descEl.disabled = true;
-    costEl.disabled = true;
+    setFormFieldsDisabled(expForm, true);
     fetch(isEdit ? '/api/groups/'+gid3+'/expenses/'+eid3 : '/api/groups/'+gid3+'/expenses',{
       method:isEdit ? 'PUT' : 'POST',
       headers:{'Content-Type':'application/json'},
@@ -308,11 +308,11 @@ document.addEventListener('submit', function(e){
           });
         } else {
           btn.disabled=false;btn.innerHTML=btnText;
-          descEl.disabled=false;costEl.disabled=false;
+          setFormFieldsDisabled(expForm, false);
         }
       }).catch(function(){
         btn.disabled=false;btn.innerHTML=btnText;
-        descEl.disabled=false;costEl.disabled=false;
+        setFormFieldsDisabled(expForm, false);
       });
     return;
   }

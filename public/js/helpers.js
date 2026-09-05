@@ -230,3 +230,21 @@ function calcSettlements(members, expenses){
   return settlements;
 }
 
+// Lock every field in a form while a submit is in flight so the values can't
+// change out from under the request. The submit button is left alone — its
+// callers swap in a spinner and manage it themselves. Only fields we disabled
+// are re-enabled, so anything already disabled stays that way.
+function setFormFieldsDisabled(form, disabled){
+  if(!form) return;
+  Array.prototype.forEach.call(form.elements, function(el){
+    if(el.type === 'submit') return;
+    if(disabled){
+      if(el.disabled) return;
+      el.dataset.reenable = '1';
+      el.disabled = true;
+    } else if(el.dataset.reenable){
+      delete el.dataset.reenable;
+      el.disabled = false;
+    }
+  });
+}
